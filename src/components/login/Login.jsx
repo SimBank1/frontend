@@ -3,6 +3,8 @@ import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "l
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useNavigate } from 'react-router-dom'
+
 
 export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
   const [username, setUsername] = useState("")
@@ -14,6 +16,8 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     type: "success",
     show: false,
   })
+
+  const navigate = useNavigate();
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
@@ -76,27 +80,29 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     await new Promise((resolve) => setTimeout(resolve, 1200))
 
     if (username === "admin" && password === "admin") {
-      showPopup("✅ Welcome Admin! Redirecting to dashboard...", "success")
+      showPopup("✅ Welcome Admin! Redirecting to dashboard...", "success");
       if (onLogin) {
-        onLogin({ username, password, userType: "admin" })
+        onLogin({ username, password, userType: "admin" });
       }
       setTimeout(() => {
-        console.log("Navigate to admin dashboard")
-      }, 2000)
+        console.log("Navigate to admin dashboard");
+        navigate('/dashboard');
+      }, 2000);
     } else if (username === "employee" && password === "employee") {
-      showPopup("✅ Welcome Employee! Redirecting to your workspace...", "success")
+      showPopup("✅ Welcome Employee! Redirecting to your workspace...", "success");
       if (onLogin) {
-        onLogin({ username, password, userType: "employee" })
+        onLogin({ username, password, userType: "employee" });
       }
       setTimeout(() => {
-        console.log("Navigate to employee dashboard")
-      }, 2000)
+        console.log("Navigate to employee dashboard");
+        navigate('/dashboard');
+      }, 2000);
     } else {
-      setPassword("")
-      showPopup("❌ Invalid credentials. Please check your username and password.", "error")
+      setPassword("");
+      showPopup("❌ Invalid credentials. Please check your username and password.", "error");
     }
-
-    setIsLoading(false)
+    
+    setIsLoading(false);    
   }
 
   const handleKeyPress = (e) => {
