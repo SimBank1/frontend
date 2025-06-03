@@ -21,7 +21,6 @@ const Login = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign In</h2>
@@ -51,13 +50,6 @@ const Login = () => {
         </div>
       </div>
     </div>
-=======
-    <form onSubmit={handleSubmit}>
-      <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
-      <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" />
-      <button type="submit">Login</button>
-    </form>
->>>>>>> b4c2381d6e9f136ad9b34a7bc7ccc4a83436a425
   );
 };
 
