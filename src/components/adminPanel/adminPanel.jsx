@@ -384,7 +384,7 @@ export default function adminPanel() {
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 ">
         <div className="flex items-center gap-3 mb-6">
           {selectedPerson.type === "employee" ? (
             <Briefcase className="w-8 h-8 text-blue-600" />
@@ -401,9 +401,9 @@ export default function adminPanel() {
 
         {/* Additional Information for Clients - Moved to top */}
         {selectedPerson.type === "client" && (
-          <Card>
+          <Card className>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className=" flex items-center gap-2 text-base">
                 <Calendar className="w-4 h-4" />
                 Additional Information
               </CardTitle>
