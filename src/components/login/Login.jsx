@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export default function Login({ onLogin, logoSrc = "/placeholder.svg?height=40&width=120" }) {
+export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -135,8 +135,6 @@ export default function Login({ onLogin, logoSrc = "/placeholder.svg?height=40&w
               <div className="flex items-center space-x-3">
                 <img src={logoSrc || "/placeholder.svg"} alt="SimBank Logo" className="h-10" />
                 <div className="hidden md:flex items-center space-x-2 text-white/90">
-                  <Shield size={16} />
-                  <span className="text-sm font-medium">Admin Portal</span>
                 </div>
               </div>
               <div className="flex items-center space-x-4 text-white/80 text-sm">
