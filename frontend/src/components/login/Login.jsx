@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [cookies, setCookie] = useCookies(['sessionCokie']);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (!username.trim() || !password.trim()) {
-      setError('Invalid username or password.');
-      return;
-    }
-
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Basic validation for demo
     if (username === 'admin' && password === 'admin') {
-      sessionStorage.setItem('sessionToken', 'admin');
+      setCookie('sessionCokie', 'admin', { path: '/' });
       navigate('/dashboard');
     } else {
-      setError('Invalid username or password.');
+      // handle error
+      alert('Invalid username or password.');
     }
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign In</h2>
@@ -51,6 +51,13 @@ const Login = () => {
         </div>
       </div>
     </div>
+=======
+    <form onSubmit={handleSubmit}>
+      <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
+      <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" />
+      <button type="submit">Login</button>
+    </form>
+>>>>>>> b4c2381d6e9f136ad9b34a7bc7ccc4a83436a425
   );
 };
 
