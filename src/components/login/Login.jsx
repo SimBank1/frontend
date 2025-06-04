@@ -331,11 +331,10 @@ export default function Login({
                   <div className="field-group">
                     <label className="field-label">Password</label>
                     <div className="password-field">
+                    
                       <input
-                        type={showPassword ? "text" : "password"}
-                        name={
-                          import.meta.env.DEV ? "dev_login_fake" : "password"
-                        }
+                        type="text"
+                        name="fake_simulated_password"
                         autoComplete="off"
                         placeholder="Enter your password"
                         value={password}
@@ -351,15 +350,17 @@ export default function Login({
                         onKeyDown={handleKeyPress}
                         className={`field-input ${
                           fieldErrors.password ? "error" : ""
-                        } ${shakeField === "password" ? "shake" : ""}`}
+                        } ${
+                          shakeField === "password" ? "shake" : ""
+                        } simulated-password ${
+                          showPassword ? "show-password" : ""
+                        }`}
                       />
 
                       <button
                         type="button"
                         className="password-toggle"
-                        onMouseDown={handleMouseDown}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseLeave}
+                        onClick={() => setShowPassword((prev) => !prev)}
                       >
                         {showPassword ? (
                           <EyeOff size={18} />

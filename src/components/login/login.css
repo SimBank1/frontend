@@ -708,3 +708,16 @@
     padding: 24px;
   }
 }
+
+
+.simulated-password {
+    -webkit-text-security: disc;
+    text-security: disc;
+  }
+  
+  .simulated-password.show-password {
+    -webkit-text-security: none;
+    text-security: none;
+  }
+  
+  
