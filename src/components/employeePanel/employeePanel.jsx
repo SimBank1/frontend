@@ -697,13 +697,7 @@ export default function EmployeePanel() {
               <CreditCard size={16} />
               Bank Accounts
             </h3>
-            <button
-          className="button-primary flex-none crm-button"Add commentMore actions
-          style={{ width: "200px" }}
-          onClick={() => setIsAddCrmOpen(true)}
-        >
-          <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
-        </button>
+           
           </div>
           <div className="card-content">
             {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
