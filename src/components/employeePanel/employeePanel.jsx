@@ -17,6 +17,7 @@ import {
   UserPlus,
   Edit,
   CheckCircle,
+  X,
 } from "lucide-react"
 import "./EmployeePanel.css"
 
@@ -795,13 +796,9 @@ export default function EmployeePanel() {
             </div>
           </div>
 
-                  <button
-          className="button-primary flex-none crm-button"
-          style={{ width: "200px" }}
-          onClick={() => setIsAddCrmOpen(true)}
-        >
-          <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
-        </button>
+          <button className="button-primary" onClick={() => setIsAddCrmOpen(true)}>
+            <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
+          </button>
         </div>
 
         {/* CRM Entries */}
@@ -906,4 +903,485 @@ export default function EmployeePanel() {
             </button>
             <button className="icon-button" onClick={handleLogout}>
               <LogOut size={16} />
-            </button>\
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Panel */}
+      <div className="middle-panel">
+        <div className="middle-content">
+          <h2 className="panel-title">Client Profile</h2>
+          {renderPersonalInfo()}
+        </div>
+      </div>
+
+      {/* Right Panel */}
+      <div className="right-panel">{renderCRMRequests()}</div>
+
+      {/* Add Client Modal */}
+      {isAddClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsAddClientOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <UserPlus size={20} color="#8b5cf6" />
+                Create New Client
+              </h3>
+              <button className="modal-close" onClick={() => setIsAddClientOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddClient}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={clientFormData.firstName}
+                      onChange={(e) => handleClientFormChange("firstName", e.target.value)}
+                      placeholder="Enter first name"
+                      required
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={clientFormData.lastName}
+                      onChange={(e) => handleClientFormChange("lastName", e.target.value)}
+                      placeholder="Enter last name"
+                      required
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Personal Code *</label>
+                  <input
+                    className={`form-input ${errors.personalCode ? "error" : ""}`}
+                    value={clientFormData.personalCode}
+                    onChange={(e) => handleClientFormChange("personalCode", e.target.value)}
+                    placeholder="Enter 11-digit personal code"
+                    required
+                  />
+                  {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Email *</label>
+                    <input
+                      type="email"
+                      className={`form-input ${errors.email ? "error" : ""}`}
+                      value={clientFormData.email}
+                      onChange={(e) => handleClientFormChange("email", e.target.value)}
+                      placeholder="Enter email"
+                      required
+                    />
+                    {errors.email && <div className="error-message">{errors.email}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Phone *</label>
+                    <input
+                      className={`form-input ${errors.phone ? "error" : ""}`}
+                      value={clientFormData.phone}
+                      onChange={(e) => handleClientFormChange("phone", e.target.value)}
+                      placeholder="0xxxxxxxx"
+                      required
+                    />
+                    {errors.phone && <div className="error-message">{errors.phone}</div>}
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Type *</label>
+                    <select
+                      className="form-select"
+                      value={clientFormData.documentType}
+                      onChange={(e) => handleClientFormChange("documentType", e.target.value)}
+                      required
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="ID Card">ID Card</option>
+                      <option value="Driver's License">Driver's License</option>
+                      <option value="Temporary Residence Permit">Temporary Residence Permit</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Number *</label>
+                    <input
+                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
+                      value={clientFormData.documentNumber}
+                      onChange={(e) => handleClientFormChange("documentNumber", e.target.value)}
+                      placeholder="8 alphanumeric characters"
+                      required
+                    />
+                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Expiry *</label>
+                    <input
+                      type="date"
+                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
+                      value={clientFormData.documentExpiry}
+                      onChange={(e) => handleClientFormChange("documentExpiry", e.target.value)}
+                      required
+                    />
+                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Date of Birth (Auto-filled)</label>
+                    <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Registration Address *</label>
+                  <input
+                    className={`form-input ${errors.registrationAddress ? "error" : ""}`}
+                    value={clientFormData.registrationAddress}
+                    onChange={(e) => handleClientFormChange("registrationAddress", e.target.value)}
+                    placeholder="Country, Region, City/Village, Street, House, Apartment, Postal Code"
+                    required
+                  />
+                  {errors.registrationAddress && <div className="error-message">{errors.registrationAddress}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Correspondence Address *</label>
+                  <input
+                    className={`form-input ${errors.correspondenceAddress ? "error" : ""}`}
+                    value={clientFormData.correspondenceAddress}
+                    onChange={(e) => handleClientFormChange("correspondenceAddress", e.target.value)}
+                    placeholder="Country, Region, City/Village, Street, House, Apartment, Postal Code"
+                    required
+                  />
+                  {errors.correspondenceAddress && <div className="error-message">{errors.correspondenceAddress}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Other Bank Accounts</label>
+                  <textarea
+                    className="form-textarea"
+                    value={clientFormData.otherBankAccounts}
+                    onChange={(e) => handleClientFormChange("otherBankAccounts", e.target.value)}
+                    placeholder="List any other bank accounts (optional)"
+                    rows={3}
+                  />
+                </div>
+                <div className="form-checkbox">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={clientFormData.marketingConsent}
+                    onChange={(e) => handleClientFormChange("marketingConsent", e.target.checked)}
+                  />
+                  <label htmlFor="marketingConsent">Marketing Consent *</label>
+                </div>
+                {errors.marketingConsent && <div className="error-message">{errors.marketingConsent}</div>}
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => setIsAddClientOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Client
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Account Modal */}
+      {isAddAccountOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsAddAccountOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <CreditCard size={20} color="#8b5cf6" />
+                Create New Bank Account
+              </h3>
+              <button className="modal-close" onClick={() => setIsAddAccountOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddAccount}>
+                <div className="form-group">
+                  <label className="form-label">IBAN Number *</label>
+                  <div className="iban-input-group">
+                    <input
+                      className={`form-input iban-input ${errors.iban ? "error" : ""}`}
+                      value={accountFormData.iban}
+                      onChange={(e) => handleAccountFormChange("iban", e.target.value)}
+                      placeholder="LT123456789012345678"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="generate-iban-button"
+                      onClick={() => handleAccountFormChange("iban", generateRandomIBAN())}
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  {errors.iban && <div className="error-message">{errors.iban}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Currency *</label>
+                  <select
+                    className="form-select"
+                    value={accountFormData.currency}
+                    onChange={(e) => handleAccountFormChange("currency", e.target.value)}
+                    required
+                  >
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="USD">USD</option>
+                    <option value="NOK">NOK</option>
+                    <option value="DKK">DKK</option>
+                    <option value="SEK">SEK</option>
+                    <option value="PLN">PLN</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Account Balance *</label>
+                  <input
+                    className={`form-input ${errors.balance ? "error" : ""}`}
+                    value={accountFormData.balance}
+                    onChange={(e) => handleAccountFormChange("balance", e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                  {errors.balance && <div className="error-message">{errors.balance}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Card Type *</label>
+                  <select
+                    className="form-select"
+                    value={accountFormData.cardType}
+                    onChange={(e) => handleAccountFormChange("cardType", e.target.value)}
+                    required
+                  >
+                    <option value="Debeto">Debeto</option>
+                    <option value="Kredito">Kredito</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Service Plan *</label>
+                  <select
+                    className="form-select"
+                    value={accountFormData.servicePlan}
+                    onChange={(e) => handleAccountFormChange("servicePlan", e.target.value)}
+                    required
+                  >
+                    <option value="Jaunimo">Jaunimo</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Gold">Gold</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Account Opening Date *</label>
+                  <input
+                    type="date"
+                    className={`form-input ${errors.openingDate ? "error" : ""}`}
+                    value={accountFormData.openingDate}
+                    onChange={(e) => handleAccountFormChange("openingDate", e.target.value)}
+                    required
+                  />
+                  {errors.openingDate && <div className="error-message">{errors.openingDate}</div>}
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => setIsAddAccountOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add CRM Modal */}
+      {isAddCrmOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsAddCrmOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <FileText size={20} color="#8b5cf6" />
+                Create New CRM Entry
+              </h3>
+              <button className="modal-close" onClick={() => setIsAddCrmOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddCrm}>
+                <div className="form-group">
+                  <label className="form-label">Client Information (Auto-filled)</label>
+                  <div className="client-info-box">
+                    <p>
+                      <strong>Name:</strong> {selectedPerson?.firstName} {selectedPerson?.lastName}
+                    </p>
+                    <p>
+                      <strong>Personal Code:</strong> {selectedPerson?.personalCode}
+                    </p>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Date of Contact *</label>
+                  <input
+                    type="date"
+                    className={`form-input ${errors.date ? "error" : ""}`}
+                    value={crmFormData.date}
+                    onChange={(e) => handleCrmFormChange("date", e.target.value)}
+                    required
+                  />
+                  {errors.date && <div className="error-message">{errors.date}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contact Type *</label>
+                  <select
+                    className={`form-select ${errors.contactType ? "error" : ""}`}
+                    value={crmFormData.contactType}
+                    onChange={(e) => handleCrmFormChange("contactType", e.target.value)}
+                    required
+                  >
+                    <option value="Email">Email</option>
+                    <option value="Phone">Phone</option>
+                    <option value="Visit">Visit</option>
+                  </select>
+                  {errors.contactType && <div className="error-message">{errors.contactType}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Content * (max 200 characters)</label>
+                  <textarea
+                    className={`form-textarea ${errors.content ? "error" : ""}`}
+                    value={crmFormData.content}
+                    onChange={(e) => handleCrmFormChange("content", e.target.value)}
+                    placeholder="Enter details of the interaction"
+                    rows={5}
+                    maxLength={200}
+                    required
+                  />
+                  <div className="character-count">{crmFormData.content.length}/200 characters</div>
+                  {errors.content && <div className="error-message">{errors.content}</div>}
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => setIsAddCrmOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Save Entry
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit CRM Modal */}
+      {isEditCrmOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsEditCrmOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Edit size={20} color="#8b5cf6" />
+                Edit CRM Entry
+              </h3>
+              <button className="modal-close" onClick={() => setIsEditCrmOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleUpdateCrm}>
+                <div className="form-group">
+                  <label className="form-label">Client Information (Read-only)</label>
+                  <div className="client-info-box">
+                    <p>
+                      <strong>Name:</strong> {selectedPerson?.firstName} {selectedPerson?.lastName}
+                    </p>
+                    <p>
+                      <strong>Personal Code:</strong> {selectedPerson?.personalCode}
+                    </p>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Date of Contact *</label>
+                  <input
+                    type="date"
+                    className={`form-input ${errors.date ? "error" : ""}`}
+                    value={crmFormData.date}
+                    onChange={(e) => handleCrmFormChange("date", e.target.value)}
+                    required
+                  />
+                  {errors.date && <div className="error-message">{errors.date}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contact Type *</label>
+                  <select
+                    className={`form-select ${errors.contactType ? "error" : ""}`}
+                    value={crmFormData.contactType}
+                    onChange={(e) => handleCrmFormChange("contactType", e.target.value)}
+                    required
+                  >
+                    <option value="Email">Email</option>
+                    <option value="Phone">Phone</option>
+                    <option value="Visit">Visit</option>
+                  </select>
+                  {errors.contactType && <div className="error-message">{errors.contactType}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Content * (max 200 characters)</label>
+                  <textarea
+                    className={`form-textarea ${errors.content ? "error" : ""}`}
+                    value={crmFormData.content}
+                    onChange={(e) => handleCrmFormChange("content", e.target.value)}
+                    placeholder="Enter details of the interaction"
+                    rows={5}
+                    maxLength={200}
+                    required
+                  />
+                  <div className="character-count">{crmFormData.content.length}/200 characters</div>
+                  {errors.content && <div className="error-message">{errors.content}</div>}
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => setIsEditCrmOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Update Entry
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Logout Popup Modal */}
+      {logoutPopup.show && (
+        <div className="popup-overlay">
+          <div className="popup-glow-container">
+            <div className="popup-outer-glow error" />
+            <div className="popup-inner-glow error" />
+            <div className="popup-content">
+              <div className="popup-header">
+                <div className="popup-icon error">
+                  <LogOut size={20} color="white" />
+                </div>
+                <h3 className="popup-title">Logout</h3>
+              </div>
+              <p className="popup-message">{logoutPopup.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
