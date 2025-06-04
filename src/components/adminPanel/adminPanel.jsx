@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
+import { useState, useMemo } from "react";
 import {
   Search,
   Users,
@@ -18,8 +18,8 @@ import {
   Building,
   CheckCircle,
   X,
-} from "lucide-react"
-import "./AdminPanel.css"
+} from "lucide-react";
+import "./AdminPanel.css";
 
 // Mock data
 const mockData = [
@@ -125,18 +125,17 @@ const mockData = [
     password: "MyPassword456",
     createdAt: "2024-02-15",
   },
-]
+];
 
 export default function AdminPanel() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [activeFilter, setActiveFilter] = useState("all")
-  const [selectedPerson, setSelectedPerson] = useState(null)
-  const [showPassword, setShowPassword] = useState({})
-  const [data, setData] = useState(mockData)
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [showPassword, setShowPassword] = useState({});
+  const [data, setData] = useState(mockData);
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -145,26 +144,26 @@ export default function AdminPanel() {
     email: "",
     username: "",
     password: "",
-  })
-  const [errors, setErrors] = useState({})
+  });
+  const [errors, setErrors] = useState({});
 
   // Show success message with auto-dismiss
   const showSuccess = (message) => {
-    setSuccessMessage(message)
+    setSuccessMessage(message);
     setTimeout(() => {
-      setSuccessMessage("")
-    }, 3000)
-  }
+      setSuccessMessage("");
+    }, 3000);
+  };
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    let filtered = data
+    let filtered = data;
 
     // Apply type filter
     if (activeFilter === "employees") {
-      filtered = filtered.filter((person) => person.type === "employee")
+      filtered = filtered.filter((person) => person.type === "employee");
     } else if (activeFilter === "clients") {
-      filtered = filtered.filter((person) => person.type === "client")
+      filtered = filtered.filter((person) => person.type === "client");
     }
 
     // Apply search filter
@@ -173,127 +172,135 @@ export default function AdminPanel() {
         (person) =>
           person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm)),
-      )
+          (person.type === "client" &&
+            person.personalCode &&
+            person.personalCode.includes(searchTerm))
+      );
     }
 
-    return filtered
-  }, [searchTerm, activeFilter, data])
+    return filtered;
+  }, [searchTerm, activeFilter, data]);
 
   const handlePersonClick = (person) => {
-    setSelectedPerson(person)
-  }
+    setSelectedPerson(person);
+  };
 
-  const togglePasswordVisibility = (personId) => {
+  const togglePasswordVisibility = (id, visible) => {
     setShowPassword((prev) => ({
       ...prev,
-      [personId]: !prev[personId],
-    }))
-  }
+      [id]: visible,
+    }));
+  };
 
   const handleLogout = () => {
-        document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-        window.location.href = "/login"}
+    document.cookie =
+      "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/login";
+  };
 
   // Validation functions
   const validateName = (name, fieldName) => {
     if (!name.trim()) {
-      return `${fieldName} is required`
+      return `${fieldName} is required`;
     }
     if (name.length < 3) {
-      return `${fieldName} must be at least 3 characters`
+      return `${fieldName} must be at least 3 characters`;
     }
     if (name.length > 50) {
-      return `${fieldName} must not exceed 50 characters`
+      return `${fieldName} must not exceed 50 characters`;
     }
     if (!/^[a-zA-Z\s]+$/.test(name)) {
-      return `${fieldName} must contain only alphabetic characters and spaces`
+      return `${fieldName} must contain only alphabetic characters and spaces`;
     }
-    return ""
-  }
+    return "";
+  };
 
   const validateEmail = (email) => {
     if (!email.trim()) {
-      return "Email is required"
+      return "Email is required";
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return "Please enter a valid email format"
+      return "Please enter a valid email format";
     }
     // Check for duplicate email
-    const existingEmail = data.find((person) => person.type === "employee" && person.email === email)
+    const existingEmail = data.find(
+      (person) => person.type === "employee" && person.email === email
+    );
     if (existingEmail) {
-      return "Email already exists"
+      return "Email already exists";
     }
-    return ""
-  }
+    return "";
+  };
 
   const validateUsername = (username) => {
     if (!username.trim()) {
-      return "Username is required"
+      return "Username is required";
     }
     if (username.length < 4) {
-      return "Username must be at least 4 characters"
+      return "Username must be at least 4 characters";
     }
     if (username.length > 20) {
-      return "Username must not exceed 20 characters"
+      return "Username must not exceed 20 characters";
     }
     // Check for duplicate username
-    const existingUsername = data.find((person) => person.type === "employee" && person.username === username)
+    const existingUsername = data.find(
+      (person) => person.type === "employee" && person.username === username
+    );
     if (existingUsername) {
-      return "Username already exists"
+      return "Username already exists";
     }
-    return ""
-  }
+    return "";
+  };
 
   const validatePassword = (password) => {
     if (!password.trim()) {
-      return "Password is required"
+      return "Password is required";
     }
     if (password.length < 8) {
-      return "Password too weak - minimum 8 characters required"
+      return "Password too weak - minimum 8 characters required";
     }
     if (/\s/.test(password)) {
-      return "Password cannot contain whitespace"
+      return "Password cannot contain whitespace";
     }
-    return ""
-  }
+    return "";
+  };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
+    }));
 
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
         [field]: "",
-      }))
+      }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
-    newErrors.firstName = validateName(formData.firstName, "First name")
-    newErrors.lastName = validateName(formData.lastName, "Last name")
-    newErrors.email = validateEmail(formData.email)
-    newErrors.username = validateUsername(formData.username)
-    newErrors.password = validatePassword(formData.password)
+    newErrors.firstName = validateName(formData.firstName, "First name");
+    newErrors.lastName = validateName(formData.lastName, "Last name");
+    newErrors.email = validateEmail(formData.email);
+    newErrors.username = validateUsername(formData.username);
+    newErrors.password = validatePassword(formData.password);
 
-    setErrors(newErrors)
+    setErrors(newErrors);
 
     // Return true if no errors
-    return !Object.values(newErrors).some((error) => error !== "")
-  }
+    return !Object.values(newErrors).some((error) => error !== "");
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
     // Create new employee
@@ -306,10 +313,10 @@ export default function AdminPanel() {
       username: formData.username.trim(),
       password: formData.password,
       createdAt: new Date().toISOString().split("T")[0],
-    }
+    };
 
     // Add to data
-    setData((prev) => [...prev, newEmployee])
+    setData((prev) => [...prev, newEmployee]);
 
     // Reset form
     setFormData({
@@ -318,14 +325,14 @@ export default function AdminPanel() {
       email: "",
       username: "",
       password: "",
-    })
-    setErrors({})
-    setIsAddEmployeeOpen(false)
-    setShowNewPassword(false)
+    });
+    setErrors({});
+    setIsAddEmployeeOpen(false);
+    setShowNewPassword(false);
 
     // Show success message
-    showSuccess("Employee created successfully!")
-  }
+    showSuccess("Employee created successfully!");
+  };
 
   const resetForm = () => {
     setFormData({
@@ -334,17 +341,25 @@ export default function AdminPanel() {
       email: "",
       username: "",
       password: "",
-    })
-    setErrors({})
-    setShowNewPassword(false)
-  }
+    });
+    setErrors({});
+    setShowNewPassword(false);
+  };
 
   const renderPersonList = () => {
     return filteredData.map((person) => (
-      <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
+      <div
+        key={person.id}
+        className="user-card"
+        onClick={() => handlePersonClick(person)}
+      >
         <div className="user-card-content">
           <div className={`user-icon ${person.type}`}>
-            {person.type === "employee" ? <Briefcase size={20} /> : <User size={20} />}
+            {person.type === "employee" ? (
+              <Briefcase size={20} />
+            ) : (
+              <User size={20} />
+            )}
           </div>
           <div className="user-info">
             <div className="user-header">
@@ -353,15 +368,21 @@ export default function AdminPanel() {
               </h3>
               <span className={`user-badge ${person.type}`}>{person.type}</span>
             </div>
-            {person.type === "client" && person.crmEntries && person.crmEntries.length > 0 && (
-              <p className="user-preview">{person.crmEntries[0].content.substring(0, 80)}...</p>
+            {person.type === "client" &&
+              person.crmEntries &&
+              person.crmEntries.length > 0 && (
+                <p className="user-preview">
+                  {person.crmEntries[0].content.substring(0, 80)}...
+                </p>
+              )}
+            {person.type === "employee" && (
+              <p className="user-preview">{person.email}</p>
             )}
-            {person.type === "employee" && <p className="user-preview">{person.email}</p>}
           </div>
         </div>
       </div>
-    ))
-  }
+    ));
+  };
 
   const renderPersonalInfo = () => {
     if (!selectedPerson) {
@@ -370,10 +391,12 @@ export default function AdminPanel() {
           <div className="empty-content">
             <User className="empty-icon" />
             <h3 className="empty-title">Personal Information</h3>
-            <p className="empty-description">Select a person to view their details</p>
+            <p className="empty-description">
+              Select a person to view their details
+            </p>
           </div>
         </div>
-      )
+      );
     }
 
     return (
@@ -404,19 +427,31 @@ export default function AdminPanel() {
               </h3>
             </div>
             <div className="card-content">
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "16px",
+                }}
+              >
                 <div className="info-item">
                   <div className="info-label">Document Expiry</div>
-                  <div className="info-value">{selectedPerson.documentExpiry}</div>
+                  <div className="info-value">
+                    {selectedPerson.documentExpiry}
+                  </div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Marketing Consent</div>
-                  <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
+                  <div className="info-value">
+                    {selectedPerson.marketingConsent ? "Yes" : "No"}
+                  </div>
                 </div>
               </div>
               <div className="info-item">
                 <div className="info-label">Correspondence Address</div>
-                <div className="info-value">{selectedPerson.correspondenceAddress}</div>
+                <div className="info-value">
+                  {selectedPerson.correspondenceAddress}
+                </div>
               </div>
             </div>
           </div>
@@ -435,7 +470,9 @@ export default function AdminPanel() {
               <>
                 <div className="info-item">
                   <div className="info-label">Personal Code</div>
-                  <div className="info-value">{selectedPerson.personalCode}</div>
+                  <div className="info-value">
+                    {selectedPerson.personalCode}
+                  </div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Date of Birth</div>
@@ -443,11 +480,15 @@ export default function AdminPanel() {
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Type</div>
-                  <div className="info-value">{selectedPerson.documentType}</div>
+                  <div className="info-value">
+                    {selectedPerson.documentType}
+                  </div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Number</div>
-                  <div className="info-value">{selectedPerson.documentNumber}</div>
+                  <div className="info-value">
+                    {selectedPerson.documentNumber}
+                  </div>
                 </div>
               </>
             ) : (
@@ -464,8 +505,23 @@ export default function AdminPanel() {
                         ? selectedPerson.password
                         : "*".repeat(selectedPerson.password.length)}
                     </span>
-                    <button className="password-toggle" onClick={() => togglePasswordVisibility(selectedPerson.id)}>
-                      {showPassword[selectedPerson.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                    <button
+                      className="password-toggle2"
+                      onMouseDown={() =>
+                        togglePasswordVisibility(selectedPerson.id, true)
+                      }
+                      onMouseUp={() =>
+                        togglePasswordVisibility(selectedPerson.id, false)
+                      }
+                      onMouseLeave={() =>
+                        togglePasswordVisibility(selectedPerson.id, false)
+                      }
+                    >
+                      {showPassword[selectedPerson.id] ? (
+                        <EyeOff size={16} className="password-icon" />
+                      ) : (
+                        <Eye size={16} className="password-icon" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -503,7 +559,9 @@ export default function AdminPanel() {
                 <MapPin size={16} className="address-icon" />
                 <div className="address-content">
                   <div className="info-label">Registration Address</div>
-                  <div className="info-value">{selectedPerson.registrationAddress}</div>
+                  <div className="info-value">
+                    {selectedPerson.registrationAddress}
+                  </div>
                 </div>
               </div>
             )}
@@ -544,8 +602,8 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
-    )
-  }
+    );
+  };
 
   const renderCRMRequests = () => {
     if (!selectedPerson) {
@@ -554,10 +612,12 @@ export default function AdminPanel() {
           <div className="empty-content">
             <FileText className="empty-icon" />
             <h2 className="empty-title">Customer Relations Management</h2>
-            <p className="empty-description">Select a client to view CRM requests</p>
+            <p className="empty-description">
+              Select a client to view CRM requests
+            </p>
           </div>
         </div>
-      )
+      );
     }
 
     if (selectedPerson.type === "employee") {
@@ -567,10 +627,12 @@ export default function AdminPanel() {
             <Briefcase className="empty-icon" />
             <h2 className="empty-title">Employee Profile</h2>
             <p className="empty-description">Employees do not have CRM data</p>
-            <p className="empty-description">Personal information is shown in the left panel</p>
+            <p className="empty-description">
+              Personal information is shown in the left panel
+            </p>
           </div>
         </div>
-      )
+      );
     }
 
     return (
@@ -597,7 +659,9 @@ export default function AdminPanel() {
                 <div className="crm-entry-header">
                   <span className="crm-entry-badge">{entry.contactType}</span>
                   <span className="crm-entry-meta">{entry.date}</span>
-                  <span className="crm-entry-meta">by {entry.employeeName}</span>
+                  <span className="crm-entry-meta">
+                    by {entry.employeeName}
+                  </span>
                 </div>
                 <p className="crm-entry-content">{entry.content}</p>
               </div>
@@ -605,13 +669,15 @@ export default function AdminPanel() {
           ) : (
             <div className="no-data">
               <FileText className="no-data-icon" />
-              <p className="no-data-text">No CRM entries found for this client</p>
+              <p className="no-data-text">
+                No CRM entries found for this client
+              </p>
             </div>
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="admin-panel">
@@ -652,21 +718,27 @@ export default function AdminPanel() {
         <div className="filter-section">
           <div className="filter-buttons">
             <button
-              className={`filter-button ${activeFilter === "all" ? "active" : ""}`}
+              className={`filter-button ${
+                activeFilter === "all" ? "active" : ""
+              }`}
               onClick={() => setActiveFilter("all")}
             >
               <Users size={16} style={{ marginRight: "8px" }} />
               All
             </button>
             <button
-              className={`filter-button ${activeFilter === "employees" ? "active" : ""}`}
+              className={`filter-button ${
+                activeFilter === "employees" ? "active" : ""
+              }`}
               onClick={() => setActiveFilter("employees")}
             >
               <Briefcase size={16} style={{ marginRight: "8px" }} />
               Employees
             </button>
             <button
-              className={`filter-button ${activeFilter === "clients" ? "active" : ""}`}
+              className={`filter-button ${
+                activeFilter === "clients" ? "active" : ""
+              }`}
               onClick={() => setActiveFilter("clients")}
             >
               <User size={16} style={{ marginRight: "8px" }} />
@@ -687,8 +759,8 @@ export default function AdminPanel() {
             <button
               className="primary-button"
               onClick={() => {
-                resetForm()
-                setIsAddEmployeeOpen(true)
+                resetForm();
+                setIsAddEmployeeOpen(true);
               }}
             >
               <Plus size={16} style={{ marginRight: "8px" }} />
@@ -714,14 +786,22 @@ export default function AdminPanel() {
 
       {/* Add Employee Modal */}
       {isAddEmployeeOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsAddEmployeeOpen(false)}>
+        <div
+          className="modal-overlay"
+          onClick={(e) =>
+            e.target === e.currentTarget && setIsAddEmployeeOpen(false)
+          }
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">
                 <Briefcase size={20} color="#8b5cf6" />
                 Add New Employee
               </h3>
-              <button className="modal-close" onClick={() => setIsAddEmployeeOpen(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setIsAddEmployeeOpen(false)}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -732,10 +812,14 @@ export default function AdminPanel() {
                   <input
                     className={`form-input ${errors.firstName ? "error" : ""}`}
                     value={formData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("firstName", e.target.value)
+                    }
                     placeholder="Enter first name"
                   />
-                  {errors.firstName && <p className="error-message">{errors.firstName}</p>}
+                  {errors.firstName && (
+                    <p className="error-message">{errors.firstName}</p>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -743,10 +827,14 @@ export default function AdminPanel() {
                   <input
                     className={`form-input ${errors.lastName ? "error" : ""}`}
                     value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("lastName", e.target.value)
+                    }
                     placeholder="Enter last name"
                   />
-                  {errors.lastName && <p className="error-message">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="error-message">{errors.lastName}</p>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -758,7 +846,9 @@ export default function AdminPanel() {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="user@example.com"
                   />
-                  {errors.email && <p className="error-message">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="error-message">{errors.email}</p>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -766,10 +856,14 @@ export default function AdminPanel() {
                   <input
                     className={`form-input ${errors.username ? "error" : ""}`}
                     value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("username", e.target.value)
+                    }
                     placeholder="Enter username (4-20 characters)"
                   />
-                  {errors.username && <p className="error-message">{errors.username}</p>}
+                  {errors.username && (
+                    <p className="error-message">{errors.username}</p>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -779,7 +873,9 @@ export default function AdminPanel() {
                       type={showNewPassword ? "text" : "password"}
                       className={`form-input ${errors.password ? "error" : ""}`}
                       value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
                       placeholder="Enter password (min 8 characters)"
                       style={{ paddingRight: "40px" }}
                     />
@@ -797,14 +893,24 @@ export default function AdminPanel() {
                         cursor: "pointer",
                       }}
                     >
-                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showNewPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
                     </button>
                   </div>
-                  {errors.password && <p className="error-message">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="error-message">{errors.password}</p>
+                  )}
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => setIsAddEmployeeOpen(false)}>
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => setIsAddEmployeeOpen(false)}
+                  >
                     Cancel
                   </button>
                   <button type="submit" className="button-primary">
@@ -816,8 +922,6 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
-
-   
     </div>
-  )
+  );
 }
