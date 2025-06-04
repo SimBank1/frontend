@@ -1,29 +1,6 @@
-"use client"
-
 import { useState, useMemo } from "react"
-import {
-  Search,
-  Users,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  CreditCard,
-  Calendar,
-  FileText,
-  LogOut,
-  Briefcase,
-  Eye,
-  EyeOff,
-  Plus,
-  Building,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Search, Users, User, Phone, Mail, MapPin, CreditCard, Calendar, FileText, LogOut, Briefcase, Eye, EyeOff, Plus, Building } from 'lucide-react'
+import './AdminPanel.css'
 
 // Mock data
 const mockData = [
@@ -133,7 +110,7 @@ const mockData = [
   },
 ]
 
-export default function adminPanel() {
+export default function AdminPanel() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
@@ -334,221 +311,211 @@ export default function adminPanel() {
 
   const renderPersonList = () => {
     return filteredData.map((person) => (
-      <Card
-        key={person.id}
-        className="mb-3 cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={() => handlePersonClick(person)}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0">
-              {person.type === "employee" ? (
-                <Briefcase className="w-5 h-5 text-blue-600" />
-              ) : (
-                <User className="w-5 h-5 text-green-600" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-medium text-gray-900 break-words leading-tight">
-                  {person.firstName} {person.lastName}
-                </h3>
-                <Badge variant={person.type === "employee" ? "secondary" : "default"} className="flex-shrink-0 text-xs">
-                  {person.type}
-                </Badge>
-              </div>
-              {person.type === "client" && person.crmEntries.length > 0 && (
-                <p className="text-sm text-gray-600 line-clamp-2 break-words">
-                  {person.crmEntries[0].content.substring(0, 80)}...
-                </p>
-              )}
-              {person.type === "employee" && <p className="text-sm text-gray-600 break-words">{person.email}</p>}
-            </div>
+      <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
+        <div className="user-card-content">
+          <div className={`user-icon ${person.type}`}>
+            {person.type === "employee" ? (
+              <Briefcase size={20} />
+            ) : (
+              <User size={20} />
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <div className="user-info">
+            <div className="user-header">
+              <h3 className="user-name">
+                {person.firstName} {person.lastName}
+              </h3>
+              <span className={`user-badge ${person.type}`}>
+                {person.type}
+              </span>
+            </div>
+            {person.type === "client" && person.crmEntries.length > 0 && (
+              <p className="user-preview">
+                {person.crmEntries[0].content.substring(0, 80)}...
+              </p>
+            )}
+            {person.type === "employee" && <p className="user-preview">{person.email}</p>}
+          </div>
+        </div>
+      </div>
     ))
   }
 
   const renderPersonalInfo = () => {
     if (!selectedPerson) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">Personal Information</h3>
-            <p className="text-gray-500">Select a person to view their details</p>
+        <div className="empty-state">
+          <div className="empty-content">
+            <User className="empty-icon" />
+            <h3 className="empty-title">Personal Information</h3>
+            <p className="empty-description">Select a person to view their details</p>
           </div>
         </div>
       )
     }
 
     return (
-      <div className="space-y-4 ">
-        <div className="flex items-center gap-3 mb-6">
-          {selectedPerson.type === "employee" ? (
-            <Briefcase className="w-8 h-8 text-blue-600" />
-          ) : (
-            <User className="w-8 h-8 text-green-600" />
-          )}
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {selectedPerson.firstName} {selectedPerson.lastName}
-            </h2>
-            <p className="text-gray-600 capitalize">{selectedPerson.type}</p>
+      <div>
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {selectedPerson.type === "employee" ? (
+              <Briefcase size={24} color="white" />
+            ) : (
+              <User size={24} color="white" />
+            )}
+          </div>
+          <div className="profile-info">
+            <h2>{selectedPerson.firstName} {selectedPerson.lastName}</h2>
+            <p>{selectedPerson.type}</p>
           </div>
         </div>
 
-        {/* Additional Information for Clients - Moved to top */}
+        {/* Additional Information for Clients */}
         {selectedPerson.type === "client" && (
-          <Card className>
-            <CardHeader>
-              <CardTitle className=" flex items-center gap-2 text-base">
-                <Calendar className="w-4 h-4" />
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <Calendar size={16} />
                 Additional Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Document Expiry</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.documentExpiry}</p>
+              </h3>
+            </div>
+            <div className="card-content">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                <div className="info-item">
+                  <div className="info-label">Document Expiry</div>
+                  <div className="info-value">{selectedPerson.documentExpiry}</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Marketing Consent</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.marketingConsent ? "Yes" : "No"}</p>
+                <div className="info-item">
+                  <div className="info-label">Marketing Consent</div>
+                  <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Correspondence Address
-                </label>
-                <p className="text-sm text-gray-900">{selectedPerson.correspondenceAddress}</p>
+              <div className="info-item">
+                <div className="info-label">Correspondence Address</div>
+                <div className="info-value">{selectedPerson.correspondenceAddress}</div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="w-4 h-4" />
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <User size={16} />
               Basic Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </h3>
+          </div>
+          <div className="card-content">
             {selectedPerson.type === "client" ? (
               <>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Personal Code</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.personalCode}</p>
+                <div className="info-item">
+                  <div className="info-label">Personal Code</div>
+                  <div className="info-value">{selectedPerson.personalCode}</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date of Birth</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.dateOfBirth}</p>
+                <div className="info-item">
+                  <div className="info-label">Date of Birth</div>
+                  <div className="info-value">{selectedPerson.dateOfBirth}</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Document Type</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.documentType}</p>
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.documentType}</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Document Number</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.documentNumber}</p>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.documentNumber}</div>
                 </div>
               </>
             ) : (
               <>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Username</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.username}</p>
+                <div className="info-item">
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{selectedPerson.username}</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Password</label>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-900 font-mono">
+                <div className="info-item">
+                  <div className="info-label">Password</div>
+                  <div className="password-container">
+                    <span className="password-value">
                       {showPassword[selectedPerson.id]
                         ? selectedPerson.password
                         : "*".repeat(selectedPerson.password.length)}
-                    </p>
+                    </span>
                     <button
+                      className="password-toggle"
                       onClick={() => togglePasswordVisibility(selectedPerson.id)}
-                      className="text-gray-500 hover:text-gray-700 transition-colors"
                     >
-                      {showPassword[selectedPerson.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword[selectedPerson.id] ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Created</label>
-                  <p className="text-sm text-gray-900">{selectedPerson.createdAt}</p>
+                <div className="info-item">
+                  <div className="info-label">Created</div>
+                  <div className="info-value">{selectedPerson.createdAt}</div>
                 </div>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Phone className="w-4 h-4" />
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <Phone size={16} />
               Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">{selectedPerson.email}</span>
+            </h3>
+          </div>
+          <div className="card-content">
+            <div className="contact-item">
+              <Mail className="contact-icon" />
+              <span>{selectedPerson.email}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">{selectedPerson.phone}</span>
+            <div className="contact-item">
+              <Phone className="contact-icon" />
+              <span>{selectedPerson.phone}</span>
             </div>
             {selectedPerson.type === "client" && (
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-gray-500 mt-1" />
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Registration Address</p>
-                  <p className="text-sm text-gray-600">{selectedPerson.registrationAddress}</p>
+              <div className="address-item">
+                <MapPin className="address-icon" />
+                <div className="address-content">
+                  <div className="info-label">Registration Address</div>
+                  <div className="info-value">{selectedPerson.registrationAddress}</div>
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Bank Accounts for Clients */}
         {selectedPerson.type === "client" && selectedPerson.accounts && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <CreditCard className="w-4 h-4" />
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <CreditCard size={16} />
                 Bank Accounts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="card-content">
               {selectedPerson.accounts.map((account) => (
-                <div key={account.id} className="border rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{account.iban}</span>
-                    <Badge variant="outline">{account.currency}</Badge>
+                <div key={account.id} className="account-item">
+                  <div className="account-header">
+                    <span className="account-iban">{account.iban}</span>
+                    <span className="account-badge">{account.currency}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-500">Balance: </span>
-                      <span className="font-medium">
-                        {account.balance.toFixed(2)} {account.currency}
-                      </span>
+                  <div className="account-details">
+                    <div className="account-detail">
+                      <div className="info-label">Balance</div>
+                      <div className="info-value">{account.balance.toFixed(2)} {account.currency}</div>
                     </div>
-                    <div>
-                      <span className="text-gray-500">Plan: </span>
-                      <span>{account.servicePlan}</span>
+                    <div className="account-detail">
+                      <div className="info-label">Plan</div>
+                      <div className="info-value">{account.servicePlan}</div>
                     </div>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
     )
@@ -557,11 +524,11 @@ export default function adminPanel() {
   const renderCRMRequests = () => {
     if (!selectedPerson) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">Customer Relations Management</h2>
-            <p className="text-gray-500">Select a client to view CRM requests</p>
+        <div className="empty-state">
+          <div className="empty-content">
+            <FileText className="empty-icon" />
+            <h2 className="empty-title">Customer Relations Management</h2>
+            <p className="empty-description">Select a client to view CRM requests</p>
           </div>
         </div>
       )
@@ -569,51 +536,49 @@ export default function adminPanel() {
 
     if (selectedPerson.type === "employee") {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">Employee Profile</h2>
-            <p className="text-gray-500">Employees do not have CRM data</p>
-            <p className="text-gray-500">Personal information is shown in the left panel</p>
+        <div className="empty-state">
+          <div className="empty-content">
+            <Briefcase className="empty-icon" />
+            <h2 className="empty-title">Employee Profile</h2>
+            <p className="empty-description">Employees do not have CRM data</p>
+            <p className="empty-description">Personal information is shown in the left panel</p>
           </div>
         </div>
       )
     }
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <FileText className="w-8 h-8 text-purple-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">CRM History</h2>
-            <p className="text-gray-600">
-              {selectedPerson.firstName} {selectedPerson.lastName}
-            </p>
+      <div>
+        <div className="crm-header">
+          <div className="crm-info">
+            <div className="crm-avatar">
+              <FileText size={24} color="white" />
+            </div>
+            <div className="crm-title">
+              <h2>CRM History</h2>
+              <p>{selectedPerson.firstName} {selectedPerson.lastName}</p>
+            </div>
           </div>
         </div>
 
         {/* CRM Entries */}
-        <div className="space-y-4">
+        <div className="crm-entries">
           {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
             selectedPerson.crmEntries.map((entry) => (
-              <Card key={entry.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="outline">{entry.contactType}</Badge>
-                    <span className="text-sm text-gray-500">{entry.date}</span>
-                    <span className="text-sm text-gray-500">by {entry.employeeName}</span>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">{entry.content}</p>
-                </CardContent>
-              </Card>
+              <div key={entry.id} className="crm-entry">
+                <div className="crm-entry-header">
+                  <span className="crm-entry-badge">{entry.contactType}</span>
+                  <span className="crm-entry-meta">{entry.date}</span>
+                  <span className="crm-entry-meta">by {entry.employeeName}</span>
+                </div>
+                <p className="crm-entry-content">{entry.content}</p>
+              </div>
             ))
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No CRM entries found for this client</p>
-              </CardContent>
-            </Card>
+            <div className="no-data">
+              <FileText className="no-data-icon" />
+              <p className="no-data-text">No CRM entries found for this client</p>
+            </div>
           )}
         </div>
       </div>
@@ -621,193 +586,199 @@ export default function adminPanel() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Left Sidebar - Search and Entity List */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        {/* Company Logo and Search Bar */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg">
-              <Building className="w-6 h-6 text-white" />
+    <div className="admin-panel">
+      {/* Left Sidebar */}
+      <div className="sidebar">
+        {/* Header */}
+        <div className="header">
+          <div className="logo-section">
+            <div className="logo-icon">
+              <Building size={24} color="white" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">CRM System</h1>
-              <p className="text-xs text-gray-500">Company Management</p>
+            <div className="logo-text">
+              <h1>SimBank</h1>
+              <p>Admin Panel</p>
             </div>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
+          <div className="search-container">
+            <Search className="search-icon" />
+            <input
               type="text"
-              placeholder="Search bar"
+              placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="search-input"
             />
           </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex flex-col gap-2">
-            <Button
-              variant={activeFilter === "all" ? "default" : "ghost"}
+        {/* Filter Section */}
+        <div className="filter-section">
+          <div className="filter-buttons">
+            <button
+              className={`filter-button ${activeFilter === "all" ? "active" : ""}`}
               onClick={() => setActiveFilter("all")}
-              className="justify-start"
             >
-              <Users className="w-4 h-4 mr-2" />
+              <Users size={16} style={{ marginRight: '8px' }} />
               All
-            </Button>
-            <Button
-              variant={activeFilter === "employees" ? "default" : "ghost"}
+            </button>
+            <button
+              className={`filter-button ${activeFilter === "employees" ? "active" : ""}`}
               onClick={() => setActiveFilter("employees")}
-              className="justify-start"
             >
-              <Briefcase className="w-4 h-4 mr-2" />
+              <Briefcase size={16} style={{ marginRight: '8px' }} />
               Employees
-            </Button>
-            <Button
-              variant={activeFilter === "clients" ? "default" : "ghost"}
+            </button>
+            <button
+              className={`filter-button ${activeFilter === "clients" ? "active" : ""}`}
               onClick={() => setActiveFilter("clients")}
-              className="justify-start"
             >
-              <User className="w-4 h-4 mr-2" />
+              <User size={16} style={{ marginRight: '8px' }} />
               Clients
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* User List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Users (alphabetical order):</h3>
+        <div className="user-list">
+          <h3>Users (alphabetical order):</h3>
           {renderPersonList()}
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex gap-2">
-            {/* Add Employee Button - Wider */}
-            <Dialog open={isAddEmployeeOpen} onOpenChange={setIsAddEmployeeOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex-1 justify-start" onClick={resetForm}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Employee
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Briefcase className="w-5 h-5" />
-                    Add New Employee
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      placeholder="Enter first name"
-                      className={errors.firstName ? "border-red-500" : ""}
-                    />
-                    {errors.firstName && <p className="text-sm text-red-500">{errors.firstName}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                      placeholder="Enter last name"
-                      className={errors.lastName ? "border-red-500" : ""}
-                    />
-                    {errors.lastName && <p className="text-sm text-red-500">{errors.lastName}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="user@example.com"
-                      className={errors.email ? "border-red-500" : ""}
-                    />
-                    {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username *</Label>
-                    <Input
-                      id="username"
-                      value={formData.username}
-                      onChange={(e) => handleInputChange("username", e.target.value)}
-                      placeholder="Enter username (4-20 characters)"
-                      className={errors.username ? "border-red-500" : ""}
-                    />
-                    {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showNewPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
-                        placeholder="Enter password (min 8 characters)"
-                        className={`pr-10 ${errors.password ? "border-red-500" : ""}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button type="submit" className="flex-1">
-                      Create Employee
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddEmployeeOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Logout Button - Square */}
-            <Button variant="outline" size="icon" className="w-10 h-10 flex-shrink-0">
-              <LogOut className="w-4 h-4" />
-            </Button>
+        {/* Bottom Section */}
+        <div className="bottom-section">
+          <div className="bottom-buttons">
+            <button 
+              className="primary-button"
+              onClick={() => {
+                resetForm()
+                setIsAddEmployeeOpen(true)
+              }}
+            >
+              <Plus size={16} style={{ marginRight: '8px' }} />
+              Add Employee
+            </button>
+            <button className="icon-button">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Middle Panel - Personal Information */}
-      <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
-        <div className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Data</h2>
+      {/* Middle Panel */}
+      <div className="middle-panel">
+        <div className="middle-content">
+          <h2 className="panel-title">Personal Data</h2>
           {renderPersonalInfo()}
         </div>
       </div>
 
-      {/* Right Panel - CRM Requests */}
-      <div className="flex-1 p-6 overflow-y-auto">{renderCRMRequests()}</div>
+      {/* Right Panel */}
+      <div className="right-panel">
+        {renderCRMRequests()}
+      </div>
+
+      {/* Add Employee Modal */}
+      {isAddEmployeeOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setIsAddEmployeeOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Briefcase size={20} color="#8b5cf6" />
+                Add New Employee
+              </h3>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label className="form-label">First Name *</label>
+                  <input
+                    className={`form-input ${errors.firstName ? 'error' : ''}`}
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    placeholder="Enter first name"
+                  />
+                  {errors.firstName && <p className="error-text">{errors.firstName}</p>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Last Name *</label>
+                  <input
+                    className={`form-input ${errors.lastName ? 'error' : ''}`}
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    placeholder="Enter last name"
+                  />
+                  {errors.lastName && <p className="error-text">{errors.lastName}</p>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? 'error' : ''}`}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="user@example.com"
+                  />
+                  {errors.email && <p className="error-text">{errors.email}</p>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Username *</label>
+                  <input
+                    className={`form-input ${errors.username ? 'error' : ''}`}
+                    value={formData.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    placeholder="Enter username (4-20 characters)"
+                  />
+                  {errors.username && <p className="error-text">{errors.username}</p>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Password *</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      className={`form-input ${errors.password ? 'error' : ''}`}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      placeholder="Enter password (min 8 characters)"
+                      style={{ paddingRight: '40px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#6b7280',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="error-text">{errors.password}</p>}
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => setIsAddEmployeeOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Employee
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
