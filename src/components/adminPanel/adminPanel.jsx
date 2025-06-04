@@ -75,7 +75,7 @@ const mockData = [
     lastName: "Kazlauskienė",
     email: "marija.kazlauskiene@company.com",
     username: "mkazlauskiene",
-    password: "SecurePass123",
+    password: "SecurePass12sdgsfdgs",
     createdAt: "2024-01-10",
   },
   {
