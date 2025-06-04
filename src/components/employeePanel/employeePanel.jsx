@@ -535,6 +535,7 @@ export default function EmployeePanel() {
     setIsAddCrmOpen(false)
     showSuccess("CRM entry added successfully!")
   }
+  
 
   const handleEditCrm = (entry) => {
     setEditingCrmEntry(entry)
@@ -702,12 +703,18 @@ export default function EmployeePanel() {
 
         {/* Bank Accounts */}
         <div className="info-card">
-          <div className="card-header">
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 className="card-title">
               <CreditCard size={16} />
               Bank Accounts
             </h3>
-           
+            <button
+          className="button-secondary"
+          style={{ background: 'white', color: '#7c3aed', fontSize: '12px', padding: '4px 8px' }}
+          onClick={() => setIsAddAccountOpen(true)}
+        >
+          <Plus size={16} style={{ marginRight: "4px" }} /> Add Account
+        </button>
           </div>
           <div className="card-content">
             {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
