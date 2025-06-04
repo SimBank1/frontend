@@ -1,8 +1,10 @@
+"use client"
+
 import { useState } from "react"
-import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useCookies } from 'react-cookie'
-import './Login.css'
+import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useCookies } from "react-cookie"
+import "./Login.css"
 
 export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
   const [username, setUsername] = useState("")
@@ -14,9 +16,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     type: "success",
     show: false,
   })
-  
+
   const navigate = useNavigate()
-  const [cookies, setCookie] = useCookies(['sessionCokie'])
+  const [cookies, setCookie] = useCookies(["sessionCokie"])
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
@@ -73,21 +75,19 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 1200))
 
-    if (username === 'admin' && password === 'admin') {
-      setCookie('sessionCokie', 'admin', { path: '/' })
-      showPopup('✅ Welcome Admin! Redirecting to dashboard...', 'success')
-      if (onLogin) onLogin({ username, password, userType: 'admin' })
-      setTimeout(() => navigate('/dashboard'), 2000)
-
-    } else if (username === 'employee' && password === 'employee') {
-      setCookie('sessionCokie', 'employee', { path: '/' })
-      showPopup('✅ Welcome Employee! Redirecting to your workspace...', 'success')
-      if (onLogin) onLogin({ username, password, userType: 'employee' })
-      setTimeout(() => navigate('/dashboard'), 2000)
-
+    if (username === "admin" && password === "admin") {
+      setCookie("sessionCokie", "admin", { path: "/" })
+      showPopup("✅ Welcome Admin! Redirecting to dashboard...", "success")
+      if (onLogin) onLogin({ username, password, userType: "admin" })
+      setTimeout(() => navigate("/dashboard"), 2000)
+    } else if (username === "employee" && password === "employee") {
+      setCookie("sessionCokie", "employee", { path: "/" })
+      showPopup("✅ Welcome Employee! Redirecting to your workspace...", "success")
+      if (onLogin) onLogin({ username, password, userType: "employee" })
+      setTimeout(() => navigate("/dashboard"), 2000)
     } else {
-      setPassword('')
-      showPopup('❌ Invalid credentials. Please check your username and password.', 'error')
+      setPassword("")
+      showPopup("❌ Invalid credentials. Please check your username and password.", "error")
     }
 
     setIsLoading(false)
@@ -291,11 +291,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                     )}
                   </div>
 
-                  <button
-                    onClick={handleLogin}
-                    disabled={isLoading}
-                    className="login-button"
-                  >
+                  <button onClick={handleLogin} disabled={isLoading} className="login-button">
                     {isLoading ? (
                       <>
                         <div className="loading-spinner" />
@@ -311,9 +307,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                 </div>
 
                 <div className="form-footer">
-                  <p className="footer-text">
-                    Authorized personnel only. All access is monitored and logged.
-                  </p>
+                  <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
                   <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
                 </div>
               </div>
@@ -346,9 +340,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                     <AlertCircle size={20} color="white" />
                   )}
                 </div>
-                <h3 className="popup-title">
-                  {popup.type === "success" ? "Success" : "Authentication Error"}
-                </h3>
+                <h3 className="popup-title">{popup.type === "success" ? "Success" : "Authentication Error"}</h3>
               </div>
 
               <p className="popup-message">{popup.message}</p>
