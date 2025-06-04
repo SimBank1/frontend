@@ -795,9 +795,13 @@ export default function EmployeePanel() {
             </div>
           </div>
 
-          <button className="button-primary" onClick={() => setIsAddCrmOpen(true)}>
-            <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
-          </button>
+                  <button
+          className="button-primary flex-none crm-button"
+          style={{ width: "200px" }}
+          onClick={() => setIsAddCrmOpen(true)}
+        >
+          <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
+        </button>
         </div>
 
         {/* CRM Entries */}
