@@ -464,7 +464,7 @@ export default function AdminPanel() {
                         ? selectedPerson.password
                         : "*".repeat(selectedPerson.password.length)}
                     </span>
-                    <button className="password-toggle" onClick={() => togglePasswordVisibility(selectedPerson.id)}>
+                    <button className="password-" onClick={() => togglePasswordVisibility(selectedPerson.id)}>
                       {showPassword[selectedPerson.id] ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
