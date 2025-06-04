@@ -136,7 +136,7 @@ export default function AdminPanel() {
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
-  const [logoutPopup, setLogoutPopup] = useState({ show: false, message: "", stage: 0 })
+  
 
   // Form state
   const [formData, setFormData] = useState({
@@ -192,13 +192,8 @@ export default function AdminPanel() {
   }
 
   const handleLogout = () => {
-    setLogoutPopup({ show: true, message: "Logging you out...", stage: 1 })
-      setTimeout(() => {
-        // Clear cookies and redirect
         document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-        window.location.href = "/login"
-    }, 1000)
-  }
+        window.location.href = "/login"}
 
   // Validation functions
   const validateName = (name, fieldName) => {
@@ -822,24 +817,7 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Logout Popup Modal */}
-      {logoutPopup.show && (
-        <div className="popup-overlay">
-          <div className="popup-glow-container">
-            <div className="popup-outer-glow error" />
-            <div className="popup-inner-glow error" />
-            <div className="popup-content">
-              <div className="popup-header">
-                <div className="popup-icon error">
-                  <LogOut size={20} color="white" />
-                </div>
-                <h3 className="popup-title">Logout</h3>
-              </div>
-              <p className="popup-message">{logoutPopup.message}</p>
-            </div>
-          </div>
-        </div>
-      )}
+   
     </div>
   )
 }
