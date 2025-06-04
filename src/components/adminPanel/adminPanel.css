@@ -134,7 +134,6 @@
   border-left: 4px solid #8b5cf6;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .user-card:hover {
@@ -471,10 +470,6 @@
   padding: 12px;
   margin-bottom: 12px;
   transition: background-color 0.2s;
-}
-
-.account-item:hover {
-  background-color: #f8fafc;
 }
 
 .account-item:last-child {
