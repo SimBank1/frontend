@@ -30,6 +30,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     password: false,
   })
 
+  const [shakeField, setShakeField] = useState("")
+  const [successPopup, setSuccessPopup] = useState({ show: false, message: "", canDismiss: false })
+
   const showPopup = (message, type) => {
     setPopup({ message, type, show: true })
 
@@ -77,17 +80,53 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
     if (username === "admin" && password === "admin") {
       setCookie("sessionCokie", "admin", { path: "/" })
-      showPopup("✅ Welcome Admin! Redirecting to dashboard...", "success")
-      if (onLogin) onLogin({ username, password, userType: "admin" })
-      setTimeout(() => navigate("/dashboard"), 2000)
+      setSuccessPopup({
+        show: true,
+        message: "✅ Welcome Admin! Redirecting to dashboard...",
+        canDismiss: false,
+      })
+
+      // Allow dismissal after 1.5 seconds
+      setTimeout(() => {
+        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }))
+      }, 1500)
+
+      // Auto redirect after 3 seconds if not dismissed
+      setTimeout(() => {
+        if (onLogin) onLogin({ username, password, userType: "admin" })
+        navigate("/dashboard")
+      }, 3000)
     } else if (username === "employee" && password === "employee") {
       setCookie("sessionCokie", "employee", { path: "/" })
-      showPopup("✅ Welcome Employee! Redirecting to your workspace...", "success")
-      if (onLogin) onLogin({ username, password, userType: "employee" })
-      setTimeout(() => navigate("/dashboard"), 2000)
+      setSuccessPopup({
+        show: true,
+        message: "✅ Welcome Employee! Redirecting to your workspace...",
+        canDismiss: false,
+      })
+
+      // Allow dismissal after 1.5 seconds
+      setTimeout(() => {
+        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }))
+      }, 1500)
+
+      // Auto redirect after 3 seconds if not dismissed
+      setTimeout(() => {
+        if (onLogin) onLogin({ username, password, userType: "employee" })
+        navigate("/dashboard")
+      }, 3000)
     } else {
       setPassword("")
-      showPopup("❌ Invalid credentials. Please check your username and password.", "error")
+      // Determine which field to shake based on the error
+      if (username !== "admin" && username !== "employee") {
+        setShakeField("username")
+      } else {
+        setShakeField("password")
+      }
+
+      // Clear shake after animation
+      setTimeout(() => {
+        setShakeField("")
+      }, 600)
     }
 
     setIsLoading(false)
@@ -109,6 +148,20 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
   const handleMouseLeave = () => {
     setShowPassword(false)
+  }
+
+  const handleSuccessPopupDismiss = () => {
+    if (successPopup.canDismiss) {
+      setSuccessPopup({ show: false, message: "", canDismiss: false })
+      if (onLogin) {
+        if (username === "admin") {
+          onLogin({ username, password, userType: "admin" })
+        } else {
+          onLogin({ username, password, userType: "employee" })
+        }
+      }
+      navigate("/dashboard")
+    }
   }
 
   return (
@@ -245,7 +298,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                       onKeyDown={handleKeyPress}
                       className={`field-input ${
                         fieldErrors.username ? "error" : ""
-                      } ${shakeFields.username ? "shake" : ""}`}
+                      } ${shakeField === "username" ? "shake" : ""}`}
                     />
                     {fieldErrors.username && (
                       <p className="field-error">
@@ -271,7 +324,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                         onKeyDown={handleKeyPress}
                         className={`field-input ${
                           fieldErrors.password ? "error" : ""
-                        } ${shakeFields.password ? "shake" : ""}`}
+                        } ${shakeField === "password" ? "shake" : ""}`}
                       />
                       <button
                         type="button"
@@ -348,6 +401,35 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
               <button onClick={hidePopup} className="popup-button">
                 Dismiss
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup Modal */}
+      {successPopup.show && (
+        <div className="popup-overlay" onClick={handleSuccessPopupDismiss}>
+          <div className="popup-glow-container">
+            <div className="popup-outer-glow success" />
+            <div className="popup-inner-glow success" />
+            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+              {successPopup.canDismiss && (
+                <button onClick={handleSuccessPopupDismiss} className="popup-close">
+                  <X size={18} />
+                </button>
+              )}
+              <div className="popup-header">
+                <div className="popup-icon success">
+                  <CheckCircle size={20} color="white" />
+                </div>
+                <h3 className="popup-title">Success</h3>
+              </div>
+              <p className="popup-message">{successPopup.message}</p>
+              {successPopup.canDismiss && (
+                <button onClick={handleSuccessPopupDismiss} className="popup-button">
+                  Continue
+                </button>
+              )}
             </div>
           </div>
         </div>
