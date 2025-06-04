@@ -165,6 +165,15 @@ export default function EmployeePanel() {
     }, 3000)
   }
 
+
+  
+  const handleLogout = () => {
+    
+        document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+        window.location.href = "/login"
+  }
+  
+
   // Validation functions
   const validatePersonalCode = (code) => {
     if (!/^\d{11}$/.test(code)) {
@@ -172,6 +181,7 @@ export default function EmployeePanel() {
     }
     return null
   }
+
 
   const validateName = (name, fieldName) => {
     if (!/^[A-Za-zĄąČčĘęĖėĮįŠšŲųŪūŽž\s]{3,50}$/.test(name)) {
@@ -863,7 +873,7 @@ export default function EmployeePanel() {
               <UserPlus size={16} style={{ marginRight: "8px" }} />
               New Client
             </button>
-            <button className="icon-button">
+            <button className="icon-button"  onClick={handleLogout}>
               <LogOut size={16} />
             </button>
           </div>
@@ -1317,6 +1327,7 @@ export default function EmployeePanel() {
           </div>
         </div>
       )}
+      
     </div>
   )
 }
