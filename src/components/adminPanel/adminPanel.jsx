@@ -193,16 +193,11 @@ export default function AdminPanel() {
 
   const handleLogout = () => {
     setLogoutPopup({ show: true, message: "Logging you out...", stage: 1 })
-
-    setTimeout(() => {
-      setLogoutPopup({ show: true, message: "Redirecting back to login...", stage: 2 })
-
       setTimeout(() => {
         // Clear cookies and redirect
         document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
         window.location.href = "/login"
-      }, 2000)
-    }, 1500)
+    }, 1000)
   }
 
   // Validation functions

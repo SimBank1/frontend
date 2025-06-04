@@ -102,16 +102,11 @@ export default function Login({
         canDismiss: false,
       });
 
-      // Allow dismissal after 1.5 seconds
-      setTimeout(() => {
-        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }));
-      }, 1500);
-
       // Auto redirect after 3 seconds if not dismissed
       setTimeout(() => {
         if (onLogin) onLogin({ username, password, userType: "admin" });
         navigate("/dashboard");
-      }, 3000);
+      }, 1000);
     } else if (username === "employee" && password === "employee") {
       setCookie("sessionCokie", "employee", { path: "/" });
       setSuccessPopup({
@@ -119,17 +114,11 @@ export default function Login({
         message: "✅ Welcome Employee! Redirecting to your workspace...",
         canDismiss: false,
       });
-
-      // Allow dismissal after 1.5 seconds
-      setTimeout(() => {
-        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }));
-      }, 1500);
-
       // Auto redirect after 3 seconds if not dismissed
       setTimeout(() => {
         if (onLogin) onLogin({ username, password, userType: "employee" });
         navigate("/dashboard");
-      }, 3000);
+      }, 1000);
     } else {
       setPassword("");
       // Determine which field to shake based on the error
@@ -344,6 +333,10 @@ export default function Login({
                     <div className="password-field">
                       <input
                         type={showPassword ? "text" : "password"}
+                        name={
+                          import.meta.env.DEV ? "dev_login_fake" : "password"
+                        }
+                        autoComplete="off"
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => {
@@ -360,6 +353,7 @@ export default function Login({
                           fieldErrors.password ? "error" : ""
                         } ${shakeField === "password" ? "shake" : ""}`}
                       />
+
                       <button
                         type="button"
                         className="password-toggle"
