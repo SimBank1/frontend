@@ -123,7 +123,6 @@ export default function EmployeePanel() {
   const [editingCrmEntry, setEditingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState("")
-  const [logoutPopup, setLogoutPopup] = useState({ show: false, message: "", stage: 0 })
 
   const [crmFormData, setCrmFormData] = useState({
     contactType: "Phone",
@@ -262,15 +261,6 @@ export default function EmployeePanel() {
     return null
   }
 
-  // Generate random IBAN
-  const generateRandomIBAN = () => {
-    // Generate random 18-digit number for Lithuanian IBAN
-    const randomDigits = Math.floor(Math.random() * 1000000000000000000)
-      .toString()
-      .padStart(18, "0")
-    return `LT${randomDigits}`
-  }
-
   // Auto-fill date of birth from personal code
   const getDateOfBirthFromPersonalCode = (personalCode) => {
     if (personalCode.length !== 11) return ""
@@ -290,20 +280,6 @@ export default function EmployeePanel() {
     }
 
     return `${fullYear}-${month}-${day}`
-  }
-
-  const handleLogout = () => {
-    setLogoutPopup({ show: true, message: "Logging you out...", stage: 1 })
-
-    setTimeout(() => {
-      setLogoutPopup({ show: true, message: "Redirecting back to login...", stage: 2 })
-
-      setTimeout(() => {
-        // Clear cookies and redirect
-        document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-        window.location.href = "/login"
-      }, 2000)
-    }, 1500)
   }
 
   // Filter and search logic
@@ -331,12 +307,9 @@ export default function EmployeePanel() {
     setClientFormData((prev) => {
       const updated = { ...prev, [field]: value }
 
-      // Auto-fill date of birth when personal code changes (live update)
-      if (field === "personalCode" && value.length >= 7) {
-        const dateOfBirth = getDateOfBirthFromPersonalCode(value)
-        if (dateOfBirth) {
-          updated.dateOfBirth = dateOfBirth
-        }
+      // Auto-fill date of birth when personal code changes
+      if (field === "personalCode") {
+        updated.dateOfBirth = getDateOfBirthFromPersonalCode(value)
       }
 
       return updated
@@ -724,9 +697,13 @@ export default function EmployeePanel() {
               <CreditCard size={16} />
               Bank Accounts
             </h3>
-            <button className="add-account-button" onClick={() => setIsAddAccountOpen(true)}>
-              <Plus size={14} /> Add Account
-            </button>
+            <button
+          className="button-primary flex-none crm-button"Add commentMore actions
+          style={{ width: "200px" }}
+          onClick={() => setIsAddCrmOpen(true)}
+        >
+          <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
+        </button>
           </div>
           <div className="card-content">
             {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
@@ -796,9 +773,13 @@ export default function EmployeePanel() {
             </div>
           </div>
 
-          <button className="button-primary" onClick={() => setIsAddCrmOpen(true)}>
-            <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
-          </button>
+                  <button
+          className="button-primary crm-button"
+          style={{ width: "200px" }}
+          onClick={() => setIsAddCrmOpen(true)}
+        >
+          <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
+        </button>
         </div>
 
         {/* CRM Entries */}
@@ -901,7 +882,7 @@ export default function EmployeePanel() {
               <UserPlus size={16} style={{ marginRight: "8px" }} />
               New Client
             </button>
-            <button className="icon-button" onClick={handleLogout}>
+            <button className="icon-button">
               <LogOut size={16} />
             </button>
           </div>
@@ -1111,22 +1092,13 @@ export default function EmployeePanel() {
               <form onSubmit={handleAddAccount}>
                 <div className="form-group">
                   <label className="form-label">IBAN Number *</label>
-                  <div className="iban-input-group">
-                    <input
-                      className={`form-input iban-input ${errors.iban ? "error" : ""}`}
-                      value={accountFormData.iban}
-                      onChange={(e) => handleAccountFormChange("iban", e.target.value)}
-                      placeholder="LT123456789012345678"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="generate-iban-button"
-                      onClick={() => handleAccountFormChange("iban", generateRandomIBAN())}
-                    >
-                      Generate
-                    </button>
-                  </div>
+                  <input
+                    className={`form-input ${errors.iban ? "error" : ""}`}
+                    value={accountFormData.iban}
+                    onChange={(e) => handleAccountFormChange("iban", e.target.value)}
+                    placeholder="LT123456789012345678"
+                    required
+                  />
                   {errors.iban && <div className="error-message">{errors.iban}</div>}
                 </div>
                 <div className="form-group">
@@ -1360,24 +1332,6 @@ export default function EmployeePanel() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Logout Popup Modal */}
-      {logoutPopup.show && (
-        <div className="popup-overlay">
-          <div className="popup-glow-container">
-            <div className="popup-outer-glow error" />
-            <div className="popup-inner-glow error" />
-            <div className="popup-content">
-              <div className="popup-header">
-                <div className="popup-icon error">
-                  <LogOut size={20} color="white" />
-                </div>
-                <h3 className="popup-title">Logout</h3>
-              </div>
-              <p className="popup-message">{logoutPopup.message}</p>
             </div>
           </div>
         </div>
