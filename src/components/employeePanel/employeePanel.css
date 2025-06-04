@@ -738,6 +738,18 @@ body {
   border-radius: 12px;
 }
 
+.crm-button {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 10px 16px !important;
+  flex: 0 1 auto !important;
+  width: 239px !important;
+  
+}
+
+
+
 .crm-entry-date,
 .crm-entry-employee {
   font-size: 13px;
