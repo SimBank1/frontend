@@ -653,23 +653,23 @@ export default function adminPanel() {
             <Button
               variant={activeFilter === "all" ? "default" : "ghost"}
               onClick={() => setActiveFilter("all")}
-              className="justify-start"
+              className="justify-start cursor-pointer "
             >
               <Users className="w-4 h-4 mr-2" />
               All
             </Button>
+
             <Button
               variant={activeFilter === "employees" ? "default" : "ghost"}
               onClick={() => setActiveFilter("employees")}
-              className="justify-start"
-            >
+              className="justify-start cursor-pointer">
               <Briefcase className="w-4 h-4 mr-2" />
               Employees
             </Button>
             <Button
               variant={activeFilter === "clients" ? "default" : "ghost"}
               onClick={() => setActiveFilter("clients")}
-              className="justify-start"
+              className="justify-start cursor-pointer"
             >
               <User className="w-4 h-4 mr-2" />
               Clients
@@ -684,12 +684,12 @@ export default function adminPanel() {
         </div>
 
         {/* Bottom Buttons */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex gap-2">
+        <div className="p-4 border-t border-gray-200 ">
+          <div className="flex gap-2 ">
             {/* Add Employee Button - Wider */}
-            <Dialog open={isAddEmployeeOpen} onOpenChange={setIsAddEmployeeOpen}>
+            <Dialog open={isAddEmployeeOpen} onOpenChange={setIsAddEmployeeOpen} className="">
               <DialogTrigger asChild>
-                <Button className="flex-1 justify-start" onClick={resetForm}>
+                <Button className="flex-1 justify-start  bg-black text-white cursor-pointer" onClick={resetForm}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Employee
                 </Button>
@@ -706,7 +706,7 @@ export default function adminPanel() {
                     <Label htmlFor="firstName">First Name *</Label>
                     <Input
                       id="firstName"
-                      value={formData.firstName}
+                      value={formData.firstName} 
                       onChange={(e) => handleInputChange("firstName", e.target.value)}
                       placeholder="Enter first name"
                       className={errors.firstName ? "border-red-500" : ""}
@@ -774,7 +774,7 @@ export default function adminPanel() {
                   </div>
 
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" className="flex-1">
+                    <Button type="submit" className="flex-1 ">
                       Create Employee
                     </Button>
                     <Button
