@@ -1,168 +1,184 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { useCookies } from "react-cookie"
-import "./Login.css"
+import { useState } from "react";
+import {
+  Eye,
+  EyeOff,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Shield,
+  Users,
+  Lock,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCookies } from "react-cookie";
+import "./Login.css";
 
-export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+export default function Login({
+  onLogin,
+  logoSrc = "/logo-rm.png?height=40&width=120",
+}) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [popup, setPopup] = useState({
     message: "",
     type: "success",
     show: false,
-  })
+  });
 
-  const navigate = useNavigate()
-  const [cookies, setCookie] = useCookies(["sessionCokie"])
+  const navigate = useNavigate();
+  const [cookies, setCookie] = useCookies(["sessionCokie"]);
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
     password: false,
-  })
+  });
 
   const [shakeFields, setShakeFields] = useState({
     username: false,
     password: false,
-  })
+  });
 
-  const [shakeField, setShakeField] = useState("")
-  const [successPopup, setSuccessPopup] = useState({ show: false, message: "", canDismiss: false })
+  const [shakeField, setShakeField] = useState("");
+  const [successPopup, setSuccessPopup] = useState({
+    show: false,
+    message: "",
+    canDismiss: false,
+  });
 
   const showPopup = (message, type) => {
-    setPopup({ message, type, show: true })
+    setPopup({ message, type, show: true });
 
     // Auto dismiss after 4 seconds
     setTimeout(() => {
-      setPopup((prev) => ({ ...prev, show: false }))
-    }, 4000)
-  }
+      setPopup((prev) => ({ ...prev, show: false }));
+    }, 4000);
+  };
 
   const hidePopup = () => {
-    setPopup((prev) => ({ ...prev, show: false }))
-  }
+    setPopup((prev) => ({ ...prev, show: false }));
+  };
 
   const triggerShake = (field) => {
-    setShakeFields((prev) => ({ ...prev, [field]: true }))
+    setShakeFields((prev) => ({ ...prev, [field]: true }));
     setTimeout(() => {
-      setShakeFields((prev) => ({ ...prev, [field]: false }))
-    }, 600)
-  }
+      setShakeFields((prev) => ({ ...prev, [field]: false }));
+    }, 600);
+  };
 
   const validateForm = () => {
-    const isUsernameEmpty = username.trim() === ""
-    const isPasswordEmpty = password.trim() === ""
+    const isUsernameEmpty = username.trim() === "";
+    const isPasswordEmpty = password.trim() === "";
 
     setFieldErrors({
       username: isUsernameEmpty,
       password: isPasswordEmpty,
-    })
+    });
 
     if (isUsernameEmpty) {
-      triggerShake("username")
+      triggerShake("username");
     }
     if (isPasswordEmpty) {
-      triggerShake("password")
+      triggerShake("password");
     }
 
-    return !isUsernameEmpty && !isPasswordEmpty
-  }
+    return !isUsernameEmpty && !isPasswordEmpty;
+  };
 
   const handleLogin = async () => {
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1200));
 
     if (username === "admin" && password === "admin") {
-      setCookie("sessionCokie", "admin", { path: "/" })
+      setCookie("sessionCokie", "admin", { path: "/" });
       setSuccessPopup({
         show: true,
         message: "✅ Welcome Admin! Redirecting to dashboard...",
         canDismiss: false,
-      })
+      });
 
       // Allow dismissal after 1.5 seconds
       setTimeout(() => {
-        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }))
-      }, 1500)
+        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }));
+      }, 1500);
 
       // Auto redirect after 3 seconds if not dismissed
       setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "admin" })
-        navigate("/dashboard")
-      }, 3000)
+        if (onLogin) onLogin({ username, password, userType: "admin" });
+        navigate("/dashboard");
+      }, 3000);
     } else if (username === "employee" && password === "employee") {
-      setCookie("sessionCokie", "employee", { path: "/" })
+      setCookie("sessionCokie", "employee", { path: "/" });
       setSuccessPopup({
         show: true,
         message: "✅ Welcome Employee! Redirecting to your workspace...",
         canDismiss: false,
-      })
+      });
 
       // Allow dismissal after 1.5 seconds
       setTimeout(() => {
-        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }))
-      }, 1500)
+        setSuccessPopup((prev) => ({ ...prev, canDismiss: true }));
+      }, 1500);
 
       // Auto redirect after 3 seconds if not dismissed
       setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "employee" })
-        navigate("/dashboard")
-      }, 3000)
+        if (onLogin) onLogin({ username, password, userType: "employee" });
+        navigate("/dashboard");
+      }, 3000);
     } else {
-      setPassword("")
+      setPassword("");
       // Determine which field to shake based on the error
       if (username !== "admin" && username !== "employee") {
-        setShakeField("username")
+        setShakeField("username");
       } else {
-        setShakeField("password")
+        setShakeField("password");
       }
 
       // Clear shake after animation
       setTimeout(() => {
-        setShakeField("")
-      }, 600)
+        setShakeField("");
+      }, 600);
     }
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      handleLogin()
+      handleLogin();
     }
-  }
+  };
 
   const handleMouseDown = () => {
-    setShowPassword(true)
-  }
+    setShowPassword(true);
+  };
 
   const handleMouseUp = () => {
-    setShowPassword(false)
-  }
+    setShowPassword(false);
+  };
 
   const handleMouseLeave = () => {
-    setShowPassword(false)
-  }
+    setShowPassword(false);
+  };
 
   const handleSuccessPopupDismiss = () => {
     if (successPopup.canDismiss) {
-      setSuccessPopup({ show: false, message: "", canDismiss: false })
+      setSuccessPopup({ show: false, message: "", canDismiss: false });
       if (onLogin) {
         if (username === "admin") {
-          onLogin({ username, password, userType: "admin" })
+          onLogin({ username, password, userType: "admin" });
         } else {
-          onLogin({ username, password, userType: "employee" })
+          onLogin({ username, password, userType: "employee" });
         }
       }
-      navigate("/dashboard")
+      navigate("/dashboard");
     }
-  }
+  };
 
   return (
     <div className="login-container">
@@ -217,8 +233,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
               </div>
 
               <p className="info-description">
-                Secure access for administrators and employees. Manage operations, oversee accounts, and maintain the
-                highest standards of banking excellence.
+                Secure access for administrators and employees. Manage
+                operations, oversee accounts, and maintain the highest standards
+                of banking excellence.
               </p>
             </div>
 
@@ -228,7 +245,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   <Shield size={20} color="white" />
                   <h4 className="feature-title">Admin Dashboard</h4>
                 </div>
-                <p className="feature-description">Full system control and oversight capabilities</p>
+                <p className="feature-description">
+                  Full system control and oversight capabilities
+                </p>
               </div>
 
               <div className="feature-card">
@@ -236,7 +255,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   <Users size={20} color="white" />
                   <h4 className="feature-title">Employee Workspace</h4>
                 </div>
-                <p className="feature-description">Customer service and account management tools</p>
+                <p className="feature-description">
+                  Customer service and account management tools
+                </p>
               </div>
 
               <div className="feature-card">
@@ -244,7 +265,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   <Lock size={20} color="white" />
                   <h4 className="feature-title">Secure Environment</h4>
                 </div>
-                <p className="feature-description">End-to-end encryption and audit logging</p>
+                <p className="feature-description">
+                  End-to-end encryption and audit logging
+                </p>
               </div>
 
               <div className="feature-card">
@@ -252,14 +275,17 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   <CheckCircle size={20} color="white" />
                   <h4 className="feature-title">Compliance Ready</h4>
                 </div>
-                <p className="feature-description">EU banking regulations and GDPR compliant</p>
+                <p className="feature-description">
+                  EU banking regulations and GDPR compliant
+                </p>
               </div>
             </div>
 
             <div className="security-notice">
               <p className="security-text">
                 <Lock size={14} />
-                This is a restricted access portal. All activities are monitored and logged.
+                This is a restricted access portal. All activities are monitored
+                and logged.
               </p>
             </div>
           </div>
@@ -279,7 +305,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                     </div>
                   </div>
                   <h2 className="form-title">Staff Login</h2>
-                  <p className="form-subtitle">Enter your credentials to continue</p>
+                  <p className="form-subtitle">
+                    Enter your credentials to continue
+                  </p>
                 </div>
 
                 <div className="form-fields">
@@ -290,9 +318,12 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                       placeholder="Enter your username"
                       value={username}
                       onChange={(e) => {
-                        setUsername(e.target.value)
+                        setUsername(e.target.value);
                         if (fieldErrors.username) {
-                          setFieldErrors((prev) => ({ ...prev, username: false }))
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            username: false,
+                          }));
                         }
                       }}
                       onKeyDown={handleKeyPress}
@@ -316,9 +347,12 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => {
-                          setPassword(e.target.value)
+                          setPassword(e.target.value);
                           if (fieldErrors.password) {
-                            setFieldErrors((prev) => ({ ...prev, password: false }))
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              password: false,
+                            }));
                           }
                         }}
                         onKeyDown={handleKeyPress}
@@ -333,7 +367,11 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseLeave}
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
                       </button>
                     </div>
                     {fieldErrors.password && (
@@ -344,7 +382,11 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                     )}
                   </div>
 
-                  <button onClick={handleLogin} disabled={isLoading} className="login-button">
+                  <button
+                    onClick={handleLogin}
+                    disabled={isLoading}
+                    className="login-button"
+                  >
                     {isLoading ? (
                       <>
                         <div className="loading-spinner" />
@@ -360,8 +402,14 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                 </div>
 
                 <div className="form-footer">
-                  <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
-                  <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
+                  <p className="footer-text">
+                    Authorized personnel only. All access is monitored and
+                    logged.
+                  </p>
+                  <p className="footer-copyright">
+                    © {new Date().getFullYear()} SimBank EU. All rights
+                    reserved.
+                  </p>
                 </div>
               </div>
             </div>
@@ -393,7 +441,11 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                     <AlertCircle size={20} color="white" />
                   )}
                 </div>
-                <h3 className="popup-title">{popup.type === "success" ? "Success" : "Authentication Error"}</h3>
+                <h3 className="popup-title">
+                  {popup.type === "success"
+                    ? "Success"
+                    : "Authentication Error"}
+                </h3>
               </div>
 
               <p className="popup-message">{popup.message}</p>
@@ -414,7 +466,10 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
             <div className="popup-inner-glow success" />
             <div className="popup-content" onClick={(e) => e.stopPropagation()}>
               {successPopup.canDismiss && (
-                <button onClick={handleSuccessPopupDismiss} className="popup-close">
+                <button
+                  onClick={handleSuccessPopupDismiss}
+                  className="popup-close"
+                >
                   <X size={18} />
                 </button>
               )}
@@ -426,7 +481,10 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
               </div>
               <p className="popup-message">{successPopup.message}</p>
               {successPopup.canDismiss && (
-                <button onClick={handleSuccessPopupDismiss} className="popup-button">
+                <button
+                  onClick={handleSuccessPopupDismiss}
+                  className="popup-button"
+                >
                   Continue
                 </button>
               )}
@@ -435,5 +493,5 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
         </div>
       )}
     </div>
-  )
+  );
 }
