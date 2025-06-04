@@ -843,29 +843,16 @@ export default function EmployeePanel() {
           </div>
         </div>
 
-        {/* Management Section */}
-        <div className="management-section">
-          <div className="management-header">
-            <h2 className="management-title">Client Management</h2>
+   
+
+        {/* Client List */}
+        <div className="client-list">
+        <div className="management-header">
+          <h2 className="management-title">All clients</h2>
             <button className="add-button" onClick={() => setIsAddClientOpen(true)}>
               <Plus size={16} color="#8b5cf6" />
             </button>
           </div>
-          <div className="nav-buttons">
-            <button className="nav-button">
-              <Users size={16} style={{ marginRight: "8px", color: "#8b5cf6" }} />
-              All Clients
-            </button>
-            <button className="nav-button">
-              <Calendar size={16} style={{ marginRight: "8px", color: "#8b5cf6" }} />
-              Recent Activity
-            </button>
-          </div>
-        </div>
-
-        {/* Client List */}
-        <div className="client-list">
-          <h3>Clients:</h3>
           {renderPersonList()}
         </div>
 
