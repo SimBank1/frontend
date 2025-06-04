@@ -4,7 +4,7 @@ import EmployeePanel from '../employeePanel/EmployeePanel';
 import { useCookies } from 'react-cookie';
 
 const Dashboard = () => {
-  const [cookies] = useCookies(['sessionCokie']);
+  const [cookies, setCookies] = useCookies(['sessionCokie']);
   const sessionToken = cookies.sessionCokie;
 
   console.log("Session Token: ", sessionToken);

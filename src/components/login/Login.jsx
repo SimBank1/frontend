@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from 'react-router-dom'
+import { useCookies } from 'react-cookie';
 
 
 export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
@@ -16,8 +17,10 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     type: "success",
     show: false,
   })
+  
 
   const navigate = useNavigate();
+  const [cookies, setCookie] = useCookies(['sessionCokie']);  
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
@@ -69,41 +72,30 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
   }
 
   const handleLogin = async () => {
-    if (!validateForm()) {
-      // Don't show popup, just shake and highlight fields
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-
-    if (username === "admin" && password === "admin") {
-      showPopup("✅ Welcome Admin! Redirecting to dashboard...", "success");
-      if (onLogin) {
-        onLogin({ username, password, userType: "admin" });
-      }
-      setTimeout(() => {
-        console.log("Navigate to admin dashboard");
-        navigate('/dashboard');
-      }, 2000);
-    } else if (username === "employee" && password === "employee") {
-      showPopup("✅ Welcome Employee! Redirecting to your workspace...", "success");
-      if (onLogin) {
-        onLogin({ username, password, userType: "employee" });
-      }
-      setTimeout(() => {
-        console.log("Navigate to employee dashboard");
-        navigate('/dashboard');
-      }, 2000);
+    if (!validateForm()) return;
+  
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+  
+    if (username === 'admin' && password === 'admin') {
+      setCookie('sessionCokie', 'admin', { path: '/' });
+      showPopup('✅ Welcome Admin! Redirecting to dashboard...', 'success');
+      if (onLogin) onLogin({ username, password, userType: 'admin' });
+      setTimeout(() => navigate('/dashboard'), 2000);
+  
+    } else if (username === 'employee' && password === 'employee') {
+      setCookie('sessionCokie', 'employee', { path: '/' });
+      showPopup('✅ Welcome Employee! Redirecting to your workspace...', 'success');
+      if (onLogin) onLogin({ username, password, userType: 'employee' });
+      setTimeout(() => navigate('/dashboard'), 2000);
+  
     } else {
-      setPassword("");
-      showPopup("❌ Invalid credentials. Please check your username and password.", "error");
+      setPassword('');
+      showPopup('❌ Invalid credentials. Please check your username and password.', 'error');
     }
-    
-    setIsLoading(false);    
-  }
+  
+    setIsLoading(false);
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
