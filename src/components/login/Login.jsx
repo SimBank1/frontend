@@ -331,7 +331,6 @@ export default function Login({
                   <div className="field-group">
                     <label className="field-label">Password</label>
                     <div className="password-field">
-                    
                       <input
                         type="text"
                         name="fake_simulated_password"
@@ -360,7 +359,9 @@ export default function Login({
                       <button
                         type="button"
                         className="password-toggle"
-                        onClick={() => setShowPassword((prev) => !prev)}
+                        onMouseDown={() => setShowPassword(true)}
+                        onMouseUp={() => setShowPassword(false)}
+                        onMouseLeave={() => setShowPassword(false)}
                       >
                         {showPassword ? (
                           <EyeOff size={18} />
