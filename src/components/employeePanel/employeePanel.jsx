@@ -33,7 +33,12 @@ export default function EmployeePanel({ data: initialData }) {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
 
+  const [logoClickCount, setLogoClickCount] = useState(0)
+  const [lastLogoClickTime, setLastLogoClickTime] = useState(null)
+  const [showVegovaFlash, setShowVegovaFlash] = useState(false)
+  
   console.log(initialData.clients)
 
   const [crmFormData, setCrmFormData] = useState({
@@ -600,6 +605,34 @@ export default function EmployeePanel({ data: initialData }) {
     return Object.keys(newErrors).length === 0
   }
 
+  const renderPersonList = () => {
+    return filteredData.map((person, index) => (
+      <div
+        key={person.id}
+        className="client-card"
+        onClick={() => handlePersonClick(person)}
+        style={{ animationDelay: `${index * 0.05}s` }}
+      >
+        <div className="client-card-content">
+          <User className="client-icon" />
+          <div className="client-info">
+            <div className="client-header">
+              <h3 className="client-name">
+                {person.firstName} {person.lastName}
+              </h3>
+              <span className="client-badge">client</span>
+            </div>
+            {person.crmEntries && person.crmEntries.length > 0 && (
+              <p className="client-preview">
+                Last interaction: {person.crmEntries[0].date}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    ));
+  };
+  
 
   const renderPersonalInfo = () => {
     if (!selectedPerson) {
@@ -1281,107 +1314,7 @@ export default function EmployeePanel({ data: initialData }) {
                     <label htmlFor="sameAsRegistration">Same as registration address</label>
                   </div>
 
-                  {!sameAsRegistration && (
-                    <>
-                      <label className="form-label">Correspondence Address *</label>
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">Country *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
-                            value={clientFormData.correspondenceCountry}
-                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
-                            placeholder="Country"
-                            required
-                          />
-                          {errors.correspondenceCountry && (
-                            <div className="error-message">{errors.correspondenceCountry}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Region *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
-                            value={clientFormData.correspondenceRegion}
-                            onChange={(e) => handleClientFormChange("correspondenceRegion", e.target.value)}
-                            placeholder="Region"
-                            required
-                          />
-                          {errors.correspondenceRegion && (
-                            <div className="error-message">{errors.correspondenceRegion}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">City/Village *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
-                            value={clientFormData.correspondenceCity}
-                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
-                            placeholder="City or Village"
-                            required
-                          />
-                          {errors.correspondenceCity && (
-                            <div className="error-message">{errors.correspondenceCity}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Street *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
-                            value={clientFormData.correspondenceStreet}
-                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
-                            placeholder="Street name"
-                            required
-                          />
-                          {errors.correspondenceStreet && (
-                            <div className="error-message">{errors.correspondenceStreet}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">House *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
-                            value={clientFormData.correspondenceHouse}
-                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
-                            placeholder="House number"
-                            required
-                          />
-                          {errors.correspondenceHouse && (
-                            <div className="error-message">{errors.correspondenceHouse}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Apartment</label>
-                          <input
-                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
-                            value={clientFormData.correspondenceApartment}
-                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
-                            placeholder="Apartment (optional)"
-                          />
-                          {errors.correspondenceApartment && (
-                            <div className="error-message">{errors.correspondenceApartment}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Postal Code *</label>
-                        <input
-                          className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
-                          value={clientFormData.correspondencePostalCode}
-                          onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
-                          placeholder="Postal code"
-                          required
-                        />
-                        {errors.correspondencePostalCode && (
-                          <div className="error-message">{errors.correspondencePostalCode}</div>
-                        )}
-                      </div>
-                    </>
-                  )}
+              
                 </div>
                 <div className="form-checkbox">
                   <input
