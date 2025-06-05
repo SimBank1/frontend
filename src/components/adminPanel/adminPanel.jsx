@@ -908,11 +908,13 @@ export default function AdminPanel() {
                 <div className="form-actions">
                   <button
                     type="button"
+                    ref={(el) => el?.style.setProperty('flex', '0', 'important')}
+                    style={{ flex: 'none' }}
                     className="button-secondary"
-                    onClick={() => setIsAddEmployeeOpen(false)}
-                  >
+                    onClick={() => setIsAddEmployeeOpen(false)}>
                     Cancel
                   </button>
+
                   <button type="submit" className="button-primary">
                     Create Employee
                   </button>
@@ -922,6 +924,8 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }
