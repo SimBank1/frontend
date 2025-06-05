@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   Search,
   User,
@@ -153,9 +153,20 @@ export default function EmployeePanel() {
     documentNumber: "",
     documentExpiry: "",
     dateOfBirth: "",
-    registrationAddress: "",
-    correspondenceAddress: "",
-    otherBankAccounts: "",
+    registrationCountry: "",
+    registrationRegion: "",
+    registrationCity: "",
+    registrationStreet: "",
+    registrationHouse: "",
+    registrationApartment: "",
+    registrationPostalCode: "",
+    correspondenceCountry: "",
+    correspondenceRegion: "",
+    correspondenceCity: "",
+    correspondenceStreet: "",
+    correspondenceHouse: "",
+    correspondenceApartment: "",
+    correspondencePostalCode: "",
     marketingConsent: false,
   })
 
@@ -168,7 +179,6 @@ export default function EmployeePanel() {
     servicePlan: "Standard",
     openingDate: new Date().toISOString().split("T")[0],
   })
-
 
   // Handle escape key for all modals
   useEffect(() => {
@@ -251,7 +261,6 @@ export default function EmployeePanel() {
       setLastLogoClickTime(now)
     }
   }
-
 
   // Validation functions
   const validatePersonalCode = (code) => {
@@ -380,142 +389,33 @@ export default function EmployeePanel() {
     return `${fullYear}-${month}-${day}`
   }
 
-  // Filter and search logic
-  const filteredData = useMemo(() => {
-    let filtered = data
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (person) =>
-          person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.personalCode.includes(searchTerm),
-      )
+  const generateRandomIBAN = () => {
+    const generateRandomDigits = (length) => {
+      return Array.from({ length }, () => Math.floor(Math.random() * 10)).join("")
     }
 
-    return filtered
-  }, [searchTerm, data])
+    let iban
+    let attempts = 0
+    const maxAttempts = 100
 
-  const handlePersonClick = (person) => {
-    setSelectedPerson(person)
+    do {
+      iban = `LT${generateRandomDigits(18)}`
+      attempts++
+    } while (data.some((person) => person.accounts?.some((account) => account.iban === iban)) && attempts < maxAttempts)
+
+    return iban
   }
 
-  const handleClientFormChange = (field, value) => {
-    setClientFormData((prev) => {
-      const updated = { ...prev, [field]: value }
-
-      // Auto-fill date of birth when personal code changes
-      if (field === "personalCode" && value.length === 11) {
-        const dateOfBirth = getDateOfBirthFromPersonalCode(value)
-        if (dateOfBirth) {
-          updated.dateOfBirth = dateOfBirth
-        }
-      }
-
-      return updated
-    })
-
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }))
-    }
-  }
-
-  const handleAccountFormChange = (field, value) => {
+  const handleGenerateIBAN = () => {
+    const newIBAN = generateRandomIBAN()
     setAccountFormData((prev) => ({
       ...prev,
-      [field]: value,
+      iban: newIBAN,
     }))
-
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }))
+    // Clear IBAN error if it exists
+    if (errors.iban) {
+      setErrors((prev) => ({ ...prev, iban: null }))
     }
-  }
-
-  const handleCrmFormChange = (field, value) => {
-    setCrmFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }))
-    }
-  }
-
-  const validateClientForm = () => {
-    const newErrors = {}
-
-    // Validate all required fields
-    const firstNameError = validateName(clientFormData.firstName, "First name")
-    if (firstNameError) newErrors.firstName = firstNameError
-
-    const lastNameError = validateName(clientFormData.lastName, "Last name")
-    if (lastNameError) newErrors.lastName = lastNameError
-
-    const personalCodeError = validatePersonalCode(clientFormData.personalCode)
-    if (personalCodeError) newErrors.personalCode = personalCodeError
-
-    const documentNumberError = validateDocumentNumber(clientFormData.documentNumber)
-    if (documentNumberError) newErrors.documentNumber = documentNumberError
-
-    const emailError = validateEmail(clientFormData.email)
-    if (emailError) newErrors.email = emailError
-
-    const phoneError = validatePhone(clientFormData.phone)
-    if (phoneError) newErrors.phone = phoneError
-
-    const expiryError = validateFutureDate(clientFormData.documentExpiry)
-    if (expiryError) newErrors.documentExpiry = expiryError
-
-    // Check required fields
-    if (!clientFormData.registrationAddress.trim()) {
-      newErrors.registrationAddress = "Registration address is required"
-    }
-
-    if (!clientFormData.correspondenceAddress.trim()) {
-      newErrors.correspondenceAddress = "Correspondence address is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateAccountForm = () => {
-    const newErrors = {}
-
-    const ibanError = validateIBAN(accountFormData.iban)
-    if (ibanError) newErrors.iban = ibanError
-
-    const balanceError = validateBalance(accountFormData.balance)
-    if (balanceError) newErrors.balance = balanceError
-
-    const dateError = validateDate(accountFormData.openingDate)
-    if (dateError) newErrors.openingDate = dateError
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateCrmForm = () => {
-    const newErrors = {}
-
-    const contentError = validateContent(crmFormData.content)
-    if (contentError) newErrors.content = contentError
-
-    if (!crmFormData.contactType) {
-      newErrors.contactType = "Please select contact type"
-    }
-
-    if (!crmFormData.date) {
-      newErrors.date = "Invalid date format"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
   const handleAddClient = (e) => {
@@ -544,9 +444,20 @@ export default function EmployeePanel() {
       documentNumber: "",
       documentExpiry: "",
       dateOfBirth: "",
-      registrationAddress: "",
-      correspondenceAddress: "",
-      otherBankAccounts: "",
+      registrationCountry: "",
+      registrationRegion: "",
+      registrationCity: "",
+      registrationStreet: "",
+      registrationHouse: "",
+      registrationApartment: "",
+      registrationPostalCode: "",
+      correspondenceCountry: "",
+      correspondenceRegion: "",
+      correspondenceCity: "",
+      correspondenceStreet: "",
+      correspondenceHouse: "",
+      correspondenceApartment: "",
+      correspondencePostalCode: "",
       marketingConsent: false,
     })
     setErrors({})
@@ -555,6 +466,70 @@ export default function EmployeePanel() {
       setSelectedPerson(newClient)
       showSuccess("Client profile created successfully!")
     }, 200)
+  }
+
+  const validateAccountForm = () => {
+    const newErrors = {}
+
+    const ibanError = validateIBAN(accountFormData.iban)
+    if (ibanError) newErrors.iban = ibanError
+
+    const balanceError = validateBalance(accountFormData.balance)
+    if (balanceError) newErrors.balance = balanceError
+
+    const openingDateError = validateDate(accountFormData.openingDate)
+    if (openingDateError) newErrors.openingDate = openingDateError
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleAccountFormChange = (field, value) => {
+    setAccountFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+    // Clear error for the field if it exists
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }))
+    }
+  }
+
+  const handleClientFormChange = (field, value) => {
+    // Auto-fill date of birth when personal code is entered
+    if (field === "personalCode") {
+      const dateOfBirth = getDateOfBirthFromPersonalCode(value)
+      setClientFormData((prev) => ({
+        ...prev,
+        [field]: value,
+        dateOfBirth: dateOfBirth,
+      }))
+      return
+    }
+
+    setClientFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+    // Clear error for the field if it exists
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }))
+    }
+  }
+
+  const handleCrmFormChange = (field, value) => {
+    setCrmFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+    // Clear error for the field if it exists
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }))
+    }
+  }
+
+  const handlePersonClick = (person) => {
+    setSelectedPerson(person)
   }
 
   const handleAddAccount = (e) => {
@@ -592,6 +567,19 @@ export default function EmployeePanel() {
     setTimeout(() => {
       showSuccess("Bank account created successfully!")
     }, 200)
+  }
+
+  const validateCrmForm = () => {
+    const newErrors = {}
+
+    const contentError = validateContent(crmFormData.content)
+    if (contentError) newErrors.content = contentError
+
+    const dateError = validateDate(crmFormData.date)
+    if (dateError) newErrors.date = dateError
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleAddCrm = (e) => {
@@ -666,6 +654,80 @@ export default function EmployeePanel() {
       showSuccess("CRM entry updated successfully!")
     }, 200)
   }
+
+  const validateClientForm = () => {
+    const newErrors = {}
+
+    // Validate all required fields
+    const firstNameError = validateName(clientFormData.firstName, "First name")
+    if (firstNameError) newErrors.firstName = firstNameError
+
+    const lastNameError = validateName(clientFormData.lastName, "Last name")
+    if (lastNameError) newErrors.lastName = lastNameError
+
+    const personalCodeError = validatePersonalCode(clientFormData.personalCode)
+    if (personalCodeError) newErrors.personalCode = personalCodeError
+
+    const documentNumberError = validateDocumentNumber(clientFormData.documentNumber)
+    if (documentNumberError) newErrors.documentNumber = documentNumberError
+
+    const emailError = validateEmail(clientFormData.email)
+    if (emailError) newErrors.email = emailError
+
+    const phoneError = validatePhone(clientFormData.phone)
+    if (phoneError) newErrors.phone = phoneError
+
+    const expiryError = validateFutureDate(clientFormData.documentExpiry)
+    if (expiryError) newErrors.documentExpiry = expiryError
+
+    // Check required address fields
+    const requiredAddressFields = [
+      "registrationCountry",
+      "registrationRegion",
+      "registrationCity",
+      "registrationStreet",
+      "registrationHouse",
+      "registrationPostalCode",
+      "correspondenceCountry",
+      "correspondenceRegion",
+      "correspondenceCity",
+      "correspondenceStreet",
+      "correspondenceHouse",
+      "correspondencePostalCode",
+    ]
+
+    requiredAddressFields.forEach((field) => {
+      if (!clientFormData[field].trim()) {
+        const fieldName = field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())
+        newErrors[field] = `${fieldName} is required`
+      }
+    })
+
+    // Marketing consent validation
+    if (!clientFormData.marketingConsent) {
+      newErrors.marketingConsent = "Marketing consent must be accepted"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Filter and search logic
+  const filteredData = useMemo(() => {
+    let filtered = data
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (person) =>
+          person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          person.personalCode.includes(searchTerm),
+      )
+    }
+
+    return filtered
+  }, [searchTerm, data])
 
   const renderPersonList = () => {
     return filteredData.map((person, index) => (
@@ -1158,35 +1220,188 @@ export default function EmployeePanel() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Registration Address *</label>
-                  <input
-                    className={`form-input ${errors.registrationAddress ? "error" : ""}`}
-                    value={clientFormData.registrationAddress}
-                    onChange={(e) => handleClientFormChange("registrationAddress", e.target.value)}
-                    placeholder="Country, Region, City/Village, Street, House, Apartment, Postal Code"
-                    required
-                  />
-                  {errors.registrationAddress && <div className="error-message">{errors.registrationAddress}</div>}
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                        value={clientFormData.registrationCountry}
+                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Region *</label>
+                      <input
+                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
+                        value={clientFormData.registrationRegion}
+                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
+                        placeholder="Region"
+                        required
+                      />
+                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">City/Village *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Street *</label>
+                      <input
+                        className={`form-input ${errors.registrationStreet ? "error" : ""}`}
+                        value={clientFormData.registrationStreet}
+                        onChange={(e) => handleClientFormChange("registrationStreet", e.target.value)}
+                        placeholder="Street name"
+                        required
+                      />
+                      {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">House *</label>
+                      <input
+                        className={`form-input ${errors.registrationHouse ? "error" : ""}`}
+                        value={clientFormData.registrationHouse}
+                        onChange={(e) => handleClientFormChange("registrationHouse", e.target.value)}
+                        placeholder="House number"
+                        required
+                      />
+                      {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apartment</label>
+                      <input
+                        className={`form-input ${errors.registrationApartment ? "error" : ""}`}
+                        value={clientFormData.registrationApartment}
+                        onChange={(e) => handleClientFormChange("registrationApartment", e.target.value)}
+                        placeholder="Apartment (optional)"
+                      />
+                      {errors.registrationApartment && (
+                        <div className="error-message">{errors.registrationApartment}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Postal Code *</label>
+                    <input
+                      className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                      value={clientFormData.registrationPostalCode}
+                      onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                      placeholder="Postal code"
+                      required
+                    />
+                    {errors.registrationPostalCode && (
+                      <div className="error-message">{errors.registrationPostalCode}</div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="form-group">
                   <label className="form-label">Correspondence Address *</label>
-                  <input
-                    className={`form-input ${errors.correspondenceAddress ? "error" : ""}`}
-                    value={clientFormData.correspondenceAddress}
-                    onChange={(e) => handleClientFormChange("correspondenceAddress", e.target.value)}
-                    placeholder="Country, Region, City/Village, Street, House, Apartment, Postal Code"
-                    required
-                  />
-                  {errors.correspondenceAddress && <div className="error-message">{errors.correspondenceAddress}</div>}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Other Bank Accounts</label>
-                  <textarea
-                    className="form-textarea"
-                    value={clientFormData.otherBankAccounts}
-                    onChange={(e) => handleClientFormChange("otherBankAccounts", e.target.value)}
-                    placeholder="List any other bank accounts (optional)"
-                    rows={3}
-                  />
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                        value={clientFormData.correspondenceCountry}
+                        onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.correspondenceCountry && (
+                        <div className="error-message">{errors.correspondenceCountry}</div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Region *</label>
+                      <input
+                        className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
+                        value={clientFormData.correspondenceRegion}
+                        onChange={(e) => handleClientFormChange("correspondenceRegion", e.target.value)}
+                        placeholder="Region"
+                        required
+                      />
+                      {errors.correspondenceRegion && (
+                        <div className="error-message">{errors.correspondenceRegion}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">City/Village *</label>
+                      <input
+                        className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                        value={clientFormData.correspondenceCity}
+                        onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.correspondenceCity && <div className="error-message">{errors.correspondenceCity}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Street *</label>
+                      <input
+                        className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                        value={clientFormData.correspondenceStreet}
+                        onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                        placeholder="Street name"
+                        required
+                      />
+                      {errors.correspondenceStreet && (
+                        <div className="error-message">{errors.correspondenceStreet}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">House *</label>
+                      <input
+                        className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                        value={clientFormData.correspondenceHouse}
+                        onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                        placeholder="House number"
+                        required
+                      />
+                      {errors.correspondenceHouse && <div className="error-message">{errors.correspondenceHouse}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apartment</label>
+                      <input
+                        className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                        value={clientFormData.correspondenceApartment}
+                        onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                        placeholder="Apartment (optional)"
+                      />
+                      {errors.correspondenceApartment && (
+                        <div className="error-message">{errors.correspondenceApartment}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Postal Code *</label>
+                    <input
+                      className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                      value={clientFormData.correspondencePostalCode}
+                      onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                      placeholder="Postal code"
+                      required
+                    />
+                    {errors.correspondencePostalCode && (
+                      <div className="error-message">{errors.correspondencePostalCode}</div>
+                    )}
+                  </div>
                 </div>
                 <div className="form-checkbox">
                   <input
@@ -1194,8 +1409,10 @@ export default function EmployeePanel() {
                     id="marketingConsent"
                     checked={clientFormData.marketingConsent}
                     onChange={(e) => handleClientFormChange("marketingConsent", e.target.checked)}
+                    className={errors.marketingConsent ? "error" : ""}
                   />
-                  <label htmlFor="marketingConsent">Marketing Consent *</label>
+                  <label htmlFor="marketingConsent">Marketing consent *</label>
+                  {errors.marketingConsent && <div className="error-message">{errors.marketingConsent}</div>}
                 </div>
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
@@ -1231,13 +1448,20 @@ export default function EmployeePanel() {
               <form onSubmit={handleAddAccount}>
                 <div className="form-group">
                   <label className="form-label">IBAN Number *</label>
-                  <input
-                    className={`form-input ${errors.iban ? "error" : ""}`}
-                    value={accountFormData.iban}
-                    onChange={(e) => handleAccountFormChange("iban", e.target.value)}
-                    placeholder="LT123456789012345678"
-                    required
-                  />
+                  <div className="iban-input-group">
+                    <div className="iban-input">
+                      <input
+                        className={`form-input ${errors.iban ? "error" : ""}`}
+                        value={accountFormData.iban}
+                        onChange={(e) => handleAccountFormChange("iban", e.target.value)}
+                        placeholder="LT123456789012345678"
+                        required
+                      />
+                    </div>
+                    <button type="button" className="generate-iban-button" onClick={handleGenerateIBAN}>
+                      Generate
+                    </button>
+                  </div>
                   {errors.iban && <div className="error-message">{errors.iban}</div>}
                 </div>
                 <div className="form-group">

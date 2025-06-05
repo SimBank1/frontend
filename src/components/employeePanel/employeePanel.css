@@ -1214,5 +1214,34 @@
     -ms-user-select: none;
     pointer-events: none;
   }
+
   
+  .iban-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .iban-input {
+    flex: 1;
+  }
+  
+  .generate-iban-button {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    background: linear-gradient(to right, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  
+  .generate-iban-button:hover {
+    background: linear-gradient(to right, #059669, #047857);
+    transform: translateY(-1px);
+  }
   
