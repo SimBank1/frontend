@@ -42,6 +42,21 @@
     z-index: 1000;
     animation: slideInRight 0.15s ease-out forwards, fadeOut 0.15s ease-in forwards 2.7s;
   }
+  .vegova-flash-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 60;
+}
+
+.vegova-flash-img {
+    height: 80px;
+    width: auto;
+    animation: fadeOut var(--animationTime)s forwards;
+}
   
   @keyframes slideInRight {
     from {

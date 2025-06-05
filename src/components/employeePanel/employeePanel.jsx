@@ -123,6 +123,10 @@ export default function EmployeePanel() {
   const [successMessage, setSuccessMessage] = useState("")
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
 
+  const [logoClickCount, setLogoClickCount] = useState(0)
+  const [lastLogoClickTime, setLastLogoClickTime] = useState(null)
+  const [showVegovaFlash, setShowVegovaFlash] = useState(false)
+
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
     addClient: false,
@@ -227,6 +231,27 @@ export default function EmployeePanel() {
       handleLogout()
     }, 200)
   }
+
+  const handleVegovaLogoClick = () => {
+    const now = Date.now()
+    if (!lastLogoClickTime || now - lastLogoClickTime > 5000) {
+      setLogoClickCount(1)
+      setLastLogoClickTime(now)
+      return
+    }
+
+    const newCount = logoClickCount + 1
+    if (newCount >= 10) {
+      setShowVegovaFlash(true)
+      setLogoClickCount(0)
+      setLastLogoClickTime(null)
+      setTimeout(() => setShowVegovaFlash(false), 150)
+    } else {
+      setLogoClickCount(newCount)
+      setLastLogoClickTime(now)
+    }
+  }
+
 
   // Validation functions
   const validatePersonalCode = (code) => {
@@ -453,10 +478,6 @@ export default function EmployeePanel() {
 
     if (!clientFormData.correspondenceAddress.trim()) {
       newErrors.correspondenceAddress = "Correspondence address is required"
-    }
-
-    if (!clientFormData.marketingConsent) {
-      newErrors.marketingConsent = "Marketing consent must be selected"
     }
 
     setErrors(newErrors)
@@ -898,6 +919,11 @@ export default function EmployeePanel() {
   return (
     <div className="employee-panel">
       {/* Success message toast */}
+      {showVegovaFlash && (
+        <div className="vegova-flash-overlay">
+          <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-flash-img" />
+        </div>
+      )}
       {successMessage && (
         <div className="success-toast">
           <CheckCircle size={20} />
@@ -919,6 +945,12 @@ export default function EmployeePanel() {
             </div>
             <div className="vegova-logo-sidebar">
               <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
+              <img
+                src="/vegova-logo.png"
+                alt="Vegova Ljubljana"
+                className="vegova-logo-sidebar-img"
+                onClick={handleVegovaLogoClick}
+              />
             </div>
           </div>
           <div className="search-container">
@@ -1166,7 +1198,6 @@ export default function EmployeePanel() {
                   />
                   <label htmlFor="marketingConsent">Marketing Consent *</label>
                 </div>
-                {errors.marketingConsent && <div className="error-message">{errors.marketingConsent}</div>}
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
                     Cancel

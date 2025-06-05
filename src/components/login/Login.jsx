@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 import { useCookies } from "react-cookie"
 import "./Login.css"
 
-export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
+export default function Login({ onLogin}) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -26,11 +26,6 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     password: false,
   })
 
-  const [shakeFields, setShakeFields] = useState({
-    username: false,
-    password: false,
-  })
-
   const [shakeField, setShakeField] = useState("")
   const [successPopup, setSuccessPopup] = useState({
     show: false,
@@ -40,10 +35,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
   })
 
   // Easter egg states
-  const [logoClickCount, setLogoClickCount] = useState(0)
-  const [vegovaLogoClickCount, setVegovaLogoClickCount] = useState(0)
+  const logoClickCountRef = useRef(0)
+  const vegovaLogoClickCountRef = useRef(0)
   const [showVegovaAnimation, setShowVegovaAnimation] = useState(false)
-  const [slovenianAnthem, setSlovenianAnthem] = useState(null)
   const [matrixMode, setMatrixMode] = useState(false)
   const [matrixChars, setMatrixChars] = useState([])
   const [showRainbowText, setShowRainbowText] = useState(false)
@@ -181,31 +175,23 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
   // Logo click easter egg
   const handleLogoClick = () => {
-    setLogoClickCount((prev) => {
-      const newCount = prev + 1
-      if (newCount === 5) {
-        // Reduced from 10 to 5 for easier activation
-        // Enable VegCoin
-        localStorage.setItem("vegcoin_enabled", "true")
-        localStorage.setItem("vegcoin_balance", "420.69")
-        showPopup("🪙 VegCoin unlocked! Balance: 420.69 VGC", "success")
-        return 0
-      }
-      return newCount
-    })
-  }
+    logoClickCountRef.current += 1
+    if (logoClickCountRef.current === 5) {
+      // Reduced from 10 to 5 for easier activation
+      // Enable VegCoin
+      localStorage.setItem("vegcoin_enabled", "true")
+      localStorage.setItem("vegcoin_balance", "420.69")
+      showPopup("🪙 VegCoin unlocked! Balance: 420.69 VGC", "success")
+      logoClickCountRef.current = 0
+    }
 
   // Vegova logo click easter egg for rainbow text
   const handleVegovaLogoClick = () => {
-    setVegovaLogoClickCount((prev) => {
-      const newCount = prev + 1
-      if (newCount === 2) {
-        setShowRainbowText(true)
-        return 0
-      }
-      return newCount
-    })
-  }
+    vegovaLogoClickCountRef.current += 1
+    if (vegovaLogoClickCountRef.current === 2) {
+      setShowRainbowText(true)
+      vegovaLogoClickCountRef.current = 0
+    }
 
   // Technical Vegova animation easter egg
   useEffect(() => {
@@ -236,14 +222,6 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     }
   }, [username])
 
-  const showPopup = (message, type) => {
-    setPopup({ message, type, show: true, isClosing: false })
-
-    // Auto dismiss after 4 seconds
-    setTimeout(() => {
-      hidePopup()
-    }, 4000)
-  }
 
   const hidePopup = () => {
     setPopup((prev) => ({ ...prev, isClosing: true }))
@@ -253,9 +231,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
   }
 
   const triggerShake = (field) => {
-    setShakeFields((prev) => ({ ...prev, [field]: true }))
+    setShakeField(field)
     setTimeout(() => {
-      setShakeFields((prev) => ({ ...prev, [field]: false }))
+      setShakeField("")
     }, 600)
   }
 
