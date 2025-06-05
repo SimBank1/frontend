@@ -350,8 +350,9 @@ export default function EmployeePanel() {
   }
 
   // Auto-fill date of birth from personal code
+  // Accept value as soon as the birth date segment (7 digits) is available
   const getDateOfBirthFromPersonalCode = (personalCode) => {
-    if (personalCode.length !== 11) return ""
+    if (personalCode.length < 7) return ""
 
     const century = personalCode[0]
     const year = personalCode.substring(1, 3)
@@ -406,11 +407,9 @@ export default function EmployeePanel() {
       const updated = { ...prev, [field]: value }
 
       // Auto-fill date of birth when personal code changes
-      if (field === "personalCode" && value.length === 11) {
+      if (field === "personalCode") {
         const dateOfBirth = getDateOfBirthFromPersonalCode(value)
-        if (dateOfBirth) {
-          updated.dateOfBirth = dateOfBirth
-        }
+        updated.dateOfBirth = dateOfBirth
       }
 
       return updated
@@ -526,7 +525,8 @@ export default function EmployeePanel() {
     }
 
     const newClient = {
-      id: (data.length + 1).toString(),
+      // Use timestamp to avoid duplicate IDs
+      id: Date.now().toString(),
       type: "client",
       ...clientFormData,
       accounts: [],

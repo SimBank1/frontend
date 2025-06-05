@@ -7,9 +7,6 @@ import { useCookies } from "react-cookie";
 const Dashboard = () => {
   const [cookies] = useCookies(["sessionCookie"]);
   const sessionToken = cookies.sessionCookie;
-
-  console.log("Session Token: ", sessionToken);
-
   // Routing based on sessionToken value
   switch (sessionToken) {
     case "admin":

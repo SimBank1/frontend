@@ -41,30 +41,13 @@ export default function Login({ onLogin}) {
   const [matrixMode, setMatrixMode] = useState(false)
   const [matrixChars, setMatrixChars] = useState([])
   const [showRainbowText, setShowRainbowText] = useState(false)
-  const [consoleInitialized, setConsoleInitialized] = useState(false)
 
   // Refs for audio elements
   const anthemRef = useRef(null)
   const matrixSoundRef = useRef(null)
   const vegovaSoundRef = useRef(null)
 
-  // Console easter eggs - only once
-  useEffect(() => {
-    if (!consoleInitialized) {
-      // Clear console first
-      console.clear()
 
-      // Add our messages with styling
-      console.log("%c🏦 SimBank Developer Console 🏦", "color: #8b5cf6; font-size: 20px; font-weight: bold;")
-      console.log("%cHey dev 👀, looking for bugs or just bored?", "color: #3b82f6; font-size: 14px;")
-      console.log("%cVegova Rulez. 👨‍💻 💰", "color: #10b981; font-size: 16px; font-weight: bold;")
-      console.log("%cTry typing 'vegova' or 'slovenia' as username for surprises!", "color: #f59e0b;")
-      console.log("%cOr try the Konami code... just kidding, try 'matrix' anywhere!", "color: #ef4444;")
-      console.log("%cPssst... there's a hidden route at /terminal", "color: #6366f1; font-style: italic;")
-
-      setConsoleInitialized(true)
-    }
-  }, [consoleInitialized])
 
   // Preload audio files
   useEffect(() => {
@@ -184,6 +167,7 @@ export default function Login({ onLogin}) {
       showPopup("🪙 VegCoin unlocked! Balance: 420.69 VGC", "success")
       logoClickCountRef.current = 0
     }
+  }
 
   // Vegova logo click easter egg for rainbow text
   const handleVegovaLogoClick = () => {
@@ -192,6 +176,7 @@ export default function Login({ onLogin}) {
       setShowRainbowText(true)
       vegovaLogoClickCountRef.current = 0
     }
+  }
 
   // Technical Vegova animation easter egg
   useEffect(() => {
