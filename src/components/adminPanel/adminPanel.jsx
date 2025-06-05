@@ -136,7 +136,7 @@ export default function AdminPanel() {
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
-  
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -192,8 +192,9 @@ export default function AdminPanel() {
   }
 
   const handleLogout = () => {
-        document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-        window.location.href = "/login"}
+    document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    window.location.href = "/login"
+  }
 
   // Validation functions
   const validateName = (name, fieldName) => {
@@ -804,9 +805,15 @@ export default function AdminPanel() {
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => setIsAddEmployeeOpen(false)}>
+                  <button
+                    type="button"
+                    ref={(el) => el?.style.setProperty('flex', '0', 'important')}
+                    style={{ flex: 'none' }}
+                    className="button-secondary"
+                    onClick={() => setIsAddEmployeeOpen(false)}>
                     Cancel
                   </button>
+
                   <button type="submit" className="button-primary">
                     Create Employee
                   </button>
@@ -817,7 +824,7 @@ export default function AdminPanel() {
         </div>
       )}
 
-   
+
     </div>
   )
 }
