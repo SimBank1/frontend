@@ -130,6 +130,12 @@
     width: auto;
     filter: brightness(0) invert(1);
     opacity: 0.9;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .vegova-logo-img:hover {
+    transform: scale(1.1);
   }
   
   .nav-info {
@@ -518,6 +524,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .vegova-logo-section:hover {
+    transform: scale(1.05);
   }
   
   .vegova-logo-footer {
@@ -584,12 +596,12 @@
     font-size: 8px;
     color: #d1d5db;
     cursor: pointer;
-    opacity: 0.3;
+    opacity: 0.2;
     transition: opacity 0.2s;
   }
   
   .dont-click-me:hover {
-    opacity: 0.7;
+    opacity: 0.5;
   }
   
   /* Popup Modal */
@@ -780,13 +792,14 @@
     }
   }
   
-  .vegova-animation-overlay {
+  /* Technical Vegova Animation */
+  .vegova-tech-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -794,28 +807,147 @@
     pointer-events: none;
   }
   
-  .vegova-animation-content {
+  .tech-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    gap: 2px;
+  }
+  
+  .tech-cell {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    animation: techPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes techPulse {
+    0%,
+    100% {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+    50% {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+  }
+  
+  .vegova-tech-content {
+    position: relative;
+    z-index: 10;
     text-align: center;
+    max-width: 600px;
+    padding: 40px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .tech-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .tech-logo {
     position: relative;
   }
   
-  .vegova-animation-logo {
-    width: 200px;
+  .vegova-tech-logo {
+    width: 80px;
     height: auto;
-    animation: vegovaGlow 1s ease-in-out infinite alternate;
-    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8));
+    filter: brightness(0) invert(1);
+    animation: logoScan 3s ease-in-out infinite;
   }
   
-  .vegova-animation-text {
-    font-size: 3rem;
+  @keyframes logoScan {
+    0%,
+    100% {
+      filter: brightness(0) invert(1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(0) invert(1) drop-shadow(0 0 20px #3b82f6);
+      transform: scale(1.1);
+    }
+  }
+  
+  .tech-text {
+    color: #3b82f6;
+  }
+  
+  .tech-title {
+    font-size: 2rem;
     font-weight: 900;
-    color: white;
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
-    margin-top: 20px;
-    animation: textPulse 0.5s ease-in-out infinite alternate;
+    font-family: "Courier New", monospace;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
   }
   
-  .vegova-animation-sparkles {
+  .tech-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: "Courier New", monospace;
+    letter-spacing: 2px;
+    color: #8b5cf6;
+    animation: blink 1s ease-in-out infinite;
+  }
+  
+  @keyframes blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0.3;
+    }
+  }
+  
+  .tech-console {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    font-family: "Courier New", monospace;
+    text-align: left;
+  }
+  
+  .console-line {
+    color: #00ff00;
+    font-size: 14px;
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: typeIn 0.5s ease-out forwards;
+  }
+  
+  .console-line.success {
+    color: #3b82f6;
+    font-weight: bold;
+  }
+  
+  @keyframes typeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .tech-particles {
     position: absolute;
     top: 0;
     left: 0;
@@ -824,43 +956,24 @@
     pointer-events: none;
   }
   
-  .sparkle {
+  .particle {
     position: absolute;
-    font-size: 2rem;
-    animation: sparkleFloat 2s ease-in-out infinite;
+    width: 4px;
+    height: 4px;
+    background: #3b82f6;
+    border-radius: 50%;
+    animation: particleFloat 3s ease-in-out infinite;
   }
   
-  @keyframes vegovaGlow {
-    0% {
-      transform: scale(1) rotate(0deg);
-      filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8));
-    }
-    100% {
-      transform: scale(1.1) rotate(5deg);
-      filter: drop-shadow(0 0 30px rgba(139, 92, 246, 1));
-    }
-  }
-  
-  @keyframes textPulse {
-    0% {
-      transform: scale(1);
-      text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
-    }
-    100% {
-      transform: scale(1.05);
-      text-shadow: 0 0 30px rgba(139, 92, 246, 1);
-    }
-  }
-  
-  @keyframes sparkleFloat {
+  @keyframes particleFloat {
     0%,
     100% {
-      transform: translateY(0) rotate(0deg);
-      opacity: 1;
+      transform: translateY(0) scale(1);
+      opacity: 0.3;
     }
     50% {
-      transform: translateY(-20px) rotate(180deg);
-      opacity: 0.5;
+      transform: translateY(-20px) scale(1.5);
+      opacity: 1;
     }
   }
   
@@ -941,6 +1054,20 @@
   
     .vegova-logo-nav {
       display: none;
+    }
+  
+    .tech-header {
+      flex-direction: column;
+      gap: 15px;
+    }
+  
+    .tech-title {
+      font-size: 1.5rem;
+    }
+  
+    .vegova-tech-content {
+      padding: 20px;
+      margin: 20px;
     }
   }
   

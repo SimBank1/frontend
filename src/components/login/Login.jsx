@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useCookies } from "react-cookie"
@@ -41,18 +41,65 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
   // Easter egg states
   const [logoClickCount, setLogoClickCount] = useState(0)
+  const [vegovaLogoClickCount, setVegovaLogoClickCount] = useState(0)
   const [showVegovaAnimation, setShowVegovaAnimation] = useState(false)
   const [slovenianAnthem, setSlovenianAnthem] = useState(null)
   const [matrixMode, setMatrixMode] = useState(false)
   const [matrixChars, setMatrixChars] = useState([])
+  const [showRainbowText, setShowRainbowText] = useState(false)
+  const [consoleInitialized, setConsoleInitialized] = useState(false)
 
-  // Console easter eggs
+  // Refs for audio elements
+  const anthemRef = useRef(null)
+  const matrixSoundRef = useRef(null)
+  const vegovaSoundRef = useRef(null)
+
+  // Console easter eggs - only once
   useEffect(() => {
-    console.log("🏦 SimBank Developer Console 🏦")
-    console.log("Hey dev 👀, looking for bugs or just bored?")
-    console.log("Vegova Rulez. 👨‍💻 💰")
-    console.log("Try typing 'vegova' or 'slovenia' as username for surprises!")
-    console.log("Or try the Konami code... just kidding, try 'matrix' anywhere!")
+    if (!consoleInitialized) {
+      // Clear console first
+      console.clear()
+
+      // Add our messages with styling
+      console.log("%c🏦 SimBank Developer Console 🏦", "color: #8b5cf6; font-size: 20px; font-weight: bold;")
+      console.log("%cHey dev 👀, looking for bugs or just bored?", "color: #3b82f6; font-size: 14px;")
+      console.log("%cVegova Rulez. 👨‍💻 💰", "color: #10b981; font-size: 16px; font-weight: bold;")
+      console.log("%cTry typing 'vegova' or 'slovenia' as username for surprises!", "color: #f59e0b;")
+      console.log("%cOr try the Konami code... just kidding, try 'matrix' anywhere!", "color: #ef4444;")
+      console.log("%cPssst... there's a hidden route at /terminal", "color: #6366f1; font-style: italic;")
+
+      setConsoleInitialized(true)
+    }
+  }, [consoleInitialized])
+
+  // Preload audio files
+  useEffect(() => {
+    // Create audio elements but don't play them yet
+    anthemRef.current = new Audio("/slovenian-anthem.mp3")
+    anthemRef.current.loop = true
+    anthemRef.current.volume = 0.3
+
+    matrixSoundRef.current = new Audio("/matrix-sound.mp3")
+    matrixSoundRef.current.volume = 0.2
+
+    vegovaSoundRef.current = new Audio("/vegova-sound.mp3")
+    vegovaSoundRef.current.volume = 0.3
+
+    return () => {
+      // Cleanup audio elements
+      if (anthemRef.current) {
+        anthemRef.current.pause()
+        anthemRef.current = null
+      }
+      if (matrixSoundRef.current) {
+        matrixSoundRef.current.pause()
+        matrixSoundRef.current = null
+      }
+      if (vegovaSoundRef.current) {
+        vegovaSoundRef.current.pause()
+        vegovaSoundRef.current = null
+      }
+    }
   }, [])
 
   // Matrix effect
@@ -96,21 +143,11 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
       })),
     )
 
-    // Play glitch sound
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
-
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
-
-    oscillator.frequency.setValueAtTime(200, audioContext.currentTime)
-    oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5)
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
-
-    oscillator.start()
-    oscillator.stop(audioContext.currentTime + 0.5)
+    // Play matrix sound
+    if (matrixSoundRef.current) {
+      matrixSoundRef.current.currentTime = 0
+      matrixSoundRef.current.play().catch(console.error)
+    }
 
     setTimeout(() => {
       setMatrixMode(false)
@@ -128,18 +165,26 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
         if (successPopup.show && successPopup.canDismiss) {
           handleSuccessPopupDismiss()
         }
+        if (matrixMode) {
+          setMatrixMode(false)
+          setMatrixChars([])
+        }
+        if (showVegovaAnimation) {
+          setShowVegovaAnimation(false)
+        }
       }
     }
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [popup.show, successPopup.show, successPopup.canDismiss])
+  }, [popup.show, successPopup.show, successPopup.canDismiss, matrixMode, showVegovaAnimation])
 
   // Logo click easter egg
   const handleLogoClick = () => {
     setLogoClickCount((prev) => {
       const newCount = prev + 1
-      if (newCount === 10) {
+      if (newCount === 5) {
+        // Reduced from 10 to 5 for easier activation
         // Enable VegCoin
         localStorage.setItem("vegcoin_enabled", "true")
         localStorage.setItem("vegcoin_balance", "420.69")
@@ -150,54 +195,45 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     })
   }
 
-  // Vegova animation easter egg
+  // Vegova logo click easter egg for rainbow text
+  const handleVegovaLogoClick = () => {
+    setVegovaLogoClickCount((prev) => {
+      const newCount = prev + 1
+      if (newCount === 2) {
+        setShowRainbowText(true)
+        return 0
+      }
+      return newCount
+    })
+  }
+
+  // Technical Vegova animation easter egg
   useEffect(() => {
     if (username.toLowerCase() === "vegova") {
       setShowVegovaAnimation(true)
-      setTimeout(() => setShowVegovaAnimation(false), 3000)
+
+      // Play vegova sound
+      if (vegovaSoundRef.current) {
+        vegovaSoundRef.current.currentTime = 0
+        vegovaSoundRef.current.play().catch(console.error)
+      }
+
+      // Auto-dismiss after animation completes
+      setTimeout(() => setShowVegovaAnimation(false), 4000)
     }
   }, [username])
 
-  // Slovenia anthem easter egg
+  // Slovenia anthem easter egg with MP3
   useEffect(() => {
     if (username.toLowerCase() === "slovenia") {
-      if (!slovenianAnthem) {
-        // Create a simple melody representing the Slovenian anthem
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-        const playNote = (frequency, duration, startTime) => {
-          const oscillator = audioContext.createOscillator()
-          const gainNode = audioContext.createGain()
-
-          oscillator.connect(gainNode)
-          gainNode.connect(audioContext.destination)
-
-          oscillator.frequency.setValueAtTime(frequency, startTime)
-          gainNode.gain.setValueAtTime(0.1, startTime)
-          gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration)
-
-          oscillator.start(startTime)
-          oscillator.stop(startTime + duration)
-        }
-
-        // Simple melody loop
-        const playAnthem = () => {
-          const notes = [523, 587, 659, 698, 784, 698, 659, 587, 523]
-          const startTime = audioContext.currentTime
-
-          notes.forEach((note, i) => {
-            playNote(note, 0.5, startTime + i * 0.6)
-          })
-        }
-
-        playAnthem()
-        const interval = setInterval(playAnthem, 6000)
-        setSlovenianAnthem(interval)
+      if (anthemRef.current) {
+        anthemRef.current.play().catch(console.error)
       }
-    } else if (slovenianAnthem) {
-      clearInterval(slovenianAnthem)
-      setSlovenianAnthem(null)
+    } else if (anthemRef.current && !anthemRef.current.paused) {
+      anthemRef.current.pause()
+      anthemRef.current.currentTime = 0
     }
-  }, [username, slovenianAnthem])
+  }, [username])
 
   const showPopup = (message, type) => {
     setPopup({ message, type, show: true, isClosing: false })
@@ -261,6 +297,10 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
         if (onLogin) onLogin({ username, password, userType: "employee" })
         navigate("/dashboard")
       }, 1000)
+    } else if (username.toLowerCase() === "terminal") {
+      // Special easter egg route
+      setCookie("sessionCokie", "terminal", { path: "/" })
+      navigate("/dashboard")
     } else {
       setPassword("")
 
@@ -333,25 +373,55 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
         </div>
       )}
 
-      {/* Vegova Animation Overlay */}
+      {/* Technical Vegova Animation Overlay */}
       {showVegovaAnimation && (
-        <div className="vegova-animation-overlay">
-          <div className="vegova-animation-content">
-            <img src="/vegova-logo.png" alt="Vegova" className="vegova-animation-logo" />
-            <div className="vegova-animation-text">VEGOVA POWER!</div>
-            <div className="vegova-animation-sparkles">
-              {[...Array(20)].map((_, i) => (
+        <div className="vegova-tech-overlay">
+          <div className="tech-grid">
+            {[...Array(100)].map((_, i) => (
+              <div key={i} className="tech-cell" style={{ animationDelay: `${i * 0.05}s` }}></div>
+            ))}
+          </div>
+          <div className="vegova-tech-content">
+            <div className="tech-header">
+              <div className="tech-logo">
+                <img src="/vegova-logo.png" alt="Vegova" className="vegova-tech-logo" />
+              </div>
+              <div className="tech-text">
+                <div className="tech-title">VEGOVA SYSTEMS</div>
+                <div className="tech-subtitle">INITIALIZING...</div>
+              </div>
+            </div>
+
+            <div className="tech-console">
+              <div className="console-line">{"> "} Connecting to Vegova mainframe...</div>
+              <div className="console-line" style={{ animationDelay: "0.5s" }}>
+                {"> "} Authentication successful
+              </div>
+              <div className="console-line" style={{ animationDelay: "1s" }}>
+                {"> "} Loading student database...
+              </div>
+              <div className="console-line" style={{ animationDelay: "1.5s" }}>
+                {"> "} SimBank protocols activated
+              </div>
+              <div className="console-line" style={{ animationDelay: "2s" }}>
+                {"> "} Welcome to the future of banking
+              </div>
+              <div className="console-line success" style={{ animationDelay: "2.5s" }}>
+                {"> "} SYSTEM READY
+              </div>
+            </div>
+
+            <div className="tech-particles">
+              {[...Array(30)].map((_, i) => (
                 <div
                   key={i}
-                  className="sparkle"
+                  className="particle"
                   style={{
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 2}s`,
+                    animationDelay: `${Math.random() * 3}s`,
                   }}
-                >
-                  ✨
-                </div>
+                />
               ))}
             </div>
           </div>
@@ -383,7 +453,12 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   <h1>SimBank</h1>
                 </div>
                 <div className="vegova-logo-nav">
-                  <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-img" />
+                  <img
+                    src="/vegova-logo.png"
+                    alt="Vegova Ljubljana"
+                    className="vegova-logo-img"
+                    onClick={handleVegovaLogoClick}
+                  />
                 </div>
               </div>
               <div className="nav-info">
@@ -565,7 +640,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
                 <div className="form-footer">
                   <div className="vegova-section">
-                    <div className="vegova-logo-section">
+                    <div className="vegova-logo-section" onClick={handleVegovaLogoClick}>
                       <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-footer" />
                       <span className="vegova-text">Vegova Ljubljana</span>
                     </div>
@@ -574,12 +649,14 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                       <p className="creators-names">Lin Čadež, Maj Mohar, Marko Vidic, Anej Grojzdek</p>
                     </div>
                   </div>
-                  <div className="team-credits">
-                    <p className="credits-text">
-                      Made with 💚 by 4 students from Vegova Ljubljana. We promise we didn't steal real money to make
-                      this.
-                    </p>
-                  </div>
+                  {showRainbowText && (
+                    <div className="team-credits">
+                      <p className="credits-text">
+                        Made with 💚 by 4 students from Vegova Ljubljana. We promise we didn't steal real money to make
+                        this.
+                      </p>
+                    </div>
+                  )}
                   <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
                   <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
                   <div className="secret-link">

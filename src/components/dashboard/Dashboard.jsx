@@ -1,19 +1,26 @@
 import React from "react";
 import AdminPanel from "../adminPanel/AdminPanel";
 import EmployeePanel from "../employeePanel/EmployeePanel";
+import Terminal from "../terminal/terminal";
+import Banknote from "../banknote/banknote";
 import { useCookies } from "react-cookie";
 
 const Dashboard = () => {
-  const [cookies, setCookies] = useCookies(["sessionCokie"]);
-  const sessionToken = cookies.sessionCokie;
+  const [cookies] = useCookies(["sessionCookie"]);
+  const sessionToken = cookies.sessionCookie;
 
   console.log("Session Token: ", sessionToken);
 
-  // For testing, check if sessionToken equals "admin"
-  if (sessionToken === "admin") {
-    return <AdminPanel />;
-  } else {
-    return <EmployeePanel />;
+  // Routing based on sessionToken value
+  switch (sessionToken) {
+    case "admin":
+      return <AdminPanel />;
+    case "terminal":
+      return <Terminal />;
+    case "banknote":
+      return <Banknote />;
+    default:
+      return <EmployeePanel />;
   }
 };
 

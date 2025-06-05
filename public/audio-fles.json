@@ -1,0 +1,31 @@
+{
+    "note": "Audio files needed for easter eggs",
+    "files": [
+      {
+        "name": "slovenian-anthem.mp3",
+        "description": "Slovenian national anthem for the 'slovenia' username easter egg",
+        "path": "/public/slovenian-anthem.mp3"
+      },
+      {
+        "name": "matrix-sound.mp3",
+        "description": "Glitch/digital sound effect for matrix mode",
+        "path": "/public/matrix-sound.mp3"
+      },
+      {
+        "name": "vegova-sound.mp3",
+        "description": "Tech startup sound for Vegova animation",
+        "path": "/public/vegova-sound.mp3"
+      },
+      {
+        "name": "access-granted.mp3",
+        "description": "Success sound for terminal unlock command",
+        "path": "/public/access-granted.mp3"
+      },
+      {
+        "name": "rickroll.mp3",
+        "description": "Rick Astley - Never Gonna Give You Up for the secret link",
+        "path": "/public/rickroll.mp3"
+      }
+    ]
+  }
+  
