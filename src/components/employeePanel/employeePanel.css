@@ -1227,21 +1227,35 @@
   }
   
   .generate-iban-button {
-    flex-shrink: 0;
-    padding: 10px 16px;
-    background: linear-gradient(to right, #10b981, #059669);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
+    display: none;
   }
   
   .generate-iban-button:hover {
     background: linear-gradient(to right, #059669, #047857);
     transform: translateY(-1px);
   }
+  
+  .modal-content {
+    width: 90%;
+    max-width: 900px; /* Increased from default */
+    max-height: 90vh;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    position: relative;
+    animation: modalFadeIn 0.3s ease-out;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Update the form grid to have 3 columns for wider layout */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Changed from 2 to 3 columns */
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
   

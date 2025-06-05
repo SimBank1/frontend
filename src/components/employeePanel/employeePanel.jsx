@@ -122,6 +122,7 @@ export default function EmployeePanel() {
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState("")
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
 
   const [logoClickCount, setLogoClickCount] = useState(0)
   const [lastLogoClickTime, setLastLogoClickTime] = useState(null)
@@ -517,6 +518,21 @@ export default function EmployeePanel() {
     }
   }
 
+  const copyRegistrationToCorrespondence = () => {
+    if (sameAsRegistration) {
+      setClientFormData((prev) => ({
+        ...prev,
+        correspondenceCountry: prev.registrationCountry,
+        correspondenceRegion: prev.registrationRegion,
+        correspondenceCity: prev.registrationCity,
+        correspondenceStreet: prev.registrationStreet,
+        correspondenceHouse: prev.registrationHouse,
+        correspondenceApartment: prev.registrationApartment,
+        correspondencePostalCode: prev.registrationPostalCode,
+      }))
+    }
+  }
+
   const handleCrmFormChange = (field, value) => {
     setCrmFormData((prev) => ({
       ...prev,
@@ -702,11 +718,6 @@ export default function EmployeePanel() {
         newErrors[field] = `${fieldName} is required`
       }
     })
-
-    // Marketing consent validation
-    if (!clientFormData.marketingConsent) {
-      newErrors.marketingConsent = "Marketing consent must be accepted"
-    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -977,6 +988,21 @@ export default function EmployeePanel() {
       </div>
     )
   }
+
+  useEffect(() => {
+    if (sameAsRegistration) {
+      copyRegistrationToCorrespondence()
+    }
+  }, [
+    sameAsRegistration,
+    clientFormData.registrationCountry,
+    clientFormData.registrationRegion,
+    clientFormData.registrationCity,
+    clientFormData.registrationStreet,
+    clientFormData.registrationHouse,
+    clientFormData.registrationApartment,
+    clientFormData.registrationPostalCode,
+  ])
 
   return (
     <div className="employee-panel">
@@ -1309,99 +1335,117 @@ export default function EmployeePanel() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Correspondence Address *</label>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Country *</label>
-                      <input
-                        className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
-                        value={clientFormData.correspondenceCountry}
-                        onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
-                        placeholder="Country"
-                        required
-                      />
-                      {errors.correspondenceCountry && (
-                        <div className="error-message">{errors.correspondenceCountry}</div>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Region *</label>
-                      <input
-                        className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
-                        value={clientFormData.correspondenceRegion}
-                        onChange={(e) => handleClientFormChange("correspondenceRegion", e.target.value)}
-                        placeholder="Region"
-                        required
-                      />
-                      {errors.correspondenceRegion && (
-                        <div className="error-message">{errors.correspondenceRegion}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">City/Village *</label>
-                      <input
-                        className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
-                        value={clientFormData.correspondenceCity}
-                        onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
-                        placeholder="City or Village"
-                        required
-                      />
-                      {errors.correspondenceCity && <div className="error-message">{errors.correspondenceCity}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Street *</label>
-                      <input
-                        className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
-                        value={clientFormData.correspondenceStreet}
-                        onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
-                        placeholder="Street name"
-                        required
-                      />
-                      {errors.correspondenceStreet && (
-                        <div className="error-message">{errors.correspondenceStreet}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">House *</label>
-                      <input
-                        className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
-                        value={clientFormData.correspondenceHouse}
-                        onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
-                        placeholder="House number"
-                        required
-                      />
-                      {errors.correspondenceHouse && <div className="error-message">{errors.correspondenceHouse}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Apartment</label>
-                      <input
-                        className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
-                        value={clientFormData.correspondenceApartment}
-                        onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
-                        placeholder="Apartment (optional)"
-                      />
-                      {errors.correspondenceApartment && (
-                        <div className="error-message">{errors.correspondenceApartment}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Postal Code *</label>
+                  <div className="form-checkbox" style={{ marginBottom: "12px" }}>
                     <input
-                      className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
-                      value={clientFormData.correspondencePostalCode}
-                      onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
-                      placeholder="Postal code"
-                      required
+                      type="checkbox"
+                      id="sameAsRegistration"
+                      checked={sameAsRegistration}
+                      onChange={(e) => setSameAsRegistration(e.target.checked)}
                     />
-                    {errors.correspondencePostalCode && (
-                      <div className="error-message">{errors.correspondencePostalCode}</div>
-                    )}
+                    <label htmlFor="sameAsRegistration">Same as registration address</label>
                   </div>
+
+                  {!sameAsRegistration && (
+                    <>
+                      <label className="form-label">Correspondence Address *</label>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Country *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                            value={clientFormData.correspondenceCountry}
+                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                            placeholder="Country"
+                            required
+                          />
+                          {errors.correspondenceCountry && (
+                            <div className="error-message">{errors.correspondenceCountry}</div>
+                          )}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Region *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
+                            value={clientFormData.correspondenceRegion}
+                            onChange={(e) => handleClientFormChange("correspondenceRegion", e.target.value)}
+                            placeholder="Region"
+                            required
+                          />
+                          {errors.correspondenceRegion && (
+                            <div className="error-message">{errors.correspondenceRegion}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">City/Village *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                            value={clientFormData.correspondenceCity}
+                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                            placeholder="City or Village"
+                            required
+                          />
+                          {errors.correspondenceCity && (
+                            <div className="error-message">{errors.correspondenceCity}</div>
+                          )}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Street *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                            value={clientFormData.correspondenceStreet}
+                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                            placeholder="Street name"
+                            required
+                          />
+                          {errors.correspondenceStreet && (
+                            <div className="error-message">{errors.correspondenceStreet}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">House *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                            value={clientFormData.correspondenceHouse}
+                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                            placeholder="House number"
+                            required
+                          />
+                          {errors.correspondenceHouse && (
+                            <div className="error-message">{errors.correspondenceHouse}</div>
+                          )}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Apartment</label>
+                          <input
+                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                            value={clientFormData.correspondenceApartment}
+                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                            placeholder="Apartment (optional)"
+                          />
+                          {errors.correspondenceApartment && (
+                            <div className="error-message">{errors.correspondenceApartment}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Postal Code *</label>
+                        <input
+                          className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                          value={clientFormData.correspondencePostalCode}
+                          onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                          placeholder="Postal code"
+                          required
+                        />
+                        {errors.correspondencePostalCode && (
+                          <div className="error-message">{errors.correspondencePostalCode}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="form-checkbox">
                   <input
@@ -1458,7 +1502,7 @@ export default function EmployeePanel() {
                         required
                       />
                     </div>
-                    <button type="button" className="generate-iban-button" onClick={handleGenerateIBAN}>
+                    <button type="button" className="button-secondary" onClick={handleGenerateIBAN}>
                       Generate
                     </button>
                   </div>
