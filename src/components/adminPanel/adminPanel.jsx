@@ -372,7 +372,7 @@ export default function AdminPanel() {
               person.crmEntries &&
               person.crmEntries.length > 0 && (
                 <p className="user-preview">
-                  {person.crmEntries[0].content.substring(0, 80)}...
+                Last interaction: {person.crmEntries[0].date}
                 </p>
               )}
             {person.type === "employee" && (

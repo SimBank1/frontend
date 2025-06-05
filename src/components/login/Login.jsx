@@ -90,52 +90,42 @@ export default function Login({
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-
+  
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1200));
-
+  
     if (username === "admin" && password === "admin") {
       setCookie("sessionCokie", "admin", { path: "/" });
-      setSuccessPopup({
-        show: true,
-        message: "✅ Welcome Admin! Redirecting to dashboard...",
-        canDismiss: false,
-      });
-
-      // Auto redirect after 3 seconds if not dismissed
+ 
       setTimeout(() => {
         if (onLogin) onLogin({ username, password, userType: "admin" });
         navigate("/dashboard");
       }, 1000);
     } else if (username === "employee" && password === "employee") {
       setCookie("sessionCokie", "employee", { path: "/" });
-      setSuccessPopup({
-        show: true,
-        message: "✅ Welcome Employee! Redirecting to your workspace...",
-        canDismiss: false,
-      });
-      // Auto redirect after 3 seconds if not dismissed
+
+
       setTimeout(() => {
         if (onLogin) onLogin({ username, password, userType: "employee" });
         navigate("/dashboard");
       }, 1000);
     } else {
       setPassword("");
-      // Determine which field to shake based on the error
+  
       if (username !== "admin" && username !== "employee") {
         setShakeField("username");
       } else {
         setShakeField("password");
       }
-
-      // Clear shake after animation
+  
       setTimeout(() => {
         setShakeField("");
+        setIsLoading(false);
       }, 600);
     }
-
-    setIsLoading(false);
-  };
+  
+    //setIsLoading(false);
+  };  
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
