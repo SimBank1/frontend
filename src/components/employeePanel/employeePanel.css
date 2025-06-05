@@ -803,28 +803,27 @@ body {
 
 /* Modal Styles */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-}
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 28rem;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: scaleIn 0.15s ease-out;
-}
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 28rem;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden; /* Changed from overflow-y: auto */
+    animation: scaleIn 0.15s ease-out; /* Shortened animation */
+  }
 
 .modal-header {
   padding: 20px 24px 16px;
@@ -855,7 +854,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .modal-close:hover {
@@ -864,8 +863,33 @@ body {
 }
 
 .modal-body {
-  padding: 20px 24px;
-}
+    padding: 20px 24px;
+    max-height: calc(90vh - 120px); /* Account for header height */
+    overflow-y: auto;
+    border-radius: 0 0 12px 12px; /* Ensure bottom corners are rounded */
+  }
+
+/* Custom scrollbar for modal */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+    transition: background 0.15s ease-in-out;
+  }
+  
+  .modal-body::-webkit-scrollbar-thumb:hover {
+    transition: all 0.2s;
+    background: #94a3b8;
+  }
+
 
 /* Form Styles */
 .form-group {
