@@ -133,10 +133,7 @@
     cursor: pointer;
     transition: transform 0.2s;
   }
-  
-  .vegova-logo-img:hover {
-    transform: scale(1.1);
-  }
+
   
   .nav-info {
     display: flex;
@@ -320,11 +317,7 @@
     overflow: hidden;
     transition: all 0.3s;
   }
-  
-  .login-form:hover {
-    transform: scale(1.01);
-  }
-  
+
   .form-glow-1 {
     position: absolute;
     top: -80px;
@@ -528,10 +521,6 @@
     transition: transform 0.2s;
   }
   
-  .vegova-logo-section:hover {
-    transform: scale(1.05);
-  }
-  
   .vegova-logo-footer {
     height: 24px;
     width: auto;
@@ -586,10 +575,6 @@
   .footer-copyright {
     font-size: 12px;
     color: #9ca3af;
-  }
-  
-  .secret-link {
-    margin-top: 8px;
   }
   
   .dont-click-me {
@@ -1079,5 +1064,20 @@
   .simulated-password.show-password {
     -webkit-text-security: none;
     text-security: none;
+  }
+  
+
+  .login-container {
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -ms-user-select: none;     /* For IE/Edge */
+  }
+  
+  input,
+  textarea,
+  input::placeholder {
+    user-select: text;
+    -webkit-user-select: text;
+    -ms-user-select: text;
   }
   

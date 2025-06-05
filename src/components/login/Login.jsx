@@ -229,6 +229,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
       if (anthemRef.current) {
         anthemRef.current.play().catch(console.error)
       }
+      setUsername("");
     } else if (anthemRef.current && !anthemRef.current.paused) {
       anthemRef.current.pause()
       anthemRef.current.currentTime = 0
@@ -659,11 +660,6 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                   )}
                   <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
                   <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
-                  <div className="secret-link">
-                    <span className="dont-click-me" onClick={() => navigate("/banknote")}>
-                      Don't click me
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>

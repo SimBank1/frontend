@@ -2,7 +2,6 @@ import React from "react";
 import AdminPanel from "../adminPanel/AdminPanel";
 import EmployeePanel from "../employeePanel/EmployeePanel";
 import Terminal from "../terminal/terminal";
-import Banknote from "../banknote/banknote";
 import { useCookies } from "react-cookie";
 
 const Dashboard = () => {
@@ -17,8 +16,6 @@ const Dashboard = () => {
       return <AdminPanel />;
     case "terminal":
       return <Terminal />;
-    case "banknote":
-      return <Banknote />;
     default:
       return <EmployeePanel />;
   }

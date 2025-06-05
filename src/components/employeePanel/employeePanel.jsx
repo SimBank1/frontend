@@ -165,16 +165,6 @@ export default function EmployeePanel() {
     openingDate: new Date().toISOString().split("T")[0],
   })
 
-  // VegCoin state
-  const [showVegCoin, setShowVegCoin] = useState(false)
-
-  // Check for VegCoin on mount
-  useEffect(() => {
-    const vegcoinEnabled = localStorage.getItem("vegcoin_enabled")
-    if (vegcoinEnabled === "true") {
-      setShowVegCoin(true)
-    }
-  }, [])
 
   // Handle escape key for all modals
   useEffect(() => {
@@ -708,22 +698,6 @@ export default function EmployeePanel() {
             <p>Client Profile</p>
           </div>
         </div>
-
-        {/* VegCoin Balance */}
-        {showVegCoin && (
-          <div className="info-card vegcoin-card">
-            <div className="card-header vegcoin-header">
-              <h3 className="card-title">🪙 VegCoin Wallet</h3>
-            </div>
-            <div className="card-content">
-              <div className="vegcoin-balance">
-                <span className="vegcoin-amount">{localStorage.getItem("vegcoin_balance") || "420.69"}</span>
-                <span className="vegcoin-symbol">VGC</span>
-              </div>
-              <p className="vegcoin-description">The official cryptocurrency of Vegova Ljubljana! 🚀</p>
-            </div>
-          </div>
-        )}
 
         {/* Basic Information */}
         <div className="info-card">
