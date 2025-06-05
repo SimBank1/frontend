@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import "./AdminPanel.css";
+import { Navigate, useNavigate } from 'react-router-dom';
 
 // Mock data
 const mockData = [
@@ -193,9 +194,9 @@ export default function AdminPanel() {
   };
 
   const handleLogout = () => {
-    document.cookie =
+      document.cookie =
       "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/login";
+      
   };
 
   // Validation functions

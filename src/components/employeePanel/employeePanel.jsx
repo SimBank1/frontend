@@ -168,7 +168,6 @@ export default function EmployeePanel() {
   const handleLogout = () => {
     document.cookie =
       "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/login";
   };
 
   // Validation functions
