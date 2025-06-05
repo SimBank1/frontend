@@ -14,7 +14,7 @@ export default function Banknote() {
 
     // Create and play audio
     const audio = new Audio("/rickroll.mp3")
-    audio.volume = 0.5
+    audio.volume = 1
     audio.play().catch(console.error)
 
     // Open rickroll in new window after a short delay
@@ -25,7 +25,7 @@ export default function Banknote() {
       setTimeout(() => {
         setIsRickRolling(false)
         navigate("/login")
-      }, 3000)
+      }, 1000)
     }, 1500)
   }
 
