@@ -944,7 +944,6 @@ export default function EmployeePanel() {
               <p>Employee Portal</p>
             </div>
             <div className="vegova-logo-sidebar">
-              <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
               <img
                 src="/vegova-logo.png"
                 alt="Vegova Ljubljana"

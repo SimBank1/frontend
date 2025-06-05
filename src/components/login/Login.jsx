@@ -184,7 +184,7 @@ export default function Login({ onLogin}) {
       showPopup("🪙 VegCoin unlocked! Balance: 420.69 VGC", "success")
       logoClickCountRef.current = 0
     }
-
+  }
   // Vegova logo click easter egg for rainbow text
   const handleVegovaLogoClick = () => {
     vegovaLogoClickCountRef.current += 1
@@ -192,7 +192,7 @@ export default function Login({ onLogin}) {
       setShowRainbowText(true)
       vegovaLogoClickCountRef.current = 0
     }
-
+  }
   // Technical Vegova animation easter egg
   useEffect(() => {
     if (username.toLowerCase() === "vegova") {

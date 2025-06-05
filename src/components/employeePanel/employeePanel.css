@@ -1207,4 +1207,12 @@
       display: none;
     }
   }
+
+  .vegova-flash-img {
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+  }
+  
   
