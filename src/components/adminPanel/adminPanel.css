@@ -452,18 +452,28 @@
   font-family: monospace;
 }
 
-
-.password-toggle {
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  transition: color 0.2s;
+.password-toggle2 {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    position: relative !important;
+    right: 0 !important;
+    top: 8px !important;
+    left: 0 !important;
 }
 
-.password-toggle:hover {
+.password-toggle2:hover {
   color: #374151;
 }
+  
 
 .account-item {
   border: 1px solid #e5e7eb;
