@@ -5,7 +5,7 @@ import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "l
 import { useNavigate } from "react-router-dom"
 import { useCookies } from "react-cookie"
 import "./Login.css"
-
+import { getServerLink } from "@/server_link"
 export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -17,6 +17,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     show: false,
     isClosing: false,
   })
+  const [authError, setAuthError] = useState(false)
 
   const navigate = useNavigate()
   const [cookies, setCookie] = useCookies(["sessionCokie"])
@@ -102,35 +103,35 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     if (!validateForm()) return
 
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    setAuthError(false)
 
-    if (username === "admin" && password === "admin") {
-      setCookie("sessionCokie", "admin", { path: "/" })
+    try {
+      const response = await fetch(getServerLink() + "/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
+      })
 
-      setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "admin" })
-        navigate("/dashboard")
-      }, 1000)
-    } else if (username === "employee" && password === "employee") {
-      setCookie("sessionCokie", "employee", { path: "/" })
+      const data = await response.json()
 
-      setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "employee" })
-        navigate("/dashboard")
-      }, 1000)
-    } else {
-      setPassword("")
-
-      if (username !== "admin" && username !== "employee") {
-        setShakeField("username")
-      } else {
-        setShakeField("password")
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed")
       }
 
-      setTimeout(() => {
-        setShakeField("")
+      if (data.error) {
+        setAuthError(true)
+      }
+      if(data.mode){
         setIsLoading(false)
-      }, 600)
+        window.location.href = "/dashboard";
+      }
+    } finally {
+      setIsLoading(false)
+      
+
     }
   }
 
@@ -305,6 +306,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                             username: false,
                           }))
                         }
+                        if (authError) {
+                          setAuthError(false)
+                        }
                       }}
                       onKeyDown={handleKeyPress}
                       className={`field-input ${
@@ -336,6 +340,9 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                               password: false,
                             }))
                           }
+                          if (authError) {
+                            setAuthError(false)
+                          }
                         }}
                         onKeyDown={handleKeyPress}
                         className={`field-input ${fieldErrors.password ? "error" : ""} ${
@@ -360,6 +367,29 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                       </p>
                     )}
                   </div>
+                  {authError && (
+                    <div
+                      className="auth-error-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "12px 16px",
+                        marginBottom: "16px",
+                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        borderRadius: "12px",
+                        color: "#dc2626",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        backdropFilter: "blur(8px)",
+                        animation: "fadeIn 0.3s ease-out",
+                      }}
+                    >
+                      <AlertCircle size={16} color="#dc2626" />
+                      <span>Wrong password or username</span>
+                    </div>
+                  )}
 
                   <button onClick={handleLogin} disabled={isLoading} className="login-button">
                     {isLoading ? (

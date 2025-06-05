@@ -1,20 +1,62 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AdminPanel from "../adminPanel/AdminPanel";
 import EmployeePanel from "../employeePanel/EmployeePanel";
-import { useCookies } from "react-cookie";
+import { getServerLink } from "@/server_link";
 
 const Dashboard = () => {
-  const [cookies, setCookies] = useCookies(["sessionCokie"]);
-  const sessionToken = cookies.sessionCokie;
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEmployee, setIsEmployee] = useState(false);
+  const [sessionData, setSessionData] = useState(null); // Store fetched data
 
-  console.log("Session Token: ", sessionToken);
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const response = await fetch(getServerLink() + "/rand", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-  // For testing, check if sessionToken equals "admin"
-  if (sessionToken === "admin") {
-    return <AdminPanel />;
-  } else {
-    return <EmployeePanel />;
-  }
+        const data = await response.json();
+        console.log(data);
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch session data");
+        }
+
+        const hasClients = Array.isArray(data.clients);
+        const hasEmployees = Array.isArray(data.employees);
+
+        setSessionData(data); // Save the full data
+
+        if (hasClients && hasEmployees) {
+          setIsAdmin(true);
+        } else if (hasClients && !hasEmployees) {
+          setIsEmployee(true);
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+  
+  useEffect(() => {
+    if (!isLoading && !isAdmin && !isEmployee) {
+      window.location.href = "/login";
+    }
+  }, [isLoading, isAdmin, isEmployee]);
+
+  if (isLoading) return <div>Loading dashboard...</div>;
+  if (isAdmin) return <AdminPanel data={sessionData} />;
+  if (isEmployee) return <EmployeePanel data={sessionData} />;
+  return null;
 };
 
 export default Dashboard;
