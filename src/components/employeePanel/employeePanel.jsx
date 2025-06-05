@@ -927,6 +927,7 @@ export default function EmployeePanel() {
         <div className="bottom-section">
           <div className="bottom-buttons">
             <button
+
               className="primary-button"
               onClick={() => setIsAddClientOpen(true)}
             >
@@ -1209,6 +1210,7 @@ export default function EmployeePanel() {
                   <button
                     type="button"
                     className="button-secondary"
+                    ref={(el) => el?.style.setProperty('flex', '0', 'important')}
                     onClick={() => setIsAddClientOpen(false)}
                   >
                     Cancel
@@ -1345,6 +1347,7 @@ export default function EmployeePanel() {
                   <button
                     type="button"
                     className="button-secondary"
+                    ref={(el) => el?.style.setProperty('flex', '0', 'important')}
                     onClick={() => setIsAddAccountOpen(false)}
                   >
                     Cancel
@@ -1457,6 +1460,7 @@ export default function EmployeePanel() {
                 <div className="form-actions">
                   <button
                     type="button"
+                    ref={(el) => el?.style.setProperty('flex', '0', 'important')}
                     className="button-secondary"
                     onClick={() => setIsAddCrmOpen(false)}
                   >
