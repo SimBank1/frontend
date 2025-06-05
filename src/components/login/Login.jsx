@@ -1,163 +1,173 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import {
-  Eye,
-  EyeOff,
-  X,
-  CheckCircle,
-  AlertCircle,
-  Shield,
-  Users,
-  Lock,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie";
-import "./Login.css";
+import { useState, useEffect } from "react"
+import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useCookies } from "react-cookie"
+import "./Login.css"
 
-export default function Login({
-  onLogin,
-  logoSrc = "/logo-rm.png?height=40&width=120",
-}) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width=120" }) {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [popup, setPopup] = useState({
     message: "",
     type: "success",
     show: false,
-  });
+    isClosing: false,
+  })
 
-  const navigate = useNavigate();
-  const [cookies, setCookie] = useCookies(["sessionCokie"]);
+  const navigate = useNavigate()
+  const [cookies, setCookie] = useCookies(["sessionCokie"])
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
     password: false,
-  });
+  })
 
   const [shakeFields, setShakeFields] = useState({
     username: false,
     password: false,
-  });
+  })
 
-  const [shakeField, setShakeField] = useState("");
+  const [shakeField, setShakeField] = useState("")
   const [successPopup, setSuccessPopup] = useState({
     show: false,
     message: "",
     canDismiss: false,
-  });
+    isClosing: false,
+  })
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        if (popup.show) {
+          hidePopup()
+        }
+        if (successPopup.show && successPopup.canDismiss) {
+          handleSuccessPopupDismiss()
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape)
+    return () => document.removeEventListener("keydown", handleEscape)
+  }, [popup.show, successPopup.show, successPopup.canDismiss])
 
   const showPopup = (message, type) => {
-    setPopup({ message, type, show: true });
+    setPopup({ message, type, show: true, isClosing: false })
 
     // Auto dismiss after 4 seconds
     setTimeout(() => {
-      setPopup((prev) => ({ ...prev, show: false }));
-    }, 4000);
-  };
+      hidePopup()
+    }, 4000)
+  }
 
   const hidePopup = () => {
-    setPopup((prev) => ({ ...prev, show: false }));
-  };
+    setPopup((prev) => ({ ...prev, isClosing: true }))
+    setTimeout(() => {
+      setPopup((prev) => ({ ...prev, show: false, isClosing: false }))
+    }, 200)
+  }
 
   const triggerShake = (field) => {
-    setShakeFields((prev) => ({ ...prev, [field]: true }));
+    setShakeFields((prev) => ({ ...prev, [field]: true }))
     setTimeout(() => {
-      setShakeFields((prev) => ({ ...prev, [field]: false }));
-    }, 600);
-  };
+      setShakeFields((prev) => ({ ...prev, [field]: false }))
+    }, 600)
+  }
 
   const validateForm = () => {
-    const isUsernameEmpty = username.trim() === "";
-    const isPasswordEmpty = password.trim() === "";
+    const isUsernameEmpty = username.trim() === ""
+    const isPasswordEmpty = password.trim() === ""
 
     setFieldErrors({
       username: isUsernameEmpty,
       password: isPasswordEmpty,
-    });
+    })
 
     if (isUsernameEmpty) {
-      triggerShake("username");
+      triggerShake("username")
     }
     if (isPasswordEmpty) {
-      triggerShake("password");
+      triggerShake("password")
     }
 
-    return !isUsernameEmpty && !isPasswordEmpty;
-  };
+    return !isUsernameEmpty && !isPasswordEmpty
+  }
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
-  
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-  
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+
     if (username === "admin" && password === "admin") {
-      setCookie("sessionCokie", "admin", { path: "/" });
- 
+      setCookie("sessionCokie", "admin", { path: "/" })
+
       setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "admin" });
-        navigate("/dashboard");
-      }, 1000);
+        if (onLogin) onLogin({ username, password, userType: "admin" })
+        navigate("/dashboard")
+      }, 1000)
     } else if (username === "employee" && password === "employee") {
-      setCookie("sessionCokie", "employee", { path: "/" });
-
+      setCookie("sessionCokie", "employee", { path: "/" })
 
       setTimeout(() => {
-        if (onLogin) onLogin({ username, password, userType: "employee" });
-        navigate("/dashboard");
-      }, 1000);
+        if (onLogin) onLogin({ username, password, userType: "employee" })
+        navigate("/dashboard")
+      }, 1000)
     } else {
-      setPassword("");
-  
+      setPassword("")
+
       if (username !== "admin" && username !== "employee") {
-        setShakeField("username");
+        setShakeField("username")
       } else {
-        setShakeField("password");
+        setShakeField("password")
       }
-  
+
       setTimeout(() => {
-        setShakeField("");
-        setIsLoading(false);
-      }, 600);
+        setShakeField("")
+        setIsLoading(false)
+      }, 600)
     }
-  
-    //setIsLoading(false);
-  };  
+  }
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
-      handleLogin();
+      handleLogin()
     }
-  };
+  }
 
   const handleMouseDown = () => {
-    setShowPassword(true);
-  };
+    setShowPassword(true)
+  }
 
   const handleMouseUp = () => {
-    setShowPassword(false);
-  };
+    setShowPassword(false)
+  }
 
   const handleMouseLeave = () => {
-    setShowPassword(false);
-  };
+    setShowPassword(false)
+  }
 
   const handleSuccessPopupDismiss = () => {
     if (successPopup.canDismiss) {
-      setSuccessPopup({ show: false, message: "", canDismiss: false });
-      if (onLogin) {
-        if (username === "admin") {
-          onLogin({ username, password, userType: "admin" });
-        } else {
-          onLogin({ username, password, userType: "employee" });
+      setSuccessPopup((prev) => ({ ...prev, isClosing: true }))
+      setTimeout(() => {
+        setSuccessPopup({ show: false, message: "", canDismiss: false, isClosing: false })
+        if (onLogin) {
+          if (username === "admin") {
+            onLogin({ username, password, userType: "admin" })
+          } else {
+            onLogin({ username, password, userType: "employee" })
+          }
         }
-      }
-      navigate("/dashboard");
+        navigate("/dashboard")
+      }, 200)
     }
-  };
+  }
 
   return (
     <div className="login-container">
@@ -184,6 +194,9 @@ export default function Login({
                 </div>
                 <div className="nav-title">
                   <h1>SimBank</h1>
+                </div>
+                <div className="vegova-logo-nav">
+                  <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-img" />
                 </div>
               </div>
               <div className="nav-info">
@@ -212,9 +225,8 @@ export default function Login({
               </div>
 
               <p className="info-description">
-                Secure access for administrators and employees. Manage
-                operations, oversee accounts, and maintain the highest standards
-                of banking excellence.
+                Secure access for administrators and employees. Manage operations, oversee accounts, and maintain the
+                highest standards of banking excellence.
               </p>
             </div>
 
@@ -224,9 +236,7 @@ export default function Login({
                   <Shield size={20} color="white" />
                   <h4 className="feature-title">Admin Dashboard</h4>
                 </div>
-                <p className="feature-description">
-                  Full system control and oversight capabilities
-                </p>
+                <p className="feature-description">Full system control and oversight capabilities</p>
               </div>
 
               <div className="feature-card">
@@ -234,9 +244,7 @@ export default function Login({
                   <Users size={20} color="white" />
                   <h4 className="feature-title">Employee Workspace</h4>
                 </div>
-                <p className="feature-description">
-                  Customer service and account management tools
-                </p>
+                <p className="feature-description">Customer service and account management tools</p>
               </div>
 
               <div className="feature-card">
@@ -244,9 +252,7 @@ export default function Login({
                   <Lock size={20} color="white" />
                   <h4 className="feature-title">Secure Environment</h4>
                 </div>
-                <p className="feature-description">
-                  End-to-end encryption and audit logging
-                </p>
+                <p className="feature-description">End-to-end encryption and audit logging</p>
               </div>
 
               <div className="feature-card">
@@ -254,17 +260,14 @@ export default function Login({
                   <CheckCircle size={20} color="white" />
                   <h4 className="feature-title">Compliance Ready</h4>
                 </div>
-                <p className="feature-description">
-                  EU banking regulations and GDPR compliant
-                </p>
+                <p className="feature-description">EU banking regulations and GDPR compliant</p>
               </div>
             </div>
 
             <div className="security-notice">
               <p className="security-text">
                 <Lock size={14} />
-                This is a restricted access portal. All activities are monitored
-                and logged.
+                This is a restricted access portal. All activities are monitored and logged.
               </p>
             </div>
           </div>
@@ -284,9 +287,7 @@ export default function Login({
                     </div>
                   </div>
                   <h2 className="form-title">Staff Login</h2>
-                  <p className="form-subtitle">
-                    Enter your credentials to continue
-                  </p>
+                  <p className="form-subtitle">Enter your credentials to continue</p>
                 </div>
 
                 <div className="form-fields">
@@ -297,12 +298,12 @@ export default function Login({
                       placeholder="Enter your username"
                       value={username}
                       onChange={(e) => {
-                        setUsername(e.target.value);
+                        setUsername(e.target.value)
                         if (fieldErrors.username) {
                           setFieldErrors((prev) => ({
                             ...prev,
                             username: false,
-                          }));
+                          }))
                         }
                       }}
                       onKeyDown={handleKeyPress}
@@ -328,22 +329,18 @@ export default function Login({
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => {
-                          setPassword(e.target.value);
+                          setPassword(e.target.value)
                           if (fieldErrors.password) {
                             setFieldErrors((prev) => ({
                               ...prev,
                               password: false,
-                            }));
+                            }))
                           }
                         }}
                         onKeyDown={handleKeyPress}
-                        className={`field-input ${
-                          fieldErrors.password ? "error" : ""
-                        } ${
+                        className={`field-input ${fieldErrors.password ? "error" : ""} ${
                           shakeField === "password" ? "shake" : ""
-                        } simulated-password ${
-                          showPassword ? "show-password" : ""
-                        }`}
+                        } simulated-password ${showPassword ? "show-password" : ""}`}
                       />
 
                       <button
@@ -353,11 +350,7 @@ export default function Login({
                         onMouseUp={() => setShowPassword(false)}
                         onMouseLeave={() => setShowPassword(false)}
                       >
-                        {showPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                     {fieldErrors.password && (
@@ -368,11 +361,7 @@ export default function Login({
                     )}
                   </div>
 
-                  <button
-                    onClick={handleLogin}
-                    disabled={isLoading}
-                    className="login-button"
-                  >
+                  <button onClick={handleLogin} disabled={isLoading} className="login-button">
                     {isLoading ? (
                       <>
                         <div className="loading-spinner" />
@@ -388,14 +377,18 @@ export default function Login({
                 </div>
 
                 <div className="form-footer">
-                  <p className="footer-text">
-                    Authorized personnel only. All access is monitored and
-                    logged.
-                  </p>
-                  <p className="footer-copyright">
-                    © {new Date().getFullYear()} SimBank EU. All rights
-                    reserved.
-                  </p>
+                  <div className="vegova-section">
+                    <div className="vegova-logo-section">
+                      <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-footer" />
+                      <span className="vegova-text">Vegova Ljubljana</span>
+                    </div>
+                    <div className="creators-section">
+                      <p className="creators-title">Created by:</p>
+                      <p className="creators-names">Lin Čadež, Maj Mohar, Marko Vidic, Anej Grojzdek</p>
+                    </div>
+                  </div>
+                  <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
+                  <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
                 </div>
               </div>
             </div>
@@ -414,7 +407,7 @@ export default function Login({
             <div className={`popup-inner-glow ${popup.type}`} />
 
             {/* Main popup */}
-            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+            <div className={`popup-content ${popup.isClosing ? "closing" : ""}`} onClick={(e) => e.stopPropagation()}>
               <button onClick={hidePopup} className="popup-close">
                 <X size={18} />
               </button>
@@ -427,11 +420,7 @@ export default function Login({
                     <AlertCircle size={20} color="white" />
                   )}
                 </div>
-                <h3 className="popup-title">
-                  {popup.type === "success"
-                    ? "Success"
-                    : "Authentication Error"}
-                </h3>
+                <h3 className="popup-title">{popup.type === "success" ? "Success" : "Authentication Error"}</h3>
               </div>
 
               <p className="popup-message">{popup.message}</p>
@@ -450,12 +439,12 @@ export default function Login({
           <div className="popup-glow-container">
             <div className="popup-outer-glow success" />
             <div className="popup-inner-glow success" />
-            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`popup-content ${successPopup.isClosing ? "closing" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               {successPopup.canDismiss && (
-                <button
-                  onClick={handleSuccessPopupDismiss}
-                  className="popup-close"
-                >
+                <button onClick={handleSuccessPopupDismiss} className="popup-close">
                   <X size={18} />
                 </button>
               )}
@@ -467,10 +456,7 @@ export default function Login({
               </div>
               <p className="popup-message">{successPopup.message}</p>
               {successPopup.canDismiss && (
-                <button
-                  onClick={handleSuccessPopupDismiss}
-                  className="popup-button"
-                >
+                <button onClick={handleSuccessPopupDismiss} className="popup-button">
                   Continue
                 </button>
               )}
@@ -479,5 +465,5 @@ export default function Login({
         </div>
       )}
     </div>
-  );
+  )
 }
