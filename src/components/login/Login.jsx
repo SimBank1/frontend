@@ -39,6 +39,85 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     isClosing: false,
   })
 
+  // Easter egg states
+  const [logoClickCount, setLogoClickCount] = useState(0)
+  const [showVegovaAnimation, setShowVegovaAnimation] = useState(false)
+  const [slovenianAnthem, setSlovenianAnthem] = useState(null)
+  const [matrixMode, setMatrixMode] = useState(false)
+  const [matrixChars, setMatrixChars] = useState([])
+
+  // Console easter eggs
+  useEffect(() => {
+    console.log("🏦 SimBank Developer Console 🏦")
+    console.log("Hey dev 👀, looking for bugs or just bored?")
+    console.log("Vegova Rulez. 👨‍💻 💰")
+    console.log("Try typing 'vegova' or 'slovenia' as username for surprises!")
+    console.log("Or try the Konami code... just kidding, try 'matrix' anywhere!")
+  }, [])
+
+  // Matrix effect
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      const sequence = ["m", "a", "t", "r", "i", "x"]
+      const currentSequence = window.matrixSequence || []
+
+      if (e.key.toLowerCase() === sequence[currentSequence.length]) {
+        currentSequence.push(e.key.toLowerCase())
+        window.matrixSequence = currentSequence
+
+        if (currentSequence.length === sequence.length) {
+          triggerMatrixMode()
+          window.matrixSequence = []
+        }
+      } else {
+        window.matrixSequence = []
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyPress)
+    return () => document.removeEventListener("keydown", handleKeyPress)
+  }, [])
+
+  const triggerMatrixMode = () => {
+    setMatrixMode(true)
+
+    // Create falling characters
+    const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"
+    const columns = Math.floor(window.innerWidth / 20)
+    const drops = Array(columns).fill(1)
+
+    setMatrixChars(
+      drops.map((_, i) => ({
+        id: i,
+        x: i * 20,
+        y: Math.random() * window.innerHeight,
+        char: chars[Math.floor(Math.random() * chars.length)],
+        speed: Math.random() * 3 + 1,
+      })),
+    )
+
+    // Play glitch sound
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5)
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
+
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + 0.5)
+
+    setTimeout(() => {
+      setMatrixMode(false)
+      setMatrixChars([])
+    }, 5000)
+  }
+
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e) => {
@@ -55,6 +134,70 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
   }, [popup.show, successPopup.show, successPopup.canDismiss])
+
+  // Logo click easter egg
+  const handleLogoClick = () => {
+    setLogoClickCount((prev) => {
+      const newCount = prev + 1
+      if (newCount === 10) {
+        // Enable VegCoin
+        localStorage.setItem("vegcoin_enabled", "true")
+        localStorage.setItem("vegcoin_balance", "420.69")
+        showPopup("🪙 VegCoin unlocked! Balance: 420.69 VGC", "success")
+        return 0
+      }
+      return newCount
+    })
+  }
+
+  // Vegova animation easter egg
+  useEffect(() => {
+    if (username.toLowerCase() === "vegova") {
+      setShowVegovaAnimation(true)
+      setTimeout(() => setShowVegovaAnimation(false), 3000)
+    }
+  }, [username])
+
+  // Slovenia anthem easter egg
+  useEffect(() => {
+    if (username.toLowerCase() === "slovenia") {
+      if (!slovenianAnthem) {
+        // Create a simple melody representing the Slovenian anthem
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const playNote = (frequency, duration, startTime) => {
+          const oscillator = audioContext.createOscillator()
+          const gainNode = audioContext.createGain()
+
+          oscillator.connect(gainNode)
+          gainNode.connect(audioContext.destination)
+
+          oscillator.frequency.setValueAtTime(frequency, startTime)
+          gainNode.gain.setValueAtTime(0.1, startTime)
+          gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration)
+
+          oscillator.start(startTime)
+          oscillator.stop(startTime + duration)
+        }
+
+        // Simple melody loop
+        const playAnthem = () => {
+          const notes = [523, 587, 659, 698, 784, 698, 659, 587, 523]
+          const startTime = audioContext.currentTime
+
+          notes.forEach((note, i) => {
+            playNote(note, 0.5, startTime + i * 0.6)
+          })
+        }
+
+        playAnthem()
+        const interval = setInterval(playAnthem, 6000)
+        setSlovenianAnthem(interval)
+      }
+    } else if (slovenianAnthem) {
+      clearInterval(slovenianAnthem)
+      setSlovenianAnthem(null)
+    }
+  }, [username, slovenianAnthem])
 
   const showPopup = (message, type) => {
     setPopup({ message, type, show: true, isClosing: false })
@@ -171,6 +314,50 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
 
   return (
     <div className="login-container">
+      {/* Matrix Mode Overlay */}
+      {matrixMode && (
+        <div className="matrix-overlay">
+          {matrixChars.map((char) => (
+            <div
+              key={char.id}
+              className="matrix-char"
+              style={{
+                left: char.x,
+                top: char.y,
+                animationDuration: `${char.speed}s`,
+              }}
+            >
+              {char.char}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Vegova Animation Overlay */}
+      {showVegovaAnimation && (
+        <div className="vegova-animation-overlay">
+          <div className="vegova-animation-content">
+            <img src="/vegova-logo.png" alt="Vegova" className="vegova-animation-logo" />
+            <div className="vegova-animation-text">VEGOVA POWER!</div>
+            <div className="vegova-animation-sparkles">
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="sparkle"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 2}s`,
+                  }}
+                >
+                  ✨
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background */}
       <div className="login-background" />
       <div className="login-overlay" />
@@ -189,7 +376,7 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
           <div className="nav-container">
             <div className="nav-content">
               <div className="nav-logo">
-                <div className="nav-logo-icon">
+                <div className="nav-logo-icon" onClick={handleLogoClick}>
                   <Shield size={24} color="white" />
                 </div>
                 <div className="nav-title">
@@ -387,8 +574,19 @@ export default function Login({ onLogin, logoSrc = "/logo-rm.png?height=40&width
                       <p className="creators-names">Lin Čadež, Maj Mohar, Marko Vidic, Anej Grojzdek</p>
                     </div>
                   </div>
+                  <div className="team-credits">
+                    <p className="credits-text">
+                      Made with 💚 by 4 students from Vegova Ljubljana. We promise we didn't steal real money to make
+                      this.
+                    </p>
+                  </div>
                   <p className="footer-text">Authorized personnel only. All access is monitored and logged.</p>
                   <p className="footer-copyright">© {new Date().getFullYear()} SimBank EU. All rights reserved.</p>
+                  <div className="secret-link">
+                    <span className="dont-click-me" onClick={() => navigate("/banknote")}>
+                      Don't click me
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

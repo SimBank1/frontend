@@ -481,6 +481,42 @@
     margin: 0;
   }
   
+  /* VegCoin Card */
+  .vegcoin-card {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+  }
+  
+  .vegcoin-header {
+    background: linear-gradient(135deg, #d97706, #b45309);
+  }
+  
+  .vegcoin-balance {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .vegcoin-amount {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #92400e;
+  }
+  
+  .vegcoin-symbol {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #b45309;
+  }
+  
+  .vegcoin-description {
+    color: #92400e;
+    font-weight: 500;
+    margin: 0;
+  }
+  
   /* Info Cards */
   .info-card {
     margin-bottom: 20px;

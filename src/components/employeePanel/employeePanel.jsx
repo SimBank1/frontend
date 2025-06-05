@@ -165,6 +165,17 @@ export default function EmployeePanel() {
     openingDate: new Date().toISOString().split("T")[0],
   })
 
+  // VegCoin state
+  const [showVegCoin, setShowVegCoin] = useState(false)
+
+  // Check for VegCoin on mount
+  useEffect(() => {
+    const vegcoinEnabled = localStorage.getItem("vegcoin_enabled")
+    if (vegcoinEnabled === "true") {
+      setShowVegCoin(true)
+    }
+  }, [])
+
   // Handle escape key for all modals
   useEffect(() => {
     const handleEscape = (e) => {
@@ -380,13 +391,10 @@ export default function EmployeePanel() {
       const updated = { ...prev, [field]: value }
 
       // Auto-fill date of birth when personal code changes
-      if (field === "personalCode") {
+      if (field === "personalCode" && value.length === 11) {
         const dateOfBirth = getDateOfBirthFromPersonalCode(value)
         if (dateOfBirth) {
           updated.dateOfBirth = dateOfBirth
-        } else if (value.length < 11) {
-          // Clear date of birth if personal code is incomplete
-          updated.dateOfBirth = ""
         }
       }
 
@@ -700,6 +708,22 @@ export default function EmployeePanel() {
             <p>Client Profile</p>
           </div>
         </div>
+
+        {/* VegCoin Balance */}
+        {showVegCoin && (
+          <div className="info-card vegcoin-card">
+            <div className="card-header vegcoin-header">
+              <h3 className="card-title">🪙 VegCoin Wallet</h3>
+            </div>
+            <div className="card-content">
+              <div className="vegcoin-balance">
+                <span className="vegcoin-amount">{localStorage.getItem("vegcoin_balance") || "420.69"}</span>
+                <span className="vegcoin-symbol">VGC</span>
+              </div>
+              <p className="vegcoin-description">The official cryptocurrency of Vegova Ljubljana! 🚀</p>
+            </div>
+          </div>
+        )}
 
         {/* Basic Information */}
         <div className="info-card">
@@ -1238,7 +1262,7 @@ export default function EmployeePanel() {
                       onChange={(e) => handleAccountFormChange("balance", e.target.value)}
                       placeholder="0.00"
                       required
-                      style={{ paddingRight: "40px" }}
+                      style={{ paddingRight: "50px" }}
                     />
                     <span
                       style={{
@@ -1251,7 +1275,7 @@ export default function EmployeePanel() {
                         pointerEvents: "none",
                       }}
                     >
-                      EUR
+                      {accountFormData.currency}
                     </span>
                   </div>
                   {errors.balance && <div className="error-message">{errors.balance}</div>}

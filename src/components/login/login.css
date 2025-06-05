@@ -99,6 +99,12 @@
     height: 40px;
     background: linear-gradient(135deg, #7c3aed, #3b82f6);
     border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .nav-logo-icon:hover {
+    transform: scale(1.1);
   }
   
   .nav-title {
@@ -545,6 +551,20 @@
     margin: 0;
   }
   
+  .team-credits {
+    background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbow 3s ease-in-out infinite;
+  }
+  
+  .credits-text {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+  }
+  
   .footer-text {
     font-size: 12px;
     color: #6b7280;
@@ -554,6 +574,22 @@
   .footer-copyright {
     font-size: 12px;
     color: #9ca3af;
+  }
+  
+  .secret-link {
+    margin-top: 8px;
+  }
+  
+  .dont-click-me {
+    font-size: 8px;
+    color: #d1d5db;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+  }
+  
+  .dont-click-me:hover {
+    opacity: 0.7;
   }
   
   /* Popup Modal */
@@ -711,6 +747,145 @@
   
   .popup-button:hover {
     background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  }
+  
+  /* Easter Egg Animations */
+  .matrix-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    pointer-events: none;
+  }
+  
+  .matrix-char {
+    position: absolute;
+    color: #00ff00;
+    font-family: "Courier New", monospace;
+    font-size: 18px;
+    animation: matrixFall linear infinite;
+  }
+  
+  @keyframes matrixFall {
+    0% {
+      transform: translateY(-100vh);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh);
+      opacity: 0;
+    }
+  }
+  
+  .vegova-animation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  
+  .vegova-animation-content {
+    text-align: center;
+    position: relative;
+  }
+  
+  .vegova-animation-logo {
+    width: 200px;
+    height: auto;
+    animation: vegovaGlow 1s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8));
+  }
+  
+  .vegova-animation-text {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+    margin-top: 20px;
+    animation: textPulse 0.5s ease-in-out infinite alternate;
+  }
+  
+  .vegova-animation-sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .sparkle {
+    position: absolute;
+    font-size: 2rem;
+    animation: sparkleFloat 2s ease-in-out infinite;
+  }
+  
+  @keyframes vegovaGlow {
+    0% {
+      transform: scale(1) rotate(0deg);
+      filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8));
+    }
+    100% {
+      transform: scale(1.1) rotate(5deg);
+      filter: drop-shadow(0 0 30px rgba(139, 92, 246, 1));
+    }
+  }
+  
+  @keyframes textPulse {
+    0% {
+      transform: scale(1);
+      text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+    }
+    100% {
+      transform: scale(1.05);
+      text-shadow: 0 0 30px rgba(139, 92, 246, 1);
+    }
+  }
+  
+  @keyframes sparkleFloat {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+      opacity: 0.5;
+    }
+  }
+  
+  @keyframes rainbow {
+    0%,
+    100% {
+      background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    25% {
+      background: linear-gradient(45deg, #3b82f6, #10b981);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    50% {
+      background: linear-gradient(45deg, #10b981, #f59e0b);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    75% {
+      background: linear-gradient(45deg, #f59e0b, #ef4444);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
   }
   
   /* Animations */
