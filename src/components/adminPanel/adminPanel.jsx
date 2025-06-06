@@ -811,6 +811,13 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               <h1>SimBank</h1>
               <p>Admin Portal</p>
             </div>
+            <div className="vegova-logo-sidebar">
+              <img
+                src="/vegova-logo.png"
+                alt="Vegova Ljubljana"
+                className="vegova-logo-sidebar-img"
+              />
+            </div>
           </div>
           <div className="search-container">
             <Search className="search-icon" />

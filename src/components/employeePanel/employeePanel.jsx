@@ -1148,6 +1148,13 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
               <h1>SimBank</h1>
               <p>Employee Portal</p>
             </div>
+            <div className="vegova-logo-sidebar">
+              <img
+                src="/vegova-logo.png"
+                alt="Vegova Ljubljana"
+                className="vegova-logo-sidebar-img"
+              />
+            </div>
           </div>
           <div className="search-container">
             <Search className="search-icon" />
