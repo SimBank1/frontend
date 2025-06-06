@@ -21,122 +21,20 @@ import {
 } from "lucide-react"
 import "./AdminPanel.css"
 
-// Mock data
-const mockData = [
-  {
-    id: "1",
-    type: "client",
-    firstName: "Jonas",
-    lastName: "Petraitis",
-    personalCode: "38901234567",
-    email: "jonas.petraitis@email.com",
-    phone: "037654321",
-    documentType: "ID Card",
-    documentNumber: "AB123456",
-    documentExpiry: "2028-05-15",
-    dateOfBirth: "1989-01-23",
-    registrationAddress: "Lithuania, Vilnius, Gedimino pr. 1-1, LT-01103",
-    correspondenceAddress: "Lithuania, Vilnius, Gedimino pr. 1-1, LT-01103",
-    marketingConsent: true,
-    accounts: [
-      {
-        id: "acc1",
-        iban: "LT123456789012345678",
-        currency: "EUR",
-        balance: 2500.5,
-        cardType: "Debeto",
-        servicePlan: "Gold",
-        openingDate: "2024-01-15",
-      },
-    ],
-    crmEntries: [
-      {
-        id: "crm1",
-        date: "2024-12-01",
-        contactType: "Phone",
-        content:
-          "Client called regarding account balance inquiry. Provided current balance information and explained recent transactions.",
-        employeeName: "Marija Kazlauskienė",
-      },
-      {
-        id: "crm2",
-        date: "2024-11-28",
-        contactType: "Email",
-        content:
-          "Sent welcome package and account setup instructions. Client confirmed receipt and expressed satisfaction with service.",
-        employeeName: "Marija Kazlauskienė",
-      },
-    ],
-  },
-  {
-    id: "2",
-    type: "employee",
-    firstName: "Marija",
-    lastName: "Kazlauskienė",
-    email: "marija.kazlauskiene@company.com",
-    username: "mkazlauskiene",
-    password: "SecurePass12sdgsfdgs",
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "3",
-    type: "client",
-    firstName: "Petras",
-    lastName: "Jonaitis",
-    personalCode: "37805123456",
-    email: "petras.jonaitis@email.com",
-    phone: "037987654",
-    documentType: "Passport",
-    documentNumber: "AB987654",
-    documentExpiry: "2027-03-20",
-    dateOfBirth: "1978-05-12",
-    registrationAddress: "Lithuania, Kaunas, Laisvės al. 10-5, LT-44240",
-    correspondenceAddress: "Lithuania, Kaunas, Laisvės al. 10-5, LT-44240",
-    marketingConsent: false,
-    accounts: [
-      {
-        id: "acc2",
-        iban: "LT987654321098765432",
-        currency: "EUR",
-        balance: 1200.0,
-        cardType: "Kredito",
-        servicePlan: "Standard",
-        openingDate: "2024-02-01",
-      },
-    ],
-    crmEntries: [
-      {
-        id: "crm3",
-        date: "2024-11-30",
-        contactType: "Visit",
-        content:
-          "Client visited branch to discuss loan options. Provided information about available products and requirements.",
-        employeeName: "Marija Kazlauskienė",
-      },
-    ],
-  },
-  {
-    id: "4",
-    type: "employee",
-    firstName: "Tomas",
-    lastName: "Petrauskas",
-    email: "tomas.petrauskas@company.com",
-    username: "tpetrauskas",
-    password: "MyPassword456",
-    createdAt: "2024-02-15",
-  },
-]
 
-export default function AdminPanel() {
+export default function AdminPanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [showPassword, setShowPassword] = useState({})
-  const [data, setData] = useState(mockData)
+
+  const merged = [...initialData.clients, ...initialData.employees];
+  const [data, setData] = useState(merged|| [])
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -195,23 +93,25 @@ export default function AdminPanel() {
   const filteredData = useMemo(() => {
     let filtered = data
 
-    // Apply type filter
-    if (activeFilter === "employees") {
-      filtered = filtered.filter((person) => person.type === "employee")
-    } else if (activeFilter === "clients") {
-      filtered = filtered.filter((person) => person.type === "client")
+    if (activeFilter === "clients") {
+      filtered = filtered.filter((person) => person?.marketingConsent !== undefined);
+    } else if (activeFilter === "employees") {
+      filtered = filtered.filter((person) => person?.marketingConsent === undefined);
     }
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(
-        (person) =>
-          person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm)),
-      )
+      const lowerSearch = searchTerm.toLowerCase();
+    
+      filtered = filtered.filter((person) =>
+        (person.firstName?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.personalCode?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.docNumber?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.lastName?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm))
+      );
     }
-
+    
     return filtered
   }, [searchTerm, activeFilter, data])
 
@@ -385,23 +285,27 @@ export default function AdminPanel() {
   }
 
   const renderPersonList = () => {
+    console.log(filteredData)
     return filteredData.map((person) => (
       <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
         <div className="user-card-content">
           <div className={`user-icon ${person.type}`}>
-            {person.type === "employee" ? <Briefcase size={20} /> : <User size={20} />}
+            {person.marketingConsent === undefined ? <Briefcase size={20} /> : <User size={20} />}
           </div>
           <div className="user-info">
             <div className="user-header">
               <h3 className="user-name">
                 {person.firstName} {person.lastName}
               </h3>
-              <span className={`user-badge ${person.type}`}>{person.type}</span>
+              <span className={`user-badge ${person.marketingConsent !== undefined ? 'client' : 'employee'}`}>
+              {person.marketingConsent !== undefined ? 'client' : 'employee'}
+            </span>
+
             </div>
-            {person.type === "client" && person.crmEntries && person.crmEntries.length > 0 && (
+            {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 && (
               <p className="user-preview">Last interaction: {person.crmEntries[0].date}</p>
             )}
-            {person.type === "employee" && <p className="user-preview">{person.email}</p>}
+            {person.marketingConsent === undefined && <p className="user-preview">{person.email}</p>}
           </div>
         </div>
       </div>
@@ -740,7 +644,7 @@ export default function AdminPanel() {
 
         {/* User List */}
         <div className="user-list">
-          <h3>Users (alphabetical order):</h3>
+          <h3>Users:</h3>
           {renderPersonList()}
         </div>
 
