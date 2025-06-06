@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { User, Briefcase, Search, LogOut, UserPlus, Eye, EyeOff, X } from "lucide-react"
 import "./AdminPanel.css"
+import { getServerLink } from "@/server_link";
 
 export default function AdminPanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -98,16 +99,15 @@ export default function AdminPanel({ data: initialData }) {
 
     // Apply search filter
     if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase()
+      const lowerSearch = searchTerm.toLowerCase();
 
-      filtered = filtered.filter(
-        (person) =>
-          (person.firstName?.toLowerCase() ?? "").includes(lowerSearch) ||
-          (person.personalCode?.toLowerCase() ?? "").includes(lowerSearch) ||
-          (person.docNumber?.toLowerCase() ?? "").includes(lowerSearch) ||
-          (person.lastName?.toLowerCase() ?? "").includes(lowerSearch) ||
-          (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm)),
-      )
+      filtered = filtered.filter((person) =>
+        (person.firstName?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.personalCode?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.docNumber?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.lastName?.toLowerCase() ?? '').includes(lowerSearch) ||
+        (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm))
+      );
     }
 
     return filtered
@@ -124,9 +124,27 @@ export default function AdminPanel({ data: initialData }) {
     }))
   }
 
-  const handleLogout = () => {
-    document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    window.location.href = "/login"
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(getServerLink() + "/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+
+
+      if (response.ok) {
+        window.location.href = "/login"
+
+      }
+
+    } catch (error) {
+      console.error(error.message)
+    }
+
   }
 
   const confirmLogout = () => {
@@ -296,6 +314,270 @@ export default function AdminPanel({ data: initialData }) {
         </div>
       </div>
     ))
+  }
+
+  const renderPersonalInfo = () => {
+    if (!selectedPerson) {
+      return (
+        <div className="empty-state">
+          <div className="empty-content">
+            <User className="empty-icon" />
+            <h3 className="empty-title">Personal Information</h3>
+            <p className="empty-description">Select a person to view their details</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {selectedPerson.type === "employee" ? (
+              <Briefcase size={24} color="white" />
+            ) : (
+              <User size={24} color="white" />
+            )}
+          </div>
+          <div className="profile-info">
+            <h2>
+              {selectedPerson.firstName} {selectedPerson.lastName}
+            </h2>
+            <p>{selectedPerson.type}</p>
+          </div>
+        </div>
+
+        {/* Additional Information for Clients */}
+        {selectedPerson.type === "client" && (
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <Calendar size={16} />
+                Additional Information
+              </h3>
+            </div>
+            <div className="card-content">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "16px",
+                }}
+              >
+                <div className="info-item">
+                  <div className="info-label">Document Expiry</div>
+                  <div className="info-value">{selectedPerson.documentExpiry}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Marketing Consent</div>
+                  <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
+                </div>
+              </div>
+              <div className="info-item">
+                <div className="info-label">Correspondence Address</div>
+                <div className="info-value">{selectedPerson.correspondenceAddress}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Basic Information */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <User size={16} />
+              Basic Information
+            </h3>
+          </div>
+          <div className="card-content">
+            {selectedPerson.marketingConsent !== undefined ? (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Personal Code</div>
+                  <div className="info-value">{selectedPerson.personalCode}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Date of Birth</div>
+                  <div className="info-value">{selectedPerson.dateOfBirth}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.docType}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.docNumber}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{selectedPerson.username}</div>
+                  <div className="info-label">email</div>
+                  <div className="info-value">{selectedPerson.email}</div>
+
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Password</div>
+                  <div className="password-container">
+                    <span className="password-value">
+                      {showPassword[selectedPerson.id]
+                        ? selectedPerson.password
+                        : "*".repeat(selectedPerson.password.length)}
+                    </span>
+                    <button
+                      className="password-toggle2"
+                      onMouseDown={() => togglePasswordVisibility(selectedPerson.id, true)}
+                      onMouseUp={() => togglePasswordVisibility(selectedPerson.id, false)}
+                      onMouseLeave={() => togglePasswordVisibility(selectedPerson.id, false)}
+                    >
+                      {showPassword[selectedPerson.id] ? (
+                        <EyeOff size={16} className="password-icon" />
+                      ) : (
+                        <Eye size={16} className="password-icon" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <Mail size={16} />
+              Contact
+            </h3>
+          </div>
+          <div className="card-content">
+            <div className="contact-item">
+              <Mail className="contact-icon" />
+              <span>{selectedPerson.email}</span>
+            </div>
+            {/* Only show phone for clients */}
+            {selectedPerson.type === "client" && (
+              <div className="contact-item">
+                <User size={16} className="contact-icon" />
+                <span>{selectedPerson.phone}</span>
+              </div>
+            )}
+            {selectedPerson.type === "client" && (
+              <div className="address-item">
+                <MapPin size={16} className="address-icon" />
+                <div className="address-content">
+                  <div className="info-label">Registration Address</div>
+                  <div className="info-value">{selectedPerson.registrationAddress}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {selectedPerson.marketingConsent !== undefined && selectedPerson.accounts?.length > 0 ? (
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <CreditCard size={16} />
+                Bank Accounts
+              </h3>
+            </div>
+            <div className="card-content">
+              {selectedPerson.accounts.map((account) => (
+                <div key={account.id} className="account-item">
+                  <div className="account-header">
+                    <span className="account-iban">{account.iban}</span>
+                    <span className="account-badge">{account.currency}</span>
+                  </div>
+                  <div className="account-details">
+                    <div className="account-detail">
+                      <div className="info-label">Balance</div>
+                      <div className="info-value">
+                        {account.balance.toFixed(2)} {account.currency}
+                      </div>
+                    </div>
+                    <div className="account-detail">
+                      <div className="info-label">Plan</div>
+                      <div className="info-value">{account.servicePlan}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+      </div>
+    )
+  }
+
+  const renderCRMRequests = () => {
+    if (!selectedPerson) {
+      return (
+        <div className="empty-state">
+          <div className="empty-content">
+            <FileText className="empty-icon" />
+            <h2 className="empty-title">Customer Relations Management</h2>
+            <p className="empty-description">Select a client to view CRM requests</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (selectedPerson.type === "employee") {
+      return (
+        <div className="empty-state">
+          <div className="empty-content">
+            <Briefcase className="empty-icon" />
+            <h2 className="empty-title">Employee Profile</h2>
+            <p className="empty-description">Employees do not have CRM data</p>
+            <p className="empty-description">Personal information is shown in the left panel</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="crm-header">
+          <div className="crm-info">
+            <div className="crm-avatar">
+              <FileText size={24} color="white" />
+            </div>
+            <div className="crm-title">
+              <h2>CRM History</h2>
+              <p>
+                {selectedPerson.firstName} {selectedPerson.lastName}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* CRM Entries */}
+        <div className="crm-entries">
+          {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
+            selectedPerson.crmEntries.map((entry) => (
+              <div key={entry.id} className="crm-entry">
+                <div className="crm-entry-header">
+                  <span className="crm-entry-badge">{entry.contactType}</span>
+                  <span className="crm-entry-meta">{entry.date}</span>
+                  <span className="crm-entry-meta">by {entry.employeeName}</span>
+                </div>
+                <p className="crm-entry-content">{entry.content}</p>
+              </div>
+            ))
+          ) : (
+            <div className="no-data">
+              <FileText className="no-data-icon" />
+              <p className="no-data-text">No CRM entries found for this client</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
