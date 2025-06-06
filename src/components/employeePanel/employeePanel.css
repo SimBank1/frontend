@@ -1318,3 +1318,14 @@ body {
     width: 100%;
   }
 }
+
+
+.vegova-logo-sidebar {
+  margin-left: auto;
+}
+
+.vegova-logo-sidebar-img {
+  height: 28px;
+  width: auto;
+  opacity: 0.8;
+}
