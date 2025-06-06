@@ -704,85 +704,41 @@ export default function EmployeePanel({ data: initialData }) {
         </div>
 
         {/* Basic Information */}
-        <div className="info-card">
-        <div className="info-card">
-          <div className="card-header">
+        <div className="info-card"
           <div className="card-header">
             <h3 className="card-title">
-            <h3 className="card-title">
-              <User size={16} />
               <User size={16} />
               Basic Information
-              Basic Information
-            </h3>
             </h3>
           </div>
-          </div>
-          <div className="card-content">
           <div className="card-content">
             <div className="info-item">
-            <div className="info-item">
-              <div className="info-label">Personal Code</div>
               <div className="info-label">Personal Code</div>
               <div className="info-value">{selectedPerson.personalCode}</div>
-              <div className="info-value">{selectedPerson.personalCode}</div>
             </div>
-            </div>
-            <div className="info-item">
             <div className="info-item">
               <div className="info-label">Date of Birth</div>
-              <div className="info-label">Date of Birth</div>
-              <div className="info-value">{selectedPerson.dateOfBirth}</div>
               <div className="info-value">{selectedPerson.dateOfBirth}</div>
             </div>
-            </div>
-            <div className="info-item">
             <div className="info-item">
               <div className="info-label">Document Type</div>
-              <div className="info-label">Document Type</div>
-              <div className="info-value">{selectedPerson.documentType}</div>
               <div className="info-value">{selectedPerson.docType}</div>
             </div>
-            </div>
             <div className="info-item">
-            <div className="info-item">
-              <div className="info-label">Document Number</div>
-              <div className="info-label">Document Number</div>
-              <div className="info-value">{selectedPerson.documentNumber}</div>
               <div className="info-value">{selectedPerson.docNumber}</div>
             </div>
-            </div>
-            <div className="info-item">
             <div className="info-item">
               <div className="info-label">Document Expiry</div>
-              <div className="info-label">Document Expiry</div>
-              <div className="info-value">{selectedPerson.documentExpiry}</div>
               <div className="info-value">{selectedPerson.docExpiryDate}</div>
             </div>
-            </div>
-            <div className="info-item">
             <div className="info-item">
               <div className="info-label">Other Bank Accounts</div>
-              <div className="info-label">Other Bank Accounts</div>
-              <div className="info-value">
               <div className="info-value">{selectedPerson.otherBankAccounts || "None"}</div>
-                {selectedPerson.otherBankAccounts || "None"}
-              </div>
-            </div>
             </div>
             <div className="info-item">
-            <div className="info-item">
               <div className="info-label">Marketing Consent</div>
-              <div className="info-label">Marketing Consent</div>
-              <div className="info-value">
               <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
-                {selectedPerson.marketingConsent ? "Yes" : "No"}
-              </div>
             </div>
-            </div>
-          </div>
-          </div>
-        </div>
         </div>
 
         {/* Contact Information */}
