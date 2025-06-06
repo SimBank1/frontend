@@ -732,7 +732,24 @@ export default function EmployeePanel({ data: initialData }) {
             </div>
             <div className="contact-item">
               <Phone className="contact-icon" />
-              <span>{selectedPerson.phone}</span>
+              <span>
+  {(() => {
+    if (!selectedPerson?.phoneNumber) return "";
+
+    const raw = selectedPerson.phoneNumber.replace(/\s+/g, "");
+    let number = raw.startsWith("8") ? raw.slice(1) : raw;
+
+    if (number.length === 8) {
+      const part1 = number.slice(0, 3);  // first 3 digits
+      const part2 = number.slice(3, 5);  // next 2 digits
+      const part3 = number.slice(5, 8);  // last 3 digits
+      return `+370 ${part1} ${part2} ${part3}`;
+    }
+
+    return `+370 ${number}`;
+  })()}
+</span>
+
             </div>
             <div className="address-item">
               <MapPin className="address-icon" />
