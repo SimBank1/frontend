@@ -120,11 +120,75 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         if (isDeleteClientOpen) closeModal("deleteClient")
         if (isLogoutOpen) closeModal("logout")
       }
-    }
-    document.addEventListener("keydown", handleEscape)
-    return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddClientOpen, isAddAccountOpen, isAddCrmOpen, isEditCrmOpen, isDeleteClientOpen, isLogoutOpen, searchTerm])
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isAddClientOpen, isAddAccountOpen, isAddCrmOpen, isEditCrmOpen, isLogoutOpen]);
 
+
+
+  const handleCreateNewClient = async (e) => {
+    e.preventDefault();
+  
+    const payload = {
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
+      email: clientFormData.email,
+      personal_code: clientFormData.personalCode,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      date_of_birth: clientFormData.dateOfBirth,
+      phone_number: clientFormData.phone,
+      marketing_consent: clientFormData.marketingConsent,
+      reg_address: {
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion,
+        city: clientFormData.registrationCity,
+        street: clientFormData.registrationStreet,
+        house_number: clientFormData.registrationHouse,
+        apartment: clientFormData.registrationApartment,
+        postal_code: clientFormData.registrationPostalCode
+      },
+      cor_address: {
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion,
+        city: clientFormData.correspondenceCity,
+        street: clientFormData.correspondenceStreet,
+        house_number: clientFormData.correspondenceHouse,
+        apartment: clientFormData.correspondenceApartment,
+        postal_code: clientFormData.correspondencePostalCode
+      },
+      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
+      other_bank_accounts: JSON.stringify({
+        bank: "ABC Bank",
+        iban: "DE89370400440532013000"
+      })
+    };
+  
+    try {
+      const response = await fetch("/createClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create client");
+      }
+  
+      alert("Client created successfully");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error creating client");
+    }
+  };
+
+  
+
+  
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
     setTimeout(() => {
@@ -1264,6 +1328,137 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   </div>
 
                   <div className="form-group">
+                    <label className="form-label">Document Type *</label>
+                    <select
+                      className="form-select"
+                      value={clientFormData.documentType}
+                      onChange={(e) => handleClientFormChange("documentType", e.target.value)}
+                      required
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="ID Card">ID Card</option>
+                      <option value="Driver's License">
+                        Driver's License
+                      </option>
+                      <option value="Temporary Residence Permit">
+                        Residence Permit
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Number *</label>
+                    <input
+                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
+                      value={clientFormData.documentNumber}
+                      onChange={(e) => handleClientFormChange("documentNumber", e.target.value)}
+                      placeholder="8 alphanumeric characters"
+                      required
+                    />
+                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Expiry *</label>
+                    <input
+                      type="date"
+                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
+                      value={clientFormData.documentExpiry}
+                      onChange={(e) => handleClientFormChange("documentExpiry", e.target.value)}
+                      required
+                    />
+                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Date of Birth (Auto-filled)</label>
+                    <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Registration Address *</label>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                        value={clientFormData.registrationCountry}
+                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Region *</label>
+                      <input
+                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
+                        value={clientFormData.registrationRegion}
+                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
+                        placeholder="Region"
+                        required
+                      />
+                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">City/Village *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Street *</label>
+                      <input
+                        className={`form-input ${errors.registrationStreet ? "error" : ""}`}
+                        value={clientFormData.registrationStreet}
+                        onChange={(e) => handleClientFormChange("registrationStreet", e.target.value)}
+                        placeholder="Street name"
+                        required
+                      />
+                      {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">House *</label>
+                      <input
+                        className={`form-input ${errors.registrationHouse ? "error" : ""}`}
+                        value={clientFormData.registrationHouse}
+                        onChange={(e) => handleClientFormChange("registrationHouse", e.target.value)}
+                        placeholder="House number"
+                        required
+                      />
+                      {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apartment</label>
+                      <input
+                        className={`form-input ${errors.registrationApartment ? "error" : ""}`}
+                        value={clientFormData.registrationApartment}
+                        onChange={(e) => handleClientFormChange("registrationApartment", e.target.value)}
+                        placeholder="Apartment (optional)"
+                      />
+                      {errors.registrationApartment && (
+                        <div className="error-message">{errors.registrationApartment}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Postal Code *</label>
+                    <input
+                      className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                      value={clientFormData.registrationPostalCode}
+                      onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                      placeholder="Postal code"
+                      required
+                    />
+                    {errors.registrationPostalCode && (
+                      <div className="error-message">{errors.registrationPostalCode}</div>
+                    )}
                     <label className="form-label">Second Phone (Optional)</label>
                     <div className="phone-input-group">
                       <select
@@ -1309,7 +1504,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
                     Cancel
                   </button>
-                  <button type="submit" className="button-primary">
+                  <button type="submit" className="button-primary" onClick={handleCreateNewClient}>
                     Create Client
                   </button>
                 </div>

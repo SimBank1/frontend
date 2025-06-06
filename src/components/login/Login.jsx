@@ -455,66 +455,6 @@ export default function Login({ onLogin }) {
 
         {/* Main Content */}
         <div className="main-content">
-          {/* Left Side - Info */}
-          <div className="info-section">
-            <div className="info-header">
-              <div className="info-title-section">
-                <div className="info-icon">
-                  <Users size={32} color="white" />
-                </div>
-                <div className="info-title">
-                  <h1>Staff Portal</h1>
-                  <p>SimBank Internal Access</p>
-                </div>
-              </div>
-
-              <p className="info-description">
-                Secure access for administrators and employees. Manage operations, oversee accounts, and maintain the
-                highest standards of banking excellence.
-              </p>
-            </div>
-
-            <div className="features-grid">
-              <div className="feature-card">
-                <div className="feature-header">
-                  <Shield size={20} color="white" />
-                  <h4 className="feature-title">Admin Dashboard</h4>
-                </div>
-                <p className="feature-description">Full system control and oversight capabilities</p>
-              </div>
-
-              <div className="feature-card">
-                <div className="feature-header">
-                  <Users size={20} color="white" />
-                  <h4 className="feature-title">Employee Workspace</h4>
-                </div>
-                <p className="feature-description">Customer service and account management tools</p>
-              </div>
-
-              <div className="feature-card">
-                <div className="feature-header">
-                  <Lock size={20} color="white" />
-                  <h4 className="feature-title">Secure Environment</h4>
-                </div>
-                <p className="feature-description">End-to-end encryption and audit logging</p>
-              </div>
-
-              <div className="feature-card">
-                <div className="feature-header">
-                  <CheckCircle size={20} color="white" />
-                  <h4 className="feature-title">Compliance Ready</h4>
-                </div>
-                <p className="feature-description">EU banking regulations and GDPR compliant</p>
-              </div>
-            </div>
-
-            <div className="security-notice">
-              <p className="security-text">
-                <Lock size={14} />
-                This is a restricted access portal. All activities are monitored and logged.
-              </p>
-            </div>
-          </div>
 
           {/* Right Side - Login Form */}
           <div className="login-form-section">
