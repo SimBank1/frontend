@@ -18,6 +18,7 @@ export default function Login({ onLogin }) {
     isClosing: false,
   })
   const [authError, setAuthError] = useState(false)
+  const [serverErr, setServerErr] = useState(false)
 
   const navigate = useNavigate()
   const [cookies, setCookie] = useCookies(["sessionCokie"])
@@ -276,6 +277,8 @@ export default function Login({ onLogin }) {
       const data = await response.json()
 
       if (!response.ok) {
+        setServerErr(true)
+        console.log("Server error:", data)
         throw new Error(data.message || "Login failed")
       }
 
@@ -286,6 +289,9 @@ export default function Login({ onLogin }) {
         setIsLoading(false)
         window.location.href = "/dashboard";
       }
+    } catch(error){
+      setServerErr(true)
+      console.log("Error during login:", error)
     } finally {
       setIsLoading(false)
       
@@ -625,6 +631,29 @@ export default function Login({ onLogin }) {
                     >
                       <AlertCircle size={16} color="#dc2626" />
                       <span>Wrong password or username</span>
+                    </div>
+                  )}
+                  {serverErr && (
+                    <div
+                      className="auth-error-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "12px 16px",
+                        marginBottom: "16px",
+                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        borderRadius: "12px",
+                        color: "#dc2626",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        backdropFilter: "blur(8px)",
+                        animation: "fadeIn 0.3s ease-out",
+                      }}
+                    >
+                      <AlertCircle size={16} color="#dc2626" />
+                      <span>Server not reachable!</span>
                     </div>
                   )}
 
