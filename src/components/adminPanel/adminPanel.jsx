@@ -91,7 +91,7 @@ export default function AdminPanel({ data: initialData }) {
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    let filtered = data
+    let filtered = data   
 
     if (activeFilter === "clients") {
       filtered = filtered.filter((person) => person?.marketingConsent !== undefined);
@@ -386,7 +386,7 @@ export default function AdminPanel({ data: initialData }) {
             </h3>
           </div>
           <div className="card-content">
-            {selectedPerson.type === "client" ? (
+            {selectedPerson.marketingConsent !== undefined ? (
               <>
                 <div className="info-item">
                   <div className="info-label">Personal Code</div>
@@ -398,11 +398,11 @@ export default function AdminPanel({ data: initialData }) {
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Type</div>
-                  <div className="info-value">{selectedPerson.documentType}</div>
+                  <div className="info-value">{selectedPerson.docType}</div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Number</div>
-                  <div className="info-value">{selectedPerson.documentNumber}</div>
+                  <div className="info-value">{selectedPerson.docNumber}</div>
                 </div>
               </>
             ) : (
@@ -410,6 +410,9 @@ export default function AdminPanel({ data: initialData }) {
                 <div className="info-item">
                   <div className="info-label">Username</div>
                   <div className="info-value">{selectedPerson.username}</div>
+                  <div className="info-label">email</div>
+                  <div className="info-value">{selectedPerson.email}</div>
+
                 </div>
                 <div className="info-item">
                   <div className="info-label">Password</div>
@@ -432,10 +435,6 @@ export default function AdminPanel({ data: initialData }) {
                       )}
                     </button>
                   </div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Created</div>
-                  <div className="info-value">{selectedPerson.createdAt}</div>
                 </div>
               </>
             )}
@@ -474,39 +473,39 @@ export default function AdminPanel({ data: initialData }) {
           </div>
         </div>
 
-        {/* Bank Accounts for Clients */}
-        {selectedPerson.type === "client" && selectedPerson.accounts && (
-          <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <CreditCard size={16} />
-                Bank Accounts
-              </h3>
+        {selectedPerson.marketingConsent !== undefined && selectedPerson.accounts?.length > 0 ? (
+  <div className="info-card">
+    <div className="card-header">
+      <h3 className="card-title">
+        <CreditCard size={16} />
+        Bank Accounts
+      </h3>
+    </div>
+    <div className="card-content">
+      {selectedPerson.accounts.map((account) => (
+        <div key={account.id} className="account-item">
+          <div className="account-header">
+            <span className="account-iban">{account.iban}</span>
+            <span className="account-badge">{account.currency}</span>
+          </div>
+          <div className="account-details">
+            <div className="account-detail">
+              <div className="info-label">Balance</div>
+              <div className="info-value">
+                {account.balance.toFixed(2)} {account.currency}
+              </div>
             </div>
-            <div className="card-content">
-              {selectedPerson.accounts.map((account) => (
-                <div key={account.id} className="account-item">
-                  <div className="account-header">
-                    <span className="account-iban">{account.iban}</span>
-                    <span className="account-badge">{account.currency}</span>
-                  </div>
-                  <div className="account-details">
-                    <div className="account-detail">
-                      <div className="info-label">Balance</div>
-                      <div className="info-value">
-                        {account.balance.toFixed(2)} {account.currency}
-                      </div>
-                    </div>
-                    <div className="account-detail">
-                      <div className="info-label">Plan</div>
-                      <div className="info-value">{account.servicePlan}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="account-detail">
+              <div className="info-label">Plan</div>
+              <div className="info-value">{account.servicePlan}</div>
             </div>
           </div>
-        )}
+        </div>
+      ))}
+    </div>
+  </div>
+) : null}
+
       </div>
     )
   }
