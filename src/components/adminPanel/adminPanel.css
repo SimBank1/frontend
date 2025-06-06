@@ -187,11 +187,18 @@
   border-left: 4px solid #8b5cf6;
   border-radius: 8px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .user-card:hover {
   background-color: #f8fafc;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.user-card.selected {
+  background-color: #f0f9ff;
+  border-left-color: #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .user-card-content {
@@ -234,6 +241,13 @@
   font-size: 14px;
   word-break: break-words;
   line-height: 1.3;
+}
+
+.highlight-search {
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 1px 2px;
+  border-radius: 2px;
 }
 
 .user-badge {
@@ -279,11 +293,11 @@
 
 .bottom-buttons {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .primary-button {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -315,6 +329,7 @@
   color: #8b5cf6;
   cursor: pointer;
   transition: all 0.2s;
+  margin: 0 auto;
 }
 
 .icon-button:hover {
@@ -322,7 +337,7 @@
 }
 
 .middle-panel {
-  width: 380px; /* Made narrower to match EmployeePanel */
+  width: 380px;
   background-color: white;
   border-right: 1px solid #e2e8f0;
   overflow-y: auto;
@@ -403,6 +418,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  position: relative;
 }
 
 .profile-avatar {
@@ -428,6 +444,23 @@
   text-transform: capitalize;
 }
 
+.delete-client-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-client-button:hover {
+  background: #dc2626;
+}
+
 .info-card {
   margin-bottom: 16px;
   background: white;
@@ -440,6 +473,9 @@
   background: linear-gradient(to right, #8b5cf6, #3b82f6);
   color: white;
   padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .card-title {
@@ -449,6 +485,24 @@
   font-size: 14px;
   font-weight: 600;
   margin: 0;
+}
+
+.add-account-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-account-button:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .card-content {
@@ -530,32 +584,6 @@
   font-weight: 500;
 }
 
-.address-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.address-item:last-child {
-  margin-bottom: 0;
-}
-
-.address-icon {
-  width: 16px;
-  height: 16px;
-  color: #8b5cf6;
-  margin-top: 2px;
-}
-
-.address-content .info-label {
-  margin-bottom: 2px;
-}
-
-.address-content .info-value {
-  color: #4b5563;
-}
-
 .password-container {
   display: flex;
   align-items: center;
@@ -566,21 +594,22 @@
   font-size: 14px;
   color: #111827;
   font-family: monospace;
+  flex: 1;
 }
 
-.password-toggle2 {
-  position: relative;
+.copy-button {
   background: none;
   border: none;
   color: #6b7280;
   cursor: pointer;
   padding: 4px;
-  border-radius: 50%;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
-.password-toggle2:hover {
+.copy-button:hover {
   color: #374151;
+  background-color: #f3f4f6;
 }
 
 .account-item {
@@ -617,7 +646,7 @@
 
 .account-details {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   font-size: 12px;
 }
@@ -687,6 +716,14 @@
   margin-bottom: 12px;
 }
 
+.crm-entry-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+}
+
 .crm-entry-badge {
   font-size: 12px;
   background-color: #ede9fe;
@@ -704,6 +741,21 @@
 .crm-entry-content {
   color: #374151;
   line-height: 1.5;
+  margin-top: 8px;
+}
+
+.delete-crm-button {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.delete-crm-button:hover {
+  background-color: #fef2f2;
 }
 
 .no-data {
@@ -753,6 +805,10 @@
   transition: all 0.15s ease-out;
 }
 
+.modal-content.large-modal {
+  max-width: 48rem;
+}
+
 .modal-content.closing {
   animation: scaleOut 0.15s ease-in forwards;
 }
@@ -767,6 +823,12 @@
   line-height: 1.5;
 }
 
+.delete-warning {
+  color: #374151;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
 .logout-confirm {
   background: linear-gradient(to right, #dc2626, #ef4444) !important;
   flex: 1 !important;
@@ -776,6 +838,26 @@
 
 .logout-confirm:hover {
   background: linear-gradient(to right, #b91c1c, #dc2626) !important;
+}
+
+.button-danger {
+  background: linear-gradient(to right, #dc2626, #ef4444);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.button-danger:hover {
+  background: linear-gradient(to right, #b91c1c, #dc2626);
 }
 
 @keyframes scaleIn {
@@ -861,12 +943,18 @@
   font-size: 14px;
   transition: all 0.2s;
   background: white;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #8b5cf6;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-input.readonly {
+  background-color: #f9fafb;
+  cursor: not-allowed;
 }
 
 .form-textarea {
@@ -973,6 +1061,47 @@
   background-color: #fef2f2;
 }
 
+.phone-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.country-code-select {
+  width: 120px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.iban-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-checkbox label {
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
 @media (max-width: 1200px) {
   .admin-panel {
     flex-direction: column;
@@ -1003,5 +1132,13 @@
 
   .account-details {
     grid-template-columns: 1fr;
+  }
+
+  .phone-input-group {
+    flex-direction: column;
+  }
+
+  .country-code-select {
+    width: 100%;
   }
 }

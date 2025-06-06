@@ -1,11 +1,28 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
-import { User, Briefcase, Search, LogOut, UserPlus, Eye, EyeOff, X } from "lucide-react"
+import {
+  User,
+  Briefcase,
+  Search,
+  LogOut,
+  UserPlus,
+  X,
+  Copy,
+  CheckCircle,
+  CreditCard,
+  Mail,
+  Phone,
+  FileText,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+} from "lucide-react"
 import "./AdminPanel.css"
-import { getServerLink } from "@/server_link";
+import { getServerLink } from "@/server_link"
 
-export default function AdminPanel({ data: initialData }) {
+export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
@@ -14,40 +31,136 @@ export default function AdminPanel({ data: initialData }) {
   // Search input ref for focus management
   const searchInputRef = useRef(null)
 
-  const merged = [...initialData.clients, ...initialData.employees]
-  const [data, setData] = useState(merged || [])
+  const merged = [...(initialData?.clients || []), ...(initialData?.employees || [])]
+  const [data, setData] = useState(merged)
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false)
+  const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
+  const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
     addEmployee: false,
+    addClient: false,
+    addAccount: false,
+    deleteClient: false,
     logout: false,
   })
 
-  // Form state
-  const [formData, setFormData] = useState({
+  // Employee form state with auto-generation
+  const [employeeFormData, setEmployeeFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     username: "",
     password: "",
   })
-  const [errors, setErrors] = useState({})
 
-  // Enhanced escape key handling for search functionality
+  // Client form state
+  const [clientFormData, setClientFormData] = useState({
+    firstName: "",
+    lastName: "",
+    personalCode: "",
+    email: "",
+    phone: "",
+    phoneCountryCode: "+370",
+    secondPhone: "",
+    secondPhoneCountryCode: "+370",
+    documentType: "ID Card",
+    documentNumber: "",
+    documentExpiry: "",
+    dateOfBirth: "",
+    registrationCountry: "",
+    registrationRegion: "",
+    registrationCity: "",
+    registrationStreet: "",
+    registrationHouse: "",
+    registrationApartment: "",
+    registrationPostalCode: "",
+    correspondenceCountry: "",
+    correspondenceRegion: "",
+    correspondenceCity: "",
+    correspondenceStreet: "",
+    correspondenceHouse: "",
+    correspondenceApartment: "",
+    correspondencePostalCode: "",
+    marketingConsent: false,
+  })
+
+  // Account form state
+  const [accountFormData, setAccountFormData] = useState({
+    iban: "",
+    currency: "EUR",
+    balance: "",
+    cardType: "none",
+    servicePlan: "Standard",
+    openingDate: new Date().toISOString().split("T")[0],
+  })
+
+  const [errors, setErrors] = useState({})
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
+
+  // Auto-generate username and password when name changes
+  useEffect(() => {
+    if (employeeFormData.firstName && employeeFormData.lastName) {
+      const username = generateUsername(employeeFormData.firstName, employeeFormData.lastName)
+      const password = generatePassword()
+
+      setEmployeeFormData((prev) => ({
+        ...prev,
+        username,
+        password,
+      }))
+    }
+  }, [employeeFormData.firstName, employeeFormData.lastName])
+
+  // Generate username from first and last name
+  const generateUsername = (firstName, lastName) => {
+    const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, "")
+    const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, "")
+    const baseUsername = cleanFirst + cleanLast
+
+    // Check if username exists and add number if needed
+    let username = baseUsername
+    let counter = 1
+    while (data.some((person) => person.username === username)) {
+      username = baseUsername + counter
+      counter++
+    }
+
+    return username
+  }
+
+  // Generate random password
+  const generatePassword = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+    let password = ""
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return password
+  }
+
+  // Copy username and password together
+  const copyCredentials = () => {
+    const credentials = `Username: ${employeeFormData.username}\nPassword: ${employeeFormData.password}`
+    navigator.clipboard.writeText(credentials).then(() => {
+      showSuccess("Credentials copied to clipboard!")
+    })
+  }
+
+  // Enhanced escape key handling
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
-        // Handle search bar escape functionality
         if (document.activeElement === searchInputRef.current) {
           if (searchTerm) {
-            // First escape: clear search
             setSearchTerm("")
           } else {
-            // Second escape: deselect search bar
             searchInputRef.current.blur()
           }
           return
@@ -55,13 +168,16 @@ export default function AdminPanel({ data: initialData }) {
 
         // Handle modal escapes
         if (isAddEmployeeOpen) closeModal("addEmployee")
+        if (isAddClientOpen) closeModal("addClient")
+        if (isAddAccountOpen) closeModal("addAccount")
+        if (isDeleteClientOpen) closeModal("deleteClient")
         if (isLogoutOpen) closeModal("logout")
       }
     }
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddEmployeeOpen, isLogoutOpen, searchTerm])
+  }, [isAddEmployeeOpen, isAddClientOpen, isAddAccountOpen, isDeleteClientOpen, isLogoutOpen, searchTerm])
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
@@ -70,6 +186,15 @@ export default function AdminPanel({ data: initialData }) {
       switch (modalType) {
         case "addEmployee":
           setIsAddEmployeeOpen(false)
+          break
+        case "addClient":
+          setIsAddClientOpen(false)
+          break
+        case "addAccount":
+          setIsAddAccountOpen(false)
+          break
+        case "deleteClient":
+          setIsDeleteClientOpen(false)
           break
         case "logout":
           setIsLogoutOpen(false)
@@ -87,7 +212,31 @@ export default function AdminPanel({ data: initialData }) {
     }, 3000)
   }
 
-  // Filter and search logic
+  // Generate IBAN starting with LT817044
+  const generateIBAN = () => {
+    const prefix = "LT817044"
+    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
+    return prefix + randomDigits
+  }
+
+  // Get date of birth from personal code
+  const getDateOfBirthFromPersonalCode = (personalCode) => {
+    if (personalCode.length !== 11) return ""
+    const century = personalCode[0]
+    const year = personalCode.substring(1, 3)
+    const month = personalCode.substring(3, 5)
+    const day = personalCode.substring(5, 7)
+    let fullYear
+
+    if (century === "1" || century === "2") fullYear = "18" + year
+    else if (century === "3" || century === "4") fullYear = "19" + year
+    else if (century === "5" || century === "6") fullYear = "20" + year
+    else return ""
+
+    return `${fullYear}-${month}-${day}`
+  }
+
+  // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
 
@@ -97,21 +246,42 @@ export default function AdminPanel({ data: initialData }) {
       filtered = filtered.filter((person) => person?.marketingConsent === undefined)
     }
 
-    // Apply search filter
+    // Apply search filter including phone numbers
     if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
+      const lowerSearch = searchTerm.toLowerCase()
 
-      filtered = filtered.filter((person) =>
-        (person.firstName?.toLowerCase() ?? '').includes(lowerSearch) ||
-        (person.personalCode?.toLowerCase() ?? '').includes(lowerSearch) ||
-        (person.docNumber?.toLowerCase() ?? '').includes(lowerSearch) ||
-        (person.lastName?.toLowerCase() ?? '').includes(lowerSearch) ||
-        (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm))
-      );
+      filtered = filtered.filter((person) => {
+        const nameMatch =
+          (person.firstName?.toLowerCase() ?? "").includes(lowerSearch) ||
+          (person.lastName?.toLowerCase() ?? "").includes(lowerSearch)
+        const codeMatch = (person.personalCode?.toLowerCase() ?? "").includes(lowerSearch)
+        const docMatch = (person.docNumber?.toLowerCase() ?? "").includes(lowerSearch)
+        const phoneMatch = (person.phoneNumber?.replace(/\s+/g, "") ?? "").includes(searchTerm.replace(/\s+/g, ""))
+
+        return nameMatch || codeMatch || docMatch || phoneMatch
+      })
     }
 
     return filtered
   }, [searchTerm, activeFilter, data])
+
+  // Highlight search terms in text
+  const highlightText = (text, searchTerm) => {
+    if (!searchTerm || !text) return text
+
+    const regex = new RegExp(`(${searchTerm})`, "gi")
+    const parts = text.split(regex)
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className="highlight-search">
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    )
+  }
 
   const handlePersonClick = (person) => {
     setSelectedPerson(person)
@@ -124,6 +294,13 @@ export default function AdminPanel({ data: initialData }) {
     }))
   }
 
+  const toggleCrmExpansion = (entryId) => {
+    setExpandedCrmEntries((prev) => ({
+      ...prev,
+      [entryId]: !prev[entryId],
+    }))
+  }
+
   const handleLogout = async () => {
     try {
       const response = await fetch(getServerLink() + "/logout", {
@@ -132,19 +309,14 @@ export default function AdminPanel({ data: initialData }) {
         headers: {
           "Content-Type": "application/json",
         },
-      });
-
-
+      })
 
       if (response.ok) {
         window.location.href = "/login"
-
       }
-
     } catch (error) {
       console.error(error.message)
     }
-
   }
 
   const confirmLogout = () => {
@@ -155,123 +327,64 @@ export default function AdminPanel({ data: initialData }) {
   }
 
   // Validation functions
-  const validateName = (name, fieldName) => {
-    if (!name.trim()) {
-      return `${fieldName} is required`
-    }
-    if (name.length < 3) {
-      return `${fieldName} must be at least 3 characters`
-    }
-    if (name.length > 50) {
-      return `${fieldName} must not exceed 50 characters`
-    }
-    if (!/^[a-zA-Z\s]+$/.test(name)) {
-      return `${fieldName} must contain only alphabetic characters and spaces`
-    }
-    return ""
-  }
-
-  const validateEmail = (email) => {
-    if (!email.trim()) {
-      return "Email is required"
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return "Please enter a valid email format"
-    }
-    // Check for duplicate email
-    const existingEmail = data.find((person) => person.type === "employee" && person.email === email)
-    if (existingEmail) {
-      return "Email already exists"
-    }
-    return ""
-  }
-
-  const validateUsername = (username) => {
-    if (!username.trim()) {
-      return "Username is required"
-    }
-    if (username.length < 4) {
-      return "Username must be at least 4 characters"
-    }
-    if (username.length > 20) {
-      return "Username must not exceed 20 characters"
-    }
-    // Check for duplicate username
-    const existingUsername = data.find((person) => person.type === "employee" && person.username === username)
-    if (existingUsername) {
-      return "Username already exists"
-    }
-    return ""
-  }
-
-  const validatePassword = (password) => {
-    if (!password.trim()) {
-      return "Password is required"
-    }
-    if (password.length < 8) {
-      return "Password too weak - minimum 8 characters required"
-    }
-    if (/\s/.test(password)) {
-      return "Password cannot contain whitespace"
-    }
-    return ""
-  }
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }))
-    }
-  }
-
-  const validateForm = () => {
+  const validateEmployeeForm = () => {
     const newErrors = {}
 
-    newErrors.firstName = validateName(formData.firstName, "First name")
-    newErrors.lastName = validateName(formData.lastName, "Last name")
-    newErrors.email = validateEmail(formData.email)
-    newErrors.username = validateUsername(formData.username)
-    newErrors.password = validatePassword(formData.password)
+    if (!employeeFormData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!employeeFormData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!employeeFormData.email.trim()) newErrors.email = "Email is required"
+    if (!employeeFormData.username.trim()) newErrors.username = "Username is required"
+    if (!employeeFormData.password.trim()) newErrors.password = "Password is required"
 
     setErrors(newErrors)
-
-    // Return true if no errors
-    return !Object.values(newErrors).some((error) => error !== "")
+    return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const validateClientForm = () => {
+    const newErrors = {}
 
-    if (!validateForm()) {
-      return
+    if (!clientFormData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!clientFormData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!clientFormData.personalCode.trim()) newErrors.personalCode = "Personal code is required"
+    if (!clientFormData.email.trim()) newErrors.email = "Email is required"
+    if (!clientFormData.phone.trim()) newErrors.phone = "Phone is required"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateAccountForm = () => {
+    const newErrors = {}
+
+    if (!accountFormData.iban.trim()) newErrors.iban = "IBAN is required"
+    if (!accountFormData.balance.trim()) newErrors.balance = "Balance is required"
+
+    // Check currency limits
+    if (selectedPerson && accountFormData.currency !== "EUR") {
+      const existingCurrencyAccounts =
+        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
+      if (existingCurrencyAccounts.length >= 1) {
+        newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
+      }
     }
 
-    // Create new employee
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleEmployeeSubmit = (e) => {
+    e.preventDefault()
+    if (!validateEmployeeForm()) return
+
     const newEmployee = {
       id: (data.length + 1).toString(),
       type: "employee",
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      email: formData.email.trim(),
-      username: formData.username.trim(),
-      password: formData.password,
+      ...employeeFormData,
       createdAt: new Date().toISOString().split("T")[0],
     }
 
-    // Add to data
     setData((prev) => [...prev, newEmployee])
-
-    // Reset form
-    setFormData({
+    setEmployeeFormData({
       firstName: "",
       lastName: "",
       email: "",
@@ -280,26 +393,137 @@ export default function AdminPanel({ data: initialData }) {
     })
     setErrors({})
     closeModal("addEmployee")
-    setShowNewPassword(false)
-
-    // Show success message
     setTimeout(() => {
       showSuccess("Employee created successfully!")
     }, 200)
   }
 
+  const handleClientSubmit = (e) => {
+    e.preventDefault()
+    if (!validateClientForm()) return
+
+    const newClient = {
+      id: (data.length + 1).toString(),
+      type: "client",
+      ...clientFormData,
+      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
+      accounts: [],
+      crmEntries: [],
+      marketingConsent: clientFormData.marketingConsent,
+    }
+
+    setData((prev) => [...prev, newClient])
+    setClientFormData({
+      firstName: "",
+      lastName: "",
+      personalCode: "",
+      email: "",
+      phone: "",
+      phoneCountryCode: "+370",
+      secondPhone: "",
+      secondPhoneCountryCode: "+370",
+      documentType: "ID Card",
+      documentNumber: "",
+      documentExpiry: "",
+      dateOfBirth: "",
+      registrationCountry: "",
+      registrationRegion: "",
+      registrationCity: "",
+      registrationStreet: "",
+      registrationHouse: "",
+      registrationApartment: "",
+      registrationPostalCode: "",
+      correspondenceCountry: "",
+      correspondenceRegion: "",
+      correspondenceCity: "",
+      correspondenceStreet: "",
+      correspondenceHouse: "",
+      correspondenceApartment: "",
+      correspondencePostalCode: "",
+      marketingConsent: false,
+    })
+    setErrors({})
+    closeModal("addClient")
+    setTimeout(() => {
+      setSelectedPerson(newClient)
+      showSuccess("Client created successfully!")
+    }, 200)
+  }
+
+  const handleAccountSubmit = (e) => {
+    e.preventDefault()
+    if (!validateAccountForm()) return
+
+    const newAccount = {
+      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
+      ...accountFormData,
+      balance: Number.parseFloat(accountFormData.balance),
+    }
+
+    const updatedPerson = {
+      ...selectedPerson,
+      accounts: [...(selectedPerson.accounts || []), newAccount],
+    }
+
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    setAccountFormData({
+      iban: "",
+      currency: "EUR",
+      balance: "",
+      cardType: "none",
+      servicePlan: "Standard",
+      openingDate: new Date().toISOString().split("T")[0],
+    })
+    setErrors({})
+    closeModal("addAccount")
+    setTimeout(() => {
+      showSuccess("Account created successfully!")
+    }, 200)
+  }
+
+  const handleDeleteClient = () => {
+    if (!selectedPerson) return
+
+    setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+    setSelectedPerson(null)
+    closeModal("deleteClient")
+    setTimeout(() => {
+      showSuccess("Client deleted successfully!")
+    }, 200)
+  }
+
+  const deleteCrmEntry = (entryId) => {
+    if (!selectedPerson) return
+
+    const updatedPerson = {
+      ...selectedPerson,
+      crmEntries: selectedPerson.crmEntries?.filter((entry) => entry.id !== entryId) || [],
+    }
+
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    showSuccess("CRM entry deleted successfully!")
+  }
+
+  const canDeleteCrmEntry = (entry) => {
+    return entry.employeeName === currentUser?.username
+  }
+
   const renderPersonList = () => {
     return filteredData.map((person) => (
-      <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
+      <div
+        key={person.id}
+        className={`user-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
+        onClick={() => handlePersonClick(person)}
+      >
         <div className="user-card-content">
           <div className={`user-icon ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
             {person.marketingConsent !== undefined ? <User size={20} /> : <Briefcase size={20} />}
           </div>
           <div className="user-info">
             <div className="user-header">
-              <h3 className="user-name">
-                {person.firstName} {person.lastName}
-              </h3>
+              <h3 className="user-name">{highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}</h3>
               <span className={`user-badge ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
                 {person.marketingConsent !== undefined ? "client" : "employee"}
               </span>
@@ -345,41 +569,12 @@ export default function AdminPanel({ data: initialData }) {
             </h2>
             <p>{selectedPerson.type}</p>
           </div>
+          {selectedPerson.type === "client" && (
+            <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
-
-        {/* Additional Information for Clients */}
-        {selectedPerson.type === "client" && (
-          <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <Calendar size={16} />
-                Additional Information
-              </h3>
-            </div>
-            <div className="card-content">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: "16px",
-                }}
-              >
-                <div className="info-item">
-                  <div className="info-label">Document Expiry</div>
-                  <div className="info-value">{selectedPerson.documentExpiry}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Marketing Consent</div>
-                  <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
-                </div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Correspondence Address</div>
-                <div className="info-value">{selectedPerson.correspondenceAddress}</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Basic Information */}
         <div className="info-card">
@@ -414,29 +609,25 @@ export default function AdminPanel({ data: initialData }) {
                 <div className="info-item">
                   <div className="info-label">Username</div>
                   <div className="info-value">{selectedPerson.username}</div>
-                  <div className="info-label">email</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Email</div>
                   <div className="info-value">{selectedPerson.email}</div>
-
                 </div>
                 <div className="info-item">
                   <div className="info-label">Password</div>
                   <div className="password-container">
-                    <span className="password-value">
-                      {showPassword[selectedPerson.id]
-                        ? selectedPerson.password
-                        : "*".repeat(selectedPerson.password.length)}
-                    </span>
+                    <span className="password-value">{selectedPerson.password}</span>
                     <button
-                      className="password-toggle2"
-                      onMouseDown={() => togglePasswordVisibility(selectedPerson.id, true)}
-                      onMouseUp={() => togglePasswordVisibility(selectedPerson.id, false)}
-                      onMouseLeave={() => togglePasswordVisibility(selectedPerson.id, false)}
+                      className="copy-button"
+                      onClick={() => {
+                        const credentials = `Username: ${selectedPerson.username}\nPassword: ${selectedPerson.password}`
+                        navigator.clipboard.writeText(credentials)
+                        showSuccess("Credentials copied!")
+                      }}
+                      title="Copy credentials"
                     >
-                      {showPassword[selectedPerson.id] ? (
-                        <EyeOff size={16} className="password-icon" />
-                      ) : (
-                        <Eye size={16} className="password-icon" />
-                      )}
+                      <Copy size={16} />
                     </button>
                   </div>
                 </div>
@@ -458,58 +649,81 @@ export default function AdminPanel({ data: initialData }) {
               <Mail className="contact-icon" />
               <span>{selectedPerson.email}</span>
             </div>
-            {/* Only show phone for clients */}
             {selectedPerson.type === "client" && (
-              <div className="contact-item">
-                <User size={16} className="contact-icon" />
-                <span>{selectedPerson.phone}</span>
-              </div>
-            )}
-            {selectedPerson.type === "client" && (
-              <div className="address-item">
-                <MapPin size={16} className="address-icon" />
-                <div className="address-content">
-                  <div className="info-label">Registration Address</div>
-                  <div className="info-value">{selectedPerson.registrationAddress}</div>
+              <>
+                <div className="contact-item">
+                  <Phone className="contact-icon" />
+                  <span>
+                    {selectedPerson.phoneCountryCode} {selectedPerson.phone}
+                  </span>
                 </div>
-              </div>
+                {selectedPerson.secondPhone && (
+                  <div className="contact-item">
+                    <Phone className="contact-icon" />
+                    <span>
+                      {selectedPerson.secondPhoneCountryCode} {selectedPerson.secondPhone}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {selectedPerson.marketingConsent !== undefined && selectedPerson.accounts?.length > 0 ? (
+        {/* Bank Accounts for clients - moved to top */}
+        {selectedPerson.marketingConsent !== undefined && (
           <div className="info-card">
             <div className="card-header">
               <h3 className="card-title">
                 <CreditCard size={16} />
                 Bank Accounts
               </h3>
+              <button className="add-account-button" onClick={() => setIsAddAccountOpen(true)}>
+                <Plus size={14} />
+                Add Account
+              </button>
             </div>
             <div className="card-content">
-              {selectedPerson.accounts.map((account) => (
-                <div key={account.id} className="account-item">
-                  <div className="account-header">
-                    <span className="account-iban">{account.iban}</span>
-                    <span className="account-badge">{account.currency}</span>
-                  </div>
-                  <div className="account-details">
-                    <div className="account-detail">
-                      <div className="info-label">Balance</div>
-                      <div className="info-value">
-                        {account.balance.toFixed(2)} {account.currency}
+              {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
+                selectedPerson.accounts.map((account) => (
+                  <div key={account.id} className="account-item">
+                    <div className="account-header">
+                      <span className="account-iban">{account.iban}</span>
+                      <span className="account-badge">{account.currency}</span>
+                    </div>
+                    <div className="account-details">
+                      <div className="account-detail">
+                        <div className="info-label">Balance</div>
+                        <div className="info-value">
+                          {account.balance.toFixed(2)} {account.currency}
+                        </div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Plan</div>
+                        <div className="info-value">{account.servicePlan}</div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Card Type</div>
+                        <div className="info-value">
+                          {account.cardType === "none"
+                            ? "No Card"
+                            : account.cardType === "Debeto"
+                              ? "Debit Card"
+                              : "Credit Card"}
+                        </div>
                       </div>
                     </div>
-                    <div className="account-detail">
-                      <div className="info-label">Plan</div>
-                      <div className="info-value">{account.servicePlan}</div>
-                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="no-data">
+                  <CreditCard className="no-data-icon" />
+                  <p className="no-data-text">No accounts found</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        ) : null}
-
+        )}
       </div>
     )
   }
@@ -534,7 +748,6 @@ export default function AdminPanel({ data: initialData }) {
             <Briefcase className="empty-icon" />
             <h2 className="empty-title">Employee Profile</h2>
             <p className="empty-description">Employees do not have CRM data</p>
-            <p className="empty-description">Personal information is shown in the left panel</p>
           </div>
         </div>
       )
@@ -556,17 +769,28 @@ export default function AdminPanel({ data: initialData }) {
           </div>
         </div>
 
-        {/* CRM Entries */}
         <div className="crm-entries">
           {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
             selectedPerson.crmEntries.map((entry) => (
               <div key={entry.id} className="crm-entry">
                 <div className="crm-entry-header">
-                  <span className="crm-entry-badge">{entry.contactType}</span>
-                  <span className="crm-entry-meta">{entry.date}</span>
-                  <span className="crm-entry-meta">by {entry.employeeName}</span>
+                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id)}>
+                    {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <span className="crm-entry-badge">{entry.contactType}</span>
+                    <span className="crm-entry-meta">{entry.date}</span>
+                    <span className="crm-entry-meta">by {entry.employeeName}</span>
+                  </div>
+                  {canDeleteCrmEntry(entry) && (
+                    <button
+                      className="delete-crm-button"
+                      onClick={() => deleteCrmEntry(entry.id)}
+                      title="Delete CRM entry"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
-                <p className="crm-entry-content">{entry.content}</p>
+                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
               </div>
             ))
           ) : (
@@ -584,6 +808,7 @@ export default function AdminPanel({ data: initialData }) {
     <div className="admin-panel dashboard-fade-in">
       {successMessage && (
         <div className="success-toast">
+          <CheckCircle size={20} />
           <span>{successMessage}</span>
         </div>
       )}
@@ -605,7 +830,7 @@ export default function AdminPanel({ data: initialData }) {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search users..."
+              placeholder="Search users, phone numbers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -647,6 +872,10 @@ export default function AdminPanel({ data: initialData }) {
               <UserPlus size={16} style={{ marginRight: "8px" }} />
               New Employee
             </button>
+            <button className="primary-button" onClick={() => setIsAddClientOpen(true)}>
+              <User size={16} style={{ marginRight: "8px" }} />
+              New Client
+            </button>
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
             </button>
@@ -654,7 +883,418 @@ export default function AdminPanel({ data: initialData }) {
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Middle Panel */}
+      <div className="middle-panel">
+        <div className="middle-content">
+          <h2 className="panel-title">Personal Information</h2>
+          {renderPersonalInfo()}
+        </div>
+      </div>
+
+      {/* Right Panel */}
+      <div className="right-panel">{renderCRMRequests()}</div>
+
+      {/* All Modals */}
+
+      {/* Add Employee Modal */}
+      {isAddEmployeeOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
+          <div
+            className={`modal-content ${modalClosing.addEmployee ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <UserPlus size={20} color="#8b5cf6" />
+                Create New Employee
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("addEmployee")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleEmployeeSubmit}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={employeeFormData.firstName}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="Enter first name"
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={employeeFormData.lastName}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={employeeFormData.email}
+                    onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter email"
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Username (Auto-generated)</label>
+                  <div className="username-container">
+                    <input className="form-input readonly" value={employeeFormData.username} readOnly />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Password (Auto-generated)</label>
+                  <div className="password-container">
+                    <input type="text" className="form-input readonly" value={employeeFormData.password} readOnly />
+                    <button
+                      type="button"
+                      className="copy-button"
+                      onClick={copyCredentials}
+                      title="Copy username and password"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("addEmployee")}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Employee
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Client Modal */}
+      {isAddClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addClient")}>
+          <div
+            className={`modal-content large-modal ${modalClosing.addClient ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <User size={20} color="#8b5cf6" />
+                Create New Client
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("addClient")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleClientSubmit}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={clientFormData.firstName}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="Enter first name"
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={clientFormData.lastName}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Personal Code *</label>
+                    <input
+                      className={`form-input ${errors.personalCode ? "error" : ""}`}
+                      value={clientFormData.personalCode}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setClientFormData((prev) => ({
+                          ...prev,
+                          personalCode: value,
+                          dateOfBirth: getDateOfBirthFromPersonalCode(value),
+                        }))
+                      }}
+                      placeholder="Enter 11-digit personal code"
+                    />
+                    {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={clientFormData.email}
+                    onChange={(e) => setClientFormData((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter email"
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Phone *</label>
+                    <div className="phone-input-group">
+                      <select
+                        className="country-code-select"
+                        value={clientFormData.phoneCountryCode}
+                        onChange={(e) => setClientFormData((prev) => ({ ...prev, phoneCountryCode: e.target.value }))}
+                      >
+                        <option value="+370">+370 (LT)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+33">+33 (FR)</option>
+                        <option value="+39">+39 (IT)</option>
+                        <option value="+34">+34 (ES)</option>
+                        <option value="+48">+48 (PL)</option>
+                      </select>
+                      <input
+                        className={`form-input ${errors.phone ? "error" : ""}`}
+                        value={clientFormData.phone}
+                        onChange={(e) => setClientFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Phone number"
+                      />
+                    </div>
+                    {errors.phone && <div className="error-message">{errors.phone}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <select
+                        className="country-code-select"
+                        value={clientFormData.secondPhoneCountryCode}
+                        onChange={(e) =>
+                          setClientFormData((prev) => ({ ...prev, secondPhoneCountryCode: e.target.value }))
+                        }
+                      >
+                        <option value="+370">+370 (LT)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+33">+33 (FR)</option>
+                        <option value="+39">+39 (IT)</option>
+                        <option value="+34">+34 (ES)</option>
+                        <option value="+48">+48 (PL)</option>
+                      </select>
+                      <input
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => setClientFormData((prev) => ({ ...prev, secondPhone: e.target.value }))}
+                        placeholder="Second phone number"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Date of Birth (Auto-filled from Personal Code)</label>
+                  <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
+                </div>
+
+                <div className="form-checkbox">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={clientFormData.marketingConsent}
+                    onChange={(e) => setClientFormData((prev) => ({ ...prev, marketingConsent: e.target.checked }))}
+                  />
+                  <label htmlFor="marketingConsent">Marketing consent</label>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Client
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Account Modal */}
+      {isAddAccountOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addAccount")}>
+          <div
+            className={`modal-content ${modalClosing.addAccount ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <CreditCard size={20} color="#8b5cf6" />
+                Create New Account
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("addAccount")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAccountSubmit}>
+                <div className="form-group">
+                  <label className="form-label">IBAN *</label>
+                  <div className="iban-input-group">
+                    <input
+                      className={`form-input ${errors.iban ? "error" : ""}`}
+                      value={accountFormData.iban}
+                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, iban: e.target.value }))}
+                      placeholder="LT817044..."
+                    />
+                    <button
+                      type="button"
+                      className="button-secondary"
+                      onClick={() => setAccountFormData((prev) => ({ ...prev, iban: generateIBAN() }))}
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  {errors.iban && <div className="error-message">{errors.iban}</div>}
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Currency *</label>
+                    <select
+                      className={`form-input ${errors.currency ? "error" : ""}`}
+                      value={accountFormData.currency}
+                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, currency: e.target.value }))}
+                    >
+                      <option value="EUR">EUR</option>
+                      <option value="USD">USD</option>
+                      <option value="GBP">GBP</option>
+                      <option value="PLN">PLN</option>
+                    </select>
+                    {errors.currency && <div className="error-message">{errors.currency}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Balance *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className={`form-input ${errors.balance ? "error" : ""}`}
+                      value={accountFormData.balance}
+                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, balance: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                    {errors.balance && <div className="error-message">{errors.balance}</div>}
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Service Plan *</label>
+                    <select
+                      className="form-input"
+                      value={accountFormData.servicePlan}
+                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, servicePlan: e.target.value }))}
+                    >
+                      <option value="Jaunimo">Jaunimo</option>
+                      <option value="Standard">Standard</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Loan">Loan</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Card Type</label>
+                    <select
+                      className="form-input"
+                      value={accountFormData.cardType}
+                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, cardType: e.target.value }))}
+                      disabled={!["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan)}
+                    >
+                      <option value="none">No Card</option>
+                      {["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan) && (
+                        <>
+                          <option value="Debeto">Debit Card</option>
+                          <option value="Kredito">Credit Card</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Opening Date</label>
+                  <input type="date" className="form-input readonly" value={accountFormData.openingDate} readOnly />
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("addAccount")}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Client Modal */}
+      {isDeleteClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+          <div
+            className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Client
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteClient")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete {selectedPerson?.firstName} {selectedPerson?.lastName}? This action
+                cannot be undone and will remove all associated accounts and CRM data.
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteClient")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteClient}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Modal */}
       {isLogoutOpen && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("logout")}>
           <div
@@ -683,101 +1323,6 @@ export default function AdminPanel({ data: initialData }) {
                   Logout
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Employee Modal */}
-      {isAddEmployeeOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
-          <div
-            className={`modal-content ${modalClosing.addEmployee ? "closing" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3 className="modal-title">
-                <UserPlus size={20} color="#8b5cf6" />
-                Create New Employee
-              </h3>
-              <button className="modal-close" onClick={() => closeModal("addEmployee")}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">First Name *</label>
-                    <input
-                      className={`form-input ${errors.firstName ? "error" : ""}`}
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      placeholder="Enter first name"
-                    />
-                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Last Name *</label>
-                    <input
-                      className={`form-input ${errors.lastName ? "error" : ""}`}
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                      placeholder="Enter last name"
-                    />
-                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    className={`form-input ${errors.email ? "error" : ""}`}
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="Enter email"
-                  />
-                  {errors.email && <div className="error-message">{errors.email}</div>}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Username *</label>
-                  <input
-                    className={`form-input ${errors.username ? "error" : ""}`}
-                    value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
-                    placeholder="Enter username"
-                  />
-                  {errors.username && <div className="error-message">{errors.username}</div>}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Password *</label>
-                  <div className="password-container">
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      className={`form-input ${errors.password ? "error" : ""}`}
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      placeholder="Enter password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                    >
-                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  {errors.password && <div className="error-message">{errors.password}</div>}
-                </div>
-                <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => closeModal("addEmployee")}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="button-primary">
-                    Create Employee
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>

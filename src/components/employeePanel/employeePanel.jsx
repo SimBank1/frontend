@@ -6,7 +6,6 @@ import {
   User,
   Phone,
   Mail,
-  MapPin,
   CreditCard,
   FileText,
   LogOut,
@@ -16,9 +15,12 @@ import {
   Edit,
   CheckCircle,
   X,
-} from "lucide-react";
-import "./EmployeePanel.css";
-import { getServerLink } from "@/server_link";
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react"
+import "./EmployeePanel.css"
+import { getServerLink } from "@/server_link"
 
 export default function EmployeePanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -28,11 +30,13 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
   const [isAddCrmOpen, setIsAddCrmOpen] = useState(false)
   const [isEditCrmOpen, setIsEditCrmOpen] = useState(false)
+  const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [editingCrmEntry, setEditingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState("")
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
+  const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
@@ -43,6 +47,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     addAccount: false,
     addCrm: false,
     editCrm: false,
+    deleteClient: false,
     logout: false,
   })
 
@@ -58,6 +63,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     personalCode: "",
     email: "",
     phone: "",
+    phoneCountryCode: "+370",
+    secondPhone: "",
+    secondPhoneCountryCode: "+370",
     documentType: "ID Card",
     documentNumber: "",
     documentExpiry: "",
@@ -83,7 +91,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     iban: "",
     currency: "EUR",
     balance: "",
-    cardType: "Debeto",
+    cardType: "none",
     servicePlan: "Standard",
     openingDate: new Date().toISOString().split("T")[0],
   })
@@ -109,12 +117,13 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         if (isAddAccountOpen) closeModal("addAccount")
         if (isAddCrmOpen) closeModal("addCrm")
         if (isEditCrmOpen) closeModal("editCrm")
+        if (isDeleteClientOpen) closeModal("deleteClient")
         if (isLogoutOpen) closeModal("logout")
       }
     }
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddClientOpen, isAddAccountOpen, isAddCrmOpen, isEditCrmOpen, isLogoutOpen, searchTerm])
+  }, [isAddClientOpen, isAddAccountOpen, isAddCrmOpen, isEditCrmOpen, isDeleteClientOpen, isLogoutOpen, searchTerm])
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
@@ -133,6 +142,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
           setIsEditCrmOpen(false)
           setEditingCrmEntry(null)
           break
+        case "deleteClient":
+          setIsDeleteClientOpen(false)
+          break
         case "logout":
           setIsLogoutOpen(false)
           break
@@ -148,6 +160,13 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }, 3000)
   }
 
+  const toggleCrmExpansion = (entryId) => {
+    setExpandedCrmEntries((prev) => ({
+      ...prev,
+      [entryId]: !prev[entryId],
+    }))
+  }
+
   const handleLogout = async () => {
     try {
       const response = await fetch(getServerLink() + "/logout", {
@@ -156,19 +175,14 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         headers: {
           "Content-Type": "application/json",
         },
-      });
-      
+      })
 
-
-      if(response.ok){
+      if (response.ok) {
         window.location.href = "/login"
-
       }
- 
     } catch (error) {
       console.error(error.message)
-    } 
-    
+    }
   }
 
   const confirmLogout = () => {
@@ -177,7 +191,73 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       handleLogout()
     }, 200)
   }
- 
+
+  // Generate IBAN starting with LT817044
+  const generateRandomIBAN = () => {
+    const prefix = "LT817044"
+    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
+    let iban = prefix + randomDigits
+
+    // Check if IBAN already exists
+    let attempts = 0
+    while (data.some((person) => person.accounts?.some((account) => account.iban === iban)) && attempts < 100) {
+      const newRandomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
+      iban = prefix + newRandomDigits
+      attempts++
+    }
+
+    return iban
+  }
+
+  // Get date of birth from personal code
+  const getDateOfBirthFromPersonalCode = (personalCode) => {
+    if (personalCode.length !== 11) return ""
+    const century = personalCode[0]
+    const year = personalCode.substring(1, 3)
+    const month = personalCode.substring(3, 5)
+    const day = personalCode.substring(5, 7)
+    let fullYear
+
+    if (century === "1" || century === "2") fullYear = "18" + year
+    else if (century === "3" || century === "4") fullYear = "19" + year
+    else if (century === "5" || century === "6") fullYear = "20" + year
+    else return ""
+
+    const monthNum = Number.parseInt(month, 10)
+    const dayNum = Number.parseInt(day, 10)
+    if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+      return ""
+    }
+
+    return `${fullYear}-${month}-${day}`
+  }
+
+  const handleGenerateIBAN = () => {
+    const newIBAN = generateRandomIBAN()
+    setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
+    if (errors.iban) {
+      setErrors((prev) => ({ ...prev, iban: null }))
+    }
+  }
+
+  // Highlight search terms in text
+  const highlightText = (text, searchTerm) => {
+    if (!searchTerm || !text) return text
+
+    const regex = new RegExp(`(${searchTerm})`, "gi")
+    const parts = text.split(regex)
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className="highlight-search">
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    )
+  }
+
   // VALIDATION HELPERS
   const validatePersonalCode = (code) => {
     if (!/^\d{11}$/.test(code)) {
@@ -220,8 +300,8 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   }
 
   const validateIBAN = (iban) => {
-    if (!/^LT\d{18}$/.test(iban)) {
-      return "IBAN must start with LT followed by exactly 18 digits"
+    if (!/^LT817044\d{12}$/.test(iban)) {
+      return "IBAN must start with LT817044 followed by exactly 12 digits"
     }
     const ibanExists = data.some((person) => person.accounts?.some((account) => account.iban === iban))
     if (ibanExists) {
@@ -265,53 +345,10 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     if (!content.trim()) {
       return "Content is required"
     }
-    if (content.length > 200) {
-      return "Content exceeds 200 characters"
+    if (content.length > 500) {
+      return "Content exceeds 500 characters"
     }
     return null
-  }
-
-  // AUTO-FILL dateOfBirth from personalCode
-  const getDateOfBirthFromPersonalCode = (personalCode) => {
-    if (personalCode.length !== 11) return ""
-    const century = personalCode[0]
-    const year = personalCode.substring(1, 3)
-    const month = personalCode.substring(3, 5)
-    const day = personalCode.substring(5, 7)
-    let fullYear
-
-    if (century === "1" || century === "2") fullYear = "18" + year
-    else if (century === "3" || century === "4") fullYear = "19" + year
-    else if (century === "5" || century === "6") fullYear = "20" + year
-    else return ""
-
-    const monthNum = Number.parseInt(month, 10)
-    const dayNum = Number.parseInt(day, 10)
-    if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
-      return ""
-    }
-
-    return `${fullYear}-${month}-${day}`
-  }
-
-  // GENERATE random IBAN (tries up to 100 times)
-  const generateRandomIBAN = () => {
-    const randomDigits = (len) => Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("")
-    let iban
-    let attempts = 0
-    do {
-      iban = `LT${randomDigits(18)}`
-      attempts++
-    } while (data.some((person) => person.accounts?.some((account) => account.iban === iban)) && attempts < 100)
-    return iban
-  }
-
-  const handleGenerateIBAN = () => {
-    const newIBAN = generateRandomIBAN()
-    setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
-    if (errors.iban) {
-      setErrors((prev) => ({ ...prev, iban: null }))
-    }
   }
 
   // ADD CLIENT
@@ -323,6 +360,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       id: (data.length + 1).toString(),
       type: "client",
       ...clientFormData,
+      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
       accounts: [],
       crmEntries: [],
     }
@@ -334,6 +372,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       personalCode: "",
       email: "",
       phone: "",
+      phoneCountryCode: "+370",
+      secondPhone: "",
+      secondPhoneCountryCode: "+370",
       documentType: "ID Card",
       documentNumber: "",
       documentExpiry: "",
@@ -385,28 +426,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
 
     const expiryError = validateFutureDate(clientFormData.documentExpiry)
     if (expiryError) newErrors.documentExpiry = expiryError
-
-    const requiredAddressFields = [
-      "registrationCountry",
-      "registrationRegion",
-      "registrationCity",
-      "registrationStreet",
-      "registrationHouse",
-      "registrationPostalCode",
-      "correspondenceCountry",
-      "correspondenceRegion",
-      "correspondenceCity",
-      "correspondenceStreet",
-      "correspondenceHouse",
-      "correspondencePostalCode",
-    ]
-
-    requiredAddressFields.forEach((field) => {
-      if (!clientFormData[field].trim()) {
-        const fieldName = field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())
-        newErrors[field] = `${fieldName} is required`
-      }
-    })
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -470,12 +489,27 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     const openingDateError = validateDateIsToday(accountFormData.openingDate)
     if (openingDateError) newErrors.openingDate = openingDateError
 
+    // Check currency limits - unlimited EUR, only one of each other currency
+    if (selectedPerson && accountFormData.currency !== "EUR") {
+      const existingCurrencyAccounts =
+        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
+      if (existingCurrencyAccounts.length >= 1) {
+        newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
+      }
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleAccountFormChange = (field, value) => {
     setAccountFormData((prev) => ({ ...prev, [field]: value }))
+
+    // Reset card type if service plan doesn't support cards
+    if (field === "servicePlan" && !["Jaunimo", "Standard", "Gold"].includes(value)) {
+      setAccountFormData((prev) => ({ ...prev, cardType: "none" }))
+    }
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }))
     }
@@ -503,7 +537,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       iban: "",
       currency: "EUR",
       balance: "",
-      cardType: "Debeto",
+      cardType: "none",
       servicePlan: "Standard",
       openingDate: new Date().toISOString().split("T")[0],
     })
@@ -633,15 +667,45 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }, 200)
   }
 
-  // FILTER + SEARCH
+  const deleteCrmEntry = (entryId) => {
+    if (!selectedPerson) return
+
+    const updatedPerson = {
+      ...selectedPerson,
+      crmEntries: selectedPerson.crmEntries?.filter((entry) => entry.id !== entryId) || [],
+    }
+
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    showSuccess("CRM entry deleted successfully!")
+  }
+
+  const canDeleteCrmEntry = (entry) => {
+    return entry.employeeName === currentUser?.username
+  }
+
+  const handleDeleteClient = () => {
+    if (!selectedPerson) return
+
+    setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+    setSelectedPerson(null)
+    closeModal("deleteClient")
+    setTimeout(() => {
+      showSuccess("Client deleted successfully!")
+    }, 200)
+  }
+
+  // FILTER + SEARCH including phone numbers
   const filteredData = useMemo(() => {
     let result = data
     if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase()
       result = result.filter(
         (person) =>
-          person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.personalCode.includes(searchTerm),
+          person.firstName.toLowerCase().includes(lowerSearch) ||
+          person.lastName.toLowerCase().includes(lowerSearch) ||
+          person.personalCode.includes(searchTerm) ||
+          (person.phoneNumber && person.phoneNumber.replace(/\s+/g, "").includes(searchTerm.replace(/\s+/g, ""))),
       )
     }
     return result
@@ -656,7 +720,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     filteredData.map((person, idx) => (
       <div
         key={person.id}
-        className="client-card"
+        className={`client-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
         onClick={() => handlePersonClick(person)}
         style={{ animationDelay: `${idx * 0.05}s` }}
       >
@@ -664,9 +728,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
           <User className="client-icon" />
           <div className="client-info">
             <div className="client-header">
-              <h3 className="client-name">
-                {person.firstName} {person.lastName}
-              </h3>
+              <h3 className="client-name">{highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}</h3>
               <span className="client-badge">client</span>
             </div>
             {person.crmEntries && person.crmEntries.length > 0 ? (
@@ -705,6 +767,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             </h2>
             <p>Client Profile</p>
           </div>
+          <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+            <Trash2 size={16} />
+          </button>
         </div>
 
         {/* Basic Information */}
@@ -723,32 +788,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             <div className="info-item">
               <div className="info-label">Date of Birth</div>
               <div className="info-value">{selectedPerson?.dateOfBirth ?? "-"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Document Type</div>
-              <div className="info-value">{selectedPerson?.docType ?? "-"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Document Number</div>
-              <div className="info-value">{selectedPerson?.docNumber ?? "-"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Document Expiry</div>
-              <div className="info-value">{selectedPerson?.docExpiryDate ?? "-"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Other Bank Accounts</div>
-              <div className="info-value">{selectedPerson?.otherBankAccounts || "None"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Marketing Consent</div>
-              <div className="info-value">
-                {selectedPerson?.marketingConsent === true
-                  ? "Yes"
-                  : selectedPerson?.marketingConsent === false
-                    ? "No"
-                    : "-"}
-              </div>
             </div>
           </div>
         </div>
@@ -773,77 +812,21 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             <div className="contact-item">
               <Phone className="contact-icon" />
               <span>
-                {(() => {
-                  if (!selectedPerson?.phoneNumber) return ""
-
-                  const raw = selectedPerson.phoneNumber.replace(/\s+/g, "")
-                  const number = raw.startsWith("8") ? raw.slice(1) : raw
-
-                  if (number.length === 8) {
-                    const part1 = number.slice(0, 3)
-                    const part2 = number.slice(3, 5)
-                    const part3 = number.slice(5, 8)
-                    return `+370 ${part1} ${part2} ${part3}`
-                  }
-
-                  return `+370 ${number}`
-                })()}
+                {selectedPerson.phoneCountryCode} {selectedPerson.phone}
               </span>
             </div>
-            <div className="address-item">
-              <MapPin className="address-icon" />
-              <div className="address-content">
-                <div className="info-label">Registration Address</div>
-                <div className="info-value">
-                  {selectedPerson.regAddress ? (
-                    <>
-                      <div>
-                        <div>Apartment: {selectedPerson.regAddress.apartment || "N/A"}</div>
-                        {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.regAddress.postalCode || "N/A"}{" "}
-                        {selectedPerson.regAddress.cityOrVillage || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
-                      </div>
-                    </>
-                  ) : (
-                    <div>No address info</div>
-                  )}
-                </div>
+            {selectedPerson.secondPhone && (
+              <div className="contact-item">
+                <Phone className="contact-icon" />
+                <span>
+                  {selectedPerson.secondPhoneCountryCode} {selectedPerson.secondPhone}
+                </span>
               </div>
-            </div>
-            <div className="address-item">
-              <MapPin className="address-icon" />
-              <div className="address-content">
-                <div className="info-label">Correspondence Address</div>
-                <div className="info-value">
-                  {selectedPerson.corAddress ? (
-                    <>
-                      <div>
-                        <div>Apartment: {selectedPerson.corAddress.apartment || "N/A"}</div>
-                        {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.corAddress.postalCode || "N/A"}{" "}
-                        {selectedPerson.corAddress.cityOrVillage || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
-                      </div>
-                    </>
-                  ) : (
-                    <div>No address info</div>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Bank Accounts */}
+        {/* Bank Accounts - moved to top as requested */}
         <div className="info-card">
           <div className="card-header bank-accounts-header">
             <h3 className="card-title">
@@ -877,8 +860,14 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                         <div className="info-value">{account.servicePlan}</div>
                       </div>
                       <div className="account-detail">
-                        <div className="info-label">Opened</div>
-                        <div className="info-value">{account.openingDate}</div>
+                        <div className="info-label">Card Type</div>
+                        <div className="info-value">
+                          {account.cardType === "none"
+                            ? "No Card"
+                            : account.cardType === "Debeto"
+                              ? "Debit Card"
+                              : "Credit Card"}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -939,18 +928,30 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             selectedPerson.crmEntries.map((entry, i) => (
               <div key={entry.id} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="crm-entry-header">
-                  <div className="crm-entry-meta">
+                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id)}>
+                    {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     <span className="crm-entry-badge">{entry.contactType}</span>
                     <span className="crm-entry-date">{entry.date}</span>
                     <span className="crm-entry-employee">by {entry.employeeName}</span>
                   </div>
-                  {entry.canEdit && (
-                    <button className="edit-button" onClick={() => handleEditCrm(entry)}>
-                      <Edit size={16} />
-                    </button>
-                  )}
+                  <div className="crm-entry-actions">
+                    {entry.canEdit && (
+                      <button className="edit-button" onClick={() => handleEditCrm(entry)}>
+                        <Edit size={16} />
+                      </button>
+                    )}
+                    {canDeleteCrmEntry(entry) && (
+                      <button
+                        className="delete-crm-button"
+                        onClick={() => deleteCrmEntry(entry.id)}
+                        title="Delete CRM entry"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <p className="crm-entry-content">{entry.content}</p>
+                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
               </div>
             ))
           ) : (
@@ -991,7 +992,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search clients..."
+              placeholder="Search clients, phone numbers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -1072,7 +1073,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       {isAddClientOpen && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addClient")}>
           <div
-            className={`modal-content ${modalClosing.addClient ? "closing" : ""}`}
+            className={`modal-content large-modal ${modalClosing.addClient ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
@@ -1121,271 +1122,79 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
                   </div>
                 </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={clientFormData.email}
+                    onChange={(e) => handleClientFormChange("email", e.target.value)}
+                    placeholder="Enter email"
+                    required
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+
                 <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Email *</label>
-                    <input
-                      type="email"
-                      className={`form-input ${errors.email ? "error" : ""}`}
-                      value={clientFormData.email}
-                      onChange={(e) => handleClientFormChange("email", e.target.value)}
-                      placeholder="Enter email"
-                      required
-                    />
-                    {errors.email && <div className="error-message">{errors.email}</div>}
-                  </div>
                   <div className="form-group">
                     <label className="form-label">Phone *</label>
-                    <input
-                      className={`form-input ${errors.phone ? "error" : ""}`}
-                      value={clientFormData.phone}
-                      onChange={(e) => handleClientFormChange("phone", e.target.value)}
-                      placeholder="0xxxxxxxx"
-                      required
-                    />
+                    <div className="phone-input-group">
+                      <select
+                        className="country-code-select"
+                        value={clientFormData.phoneCountryCode}
+                        onChange={(e) => handleClientFormChange("phoneCountryCode", e.target.value)}
+                      >
+                        <option value="+370">+370 (LT)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+33">+33 (FR)</option>
+                        <option value="+39">+39 (IT)</option>
+                        <option value="+34">+34 (ES)</option>
+                        <option value="+48">+48 (PL)</option>
+                      </select>
+                      <input
+                        className={`form-input ${errors.phone ? "error" : ""}`}
+                        value={clientFormData.phone}
+                        onChange={(e) => handleClientFormChange("phone", e.target.value)}
+                        placeholder="Phone number"
+                        required
+                      />
+                    </div>
                     {errors.phone && <div className="error-message">{errors.phone}</div>}
                   </div>
+
                   <div className="form-group">
-                    <label className="form-label">Document Type *</label>
-                    <select
-                      className="form-select"
-                      value={clientFormData.documentType}
-                      onChange={(e) => handleClientFormChange("documentType", e.target.value)}
-                      required
-                    >
-                      <option value="Passport">Passport</option>
-                      <option value="ID Card">ID Card</option>
-                      <option value="Driver's License">Driver's License</option>
-                      <option value="Temporary Residence Permit">Temporary Residence Permit</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Document Number *</label>
-                    <input
-                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
-                      value={clientFormData.documentNumber}
-                      onChange={(e) => handleClientFormChange("documentNumber", e.target.value)}
-                      placeholder="8 alphanumeric characters"
-                      required
-                    />
-                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Document Expiry *</label>
-                    <input
-                      type="date"
-                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
-                      value={clientFormData.documentExpiry}
-                      onChange={(e) => handleClientFormChange("documentExpiry", e.target.value)}
-                      required
-                    />
-                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Date of Birth (Auto-filled)</label>
-                    <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Registration Address *</label>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Country *</label>
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <select
+                        className="country-code-select"
+                        value={clientFormData.secondPhoneCountryCode}
+                        onChange={(e) => handleClientFormChange("secondPhoneCountryCode", e.target.value)}
+                      >
+                        <option value="+370">+370 (LT)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+33">+33 (FR)</option>
+                        <option value="+39">+39 (IT)</option>
+                        <option value="+34">+34 (ES)</option>
+                        <option value="+48">+48 (PL)</option>
+                      </select>
                       <input
-                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
-                        value={clientFormData.registrationCountry}
-                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
-                        placeholder="Country"
-                        required
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
+                        placeholder="Second phone number"
                       />
-                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Region *</label>
-                      <input
-                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
-                        value={clientFormData.registrationRegion}
-                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
-                        placeholder="Region"
-                        required
-                      />
-                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">City/Village *</label>
-                      <input
-                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
-                        value={clientFormData.registrationCity}
-                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
-                        placeholder="City or Village"
-                        required
-                      />
-                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
-                    </div>
-                  </div>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Street *</label>
-                      <input
-                        className={`form-input ${errors.registrationStreet ? "error" : ""}`}
-                        value={clientFormData.registrationStreet}
-                        onChange={(e) => handleClientFormChange("registrationStreet", e.target.value)}
-                        placeholder="Street name"
-                        required
-                      />
-                      {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">House *</label>
-                      <input
-                        className={`form-input ${errors.registrationHouse ? "error" : ""}`}
-                        value={clientFormData.registrationHouse}
-                        onChange={(e) => handleClientFormChange("registrationHouse", e.target.value)}
-                        placeholder="House number"
-                        required
-                      />
-                      {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Apartment</label>
-                      <input
-                        className={`form-input ${errors.registrationApartment ? "error" : ""}`}
-                        value={clientFormData.registrationApartment}
-                        onChange={(e) => handleClientFormChange("registrationApartment", e.target.value)}
-                        placeholder="Apartment (optional)"
-                      />
-                      {errors.registrationApartment && (
-                        <div className="error-message">{errors.registrationApartment}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Postal Code *</label>
-                    <input
-                      className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
-                      value={clientFormData.registrationPostalCode}
-                      onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
-                      placeholder="Postal code"
-                      required
-                    />
-                    {errors.registrationPostalCode && (
-                      <div className="error-message">{errors.registrationPostalCode}</div>
-                    )}
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <div className="form-checkbox" style={{ marginBottom: "12px" }}>
-                    <input
-                      type="checkbox"
-                      id="sameAsRegistration"
-                      checked={sameAsRegistration}
-                      onChange={(e) => setSameAsRegistration(e.target.checked)}
-                    />
-                    <label htmlFor="sameAsRegistration">Same as registration address</label>
-                  </div>
-
-                  {!sameAsRegistration && (
-                    <>
-                      <label className="form-label">Correspondence Address *</label>
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">Country *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
-                            value={clientFormData.correspondenceCountry}
-                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
-                            placeholder="Country"
-                            required
-                          />
-                          {errors.correspondenceCountry && (
-                            <div className="error-message">{errors.correspondenceCountry}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Region *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
-                            value={clientFormData.correspondenceRegion}
-                            onChange={(e) => handleClientFormChange("correspondenceRegion", e.target.value)}
-                            placeholder="Region"
-                            required
-                          />
-                          {errors.correspondenceRegion && (
-                            <div className="error-message">{errors.correspondenceRegion}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">City/Village *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
-                            value={clientFormData.correspondenceCity}
-                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
-                            placeholder="City or Village"
-                            required
-                          />
-                          {errors.correspondenceCity && (
-                            <div className="error-message">{errors.correspondenceCity}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">Street *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
-                            value={clientFormData.correspondenceStreet}
-                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
-                            placeholder="Street name"
-                            required
-                          />
-                          {errors.correspondenceStreet && (
-                            <div className="error-message">{errors.correspondenceStreet}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">House *</label>
-                          <input
-                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
-                            value={clientFormData.correspondenceHouse}
-                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
-                            placeholder="House number"
-                            required
-                          />
-                          {errors.correspondenceHouse && (
-                            <div className="error-message">{errors.correspondenceHouse}</div>
-                          )}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Apartment</label>
-                          <input
-                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
-                            value={clientFormData.correspondenceApartment}
-                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
-                            placeholder="Apartment (optional)"
-                          />
-                          {errors.correspondenceApartment && (
-                            <div className="error-message">{errors.correspondenceApartment}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Postal Code *</label>
-                        <input
-                          className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
-                          value={clientFormData.correspondencePostalCode}
-                          onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
-                          placeholder="Postal code"
-                          required
-                        />
-                        {errors.correspondencePostalCode && (
-                          <div className="error-message">{errors.correspondencePostalCode}</div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                  <label className="form-label">Date of Birth (Auto-filled from Personal Code)</label>
+                  <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
                 </div>
 
                 <div className="form-checkbox">
@@ -1394,11 +1203,10 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     id="marketingConsent"
                     checked={clientFormData.marketingConsent}
                     onChange={(e) => handleClientFormChange("marketingConsent", e.target.checked)}
-                    className={errors.marketingConsent ? "error" : ""}
                   />
-                  <label htmlFor="marketingConsent">Marketing consent *</label>
-                  {errors.marketingConsent && <div className="error-message">{errors.marketingConsent}</div>}
+                  <label htmlFor="marketingConsent">Marketing consent</label>
                 </div>
+
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
                     Cancel
@@ -1439,7 +1247,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                         className={`form-input ${errors.iban ? "error" : ""}`}
                         value={accountFormData.iban}
                         onChange={(e) => handleAccountFormChange("iban", e.target.value)}
-                        placeholder="LT123456789012345678"
+                        placeholder="LT817044..."
                         required
                       />
                     </div>
@@ -1449,86 +1257,97 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   </div>
                   {errors.iban && <div className="error-message">{errors.iban}</div>}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Currency *</label>
-                  <select
-                    className="form-select"
-                    value={accountFormData.currency}
-                    onChange={(e) => handleAccountFormChange("currency", e.target.value)}
-                    required
-                  >
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="USD">USD</option>
-                    <option value="NOK">NOK</option>
-                    <option value="DKK">DKK</option>
-                    <option value="SEK">SEK</option>
-                    <option value="PLN">PLN</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Account Balance *</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      className={`form-input ${errors.balance ? "error" : ""}`}
-                      value={accountFormData.balance}
-                      onChange={(e) => handleAccountFormChange("balance", e.target.value)}
-                      placeholder="0.00"
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Currency *</label>
+                    <select
+                      className={`form-input ${errors.currency ? "error" : ""}`}
+                      value={accountFormData.currency}
+                      onChange={(e) => handleAccountFormChange("currency", e.target.value)}
                       required
-                      style={{ paddingRight: "50px" }}
-                    />
-                    <span
-                      style={{
-                        position: "absolute",
-                        right: "12px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        color: "#6b7280",
-                        fontSize: "14px",
-                        pointerEvents: "none",
-                      }}
                     >
-                      {accountFormData.currency}
-                    </span>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="USD">USD</option>
+                      <option value="NOK">NOK</option>
+                      <option value="DKK">DKK</option>
+                      <option value="SEK">SEK</option>
+                      <option value="PLN">PLN</option>
+                    </select>
+                    {errors.currency && <div className="error-message">{errors.currency}</div>}
                   </div>
-                  {errors.balance && <div className="error-message">{errors.balance}</div>}
+
+                  <div className="form-group">
+                    <label className="form-label">Account Balance *</label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        className={`form-input ${errors.balance ? "error" : ""}`}
+                        value={accountFormData.balance}
+                        onChange={(e) => handleAccountFormChange("balance", e.target.value)}
+                        placeholder="0.00"
+                        required
+                        style={{ paddingRight: "50px" }}
+                      />
+                      <span
+                        style={{
+                          position: "absolute",
+                          right: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          color: "#6b7280",
+                          fontSize: "14px",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {accountFormData.currency}
+                      </span>
+                    </div>
+                    {errors.balance && <div className="error-message">{errors.balance}</div>}
+                  </div>
                 </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Service Plan *</label>
+                    <select
+                      className="form-input"
+                      value={accountFormData.servicePlan}
+                      onChange={(e) => handleAccountFormChange("servicePlan", e.target.value)}
+                      required
+                    >
+                      <option value="Jaunimo">Jaunimo</option>
+                      <option value="Standard">Standard</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Loan">Loan</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Card Type</label>
+                    <select
+                      className="form-input"
+                      value={accountFormData.cardType}
+                      onChange={(e) => handleAccountFormChange("cardType", e.target.value)}
+                      disabled={!["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan)}
+                    >
+                      <option value="none">No Card</option>
+                      {["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan) && (
+                        <>
+                          <option value="Debeto">Debit Card</option>
+                          <option value="Kredito">Credit Card</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label className="form-label">Card Type *</label>
-                  <select
-                    className="form-select"
-                    value={accountFormData.cardType}
-                    onChange={(e) => handleAccountFormChange("cardType", e.target.value)}
-                    required
-                  >
-                    <option value="Debeto">Debeto</option>
-                    <option value="Kredito">Kredito</option>
-                  </select>
+                  <label className="form-label">Opening Date</label>
+                  <input type="date" className="form-input readonly" value={accountFormData.openingDate} readOnly />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Service Plan *</label>
-                  <select
-                    className="form-select"
-                    value={accountFormData.servicePlan}
-                    onChange={(e) => handleAccountFormChange("servicePlan", e.target.value)}
-                    required
-                  >
-                    <option value="Jaunimo">Jaunimo</option>
-                    <option value="Standard">Standard</option>
-                    <option value="Gold">Gold</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Account Opening Date *</label>
-                  <input
-                    type="date"
-                    className={`form-input ${errors.openingDate ? "error" : ""}`}
-                    value={accountFormData.openingDate}
-                    onChange={(e) => handleAccountFormChange("openingDate", e.target.value)}
-                    required
-                  />
-                  {errors.openingDate && <div className="error-message">{errors.openingDate}</div>}
-                </div>
+
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("addAccount")}>
                     Cancel
@@ -1595,17 +1414,17 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   {errors.contactType && <div className="error-message">{errors.contactType}</div>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Content * (max 200 characters)</label>
+                  <label className="form-label">Content * (max 500 characters)</label>
                   <textarea
                     className={`form-textarea ${errors.content ? "error" : ""}`}
                     value={crmFormData.content}
                     onChange={(e) => handleCrmFormChange("content", e.target.value)}
                     placeholder="Enter details of the interaction"
                     rows={5}
-                    maxLength={200}
+                    maxLength={500}
                     required
                   />
-                  <div className="character-count">{crmFormData.content.length}/200 characters</div>
+                  <div className="character-count">{crmFormData.content.length}/500 characters</div>
                   {errors.content && <div className="error-message">{errors.content}</div>}
                 </div>
                 <div className="form-actions">
@@ -1677,17 +1496,17 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   {errors.contactType && <div className="error-message">{errors.contactType}</div>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Content * (max 200 characters)</label>
+                  <label className="form-label">Content * (max 500 characters)</label>
                   <textarea
                     className={`form-textarea ${errors.content ? "error" : ""}`}
                     value={crmFormData.content}
                     onChange={(e) => handleCrmFormChange("content", e.target.value)}
                     placeholder="Enter details of the interaction"
                     rows={5}
-                    maxLength={200}
+                    maxLength={500}
                     required
                   />
-                  <div className="character-count">{crmFormData.content.length}/200 characters</div>
+                  <div className="character-count">{crmFormData.content.length}/500 characters</div>
                   {errors.content && <div className="error-message">{errors.content}</div>}
                 </div>
                 <div className="form-actions">
@@ -1699,6 +1518,41 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Client Modal */}
+      {isDeleteClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+          <div
+            className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Client
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteClient")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete {selectedPerson?.firstName} {selectedPerson?.lastName}? This action
+                cannot be undone and will remove all associated accounts and CRM data.
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteClient")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteClient}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Client
+                </button>
+              </div>
             </div>
           </div>
         </div>
