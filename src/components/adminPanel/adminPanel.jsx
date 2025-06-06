@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react"
 import "./AdminPanel.css"
-
+import { getServerLink } from "@/server_link";
 
 export default function AdminPanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -29,7 +29,7 @@ export default function AdminPanel({ data: initialData }) {
   const [showPassword, setShowPassword] = useState({})
 
   const merged = [...initialData.clients, ...initialData.employees];
-  const [data, setData] = useState(merged|| [])
+  const [data, setData] = useState(merged || [])
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -91,7 +91,7 @@ export default function AdminPanel({ data: initialData }) {
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    let filtered = data   
+    let filtered = data
 
     if (activeFilter === "clients") {
       filtered = filtered.filter((person) => person?.marketingConsent !== undefined);
@@ -102,7 +102,7 @@ export default function AdminPanel({ data: initialData }) {
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-    
+
       filtered = filtered.filter((person) =>
         (person.firstName?.toLowerCase() ?? '').includes(lowerSearch) ||
         (person.personalCode?.toLowerCase() ?? '').includes(lowerSearch) ||
@@ -111,7 +111,7 @@ export default function AdminPanel({ data: initialData }) {
         (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm))
       );
     }
-    
+
     return filtered
   }, [searchTerm, activeFilter, data])
 
@@ -126,9 +126,27 @@ export default function AdminPanel({ data: initialData }) {
     }))
   }
 
-  const handleLogout = () => {
-    document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    window.location.href = "/login"
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(getServerLink() + "/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+
+
+      if (response.ok) {
+        window.location.href = "/login"
+
+      }
+
+    } catch (error) {
+      console.error(error.message)
+    }
+
   }
 
   const confirmLogout = () => {
@@ -285,7 +303,6 @@ export default function AdminPanel({ data: initialData }) {
   }
 
   const renderPersonList = () => {
-    console.log(filteredData)
     return filteredData.map((person) => (
       <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
         <div className="user-card-content">
@@ -298,8 +315,8 @@ export default function AdminPanel({ data: initialData }) {
                 {person.firstName} {person.lastName}
               </h3>
               <span className={`user-badge ${person.marketingConsent !== undefined ? 'client' : 'employee'}`}>
-              {person.marketingConsent !== undefined ? 'client' : 'employee'}
-            </span>
+                {person.marketingConsent !== undefined ? 'client' : 'employee'}
+              </span>
 
             </div>
             {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 && (
@@ -474,37 +491,37 @@ export default function AdminPanel({ data: initialData }) {
         </div>
 
         {selectedPerson.marketingConsent !== undefined && selectedPerson.accounts?.length > 0 ? (
-  <div className="info-card">
-    <div className="card-header">
-      <h3 className="card-title">
-        <CreditCard size={16} />
-        Bank Accounts
-      </h3>
-    </div>
-    <div className="card-content">
-      {selectedPerson.accounts.map((account) => (
-        <div key={account.id} className="account-item">
-          <div className="account-header">
-            <span className="account-iban">{account.iban}</span>
-            <span className="account-badge">{account.currency}</span>
-          </div>
-          <div className="account-details">
-            <div className="account-detail">
-              <div className="info-label">Balance</div>
-              <div className="info-value">
-                {account.balance.toFixed(2)} {account.currency}
-              </div>
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <CreditCard size={16} />
+                Bank Accounts
+              </h3>
             </div>
-            <div className="account-detail">
-              <div className="info-label">Plan</div>
-              <div className="info-value">{account.servicePlan}</div>
+            <div className="card-content">
+              {selectedPerson.accounts.map((account) => (
+                <div key={account.id} className="account-item">
+                  <div className="account-header">
+                    <span className="account-iban">{account.iban}</span>
+                    <span className="account-badge">{account.currency}</span>
+                  </div>
+                  <div className="account-details">
+                    <div className="account-detail">
+                      <div className="info-label">Balance</div>
+                      <div className="info-value">
+                        {account.balance.toFixed(2)} {account.currency}
+                      </div>
+                    </div>
+                    <div className="account-detail">
+                      <div className="info-label">Plan</div>
+                      <div className="info-value">{account.servicePlan}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </div>
-) : null}
+        ) : null}
 
       </div>
     )

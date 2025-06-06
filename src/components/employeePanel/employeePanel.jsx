@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import "./EmployeePanel.css";
+import { getServerLink } from "@/server_link";
 
 export default function EmployeePanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,18 +132,36 @@ export default function EmployeePanel({ data: initialData }) {
     }, 3000);
   };
 
-  const handleLogout = () => {
-    document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/login";
-  };
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(getServerLink() + "/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+
+
+      if(response.ok){
+        window.location.href = "/login"
+
+      }
+ 
+    } catch (error) {
+      console.error(error.message)
+    } 
+    
+  }
 
   const confirmLogout = () => {
-    closeModal("logout");
+    closeModal("logout")
     setTimeout(() => {
-      handleLogout();
-    }, 200);
-  };
-
+      handleLogout()
+    }, 200)
+  }
+ 
   // VALIDATION HELPERS
   const validatePersonalCode = (code) => {
     if (!/^\d{11}$/.test(code)) {
