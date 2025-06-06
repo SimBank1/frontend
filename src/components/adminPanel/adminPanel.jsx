@@ -1,24 +1,7 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
-import {
-  Search,
-  Users,
-  User,
-  Mail,
-  MapPin,
-  CreditCard,
-  Calendar,
-  FileText,
-  LogOut,
-  Briefcase,
-  Eye,
-  EyeOff,
-  Plus,
-  Building,
-  CheckCircle,
-  X,
-} from "lucide-react"
+import { useState, useMemo, useEffect, useRef } from "react"
+import { User, Briefcase, Search, LogOut, UserPlus, Eye, EyeOff, X } from "lucide-react"
 import "./AdminPanel.css"
 import { getServerLink } from "@/server_link";
 
@@ -28,13 +11,15 @@ export default function AdminPanel({ data: initialData }) {
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [showPassword, setShowPassword] = useState({})
 
-  const merged = [...initialData.clients, ...initialData.employees];
+  // Search input ref for focus management
+  const searchInputRef = useRef(null)
+
+  const merged = [...initialData.clients, ...initialData.employees]
   const [data, setData] = useState(merged || [])
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
-
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -52,10 +37,23 @@ export default function AdminPanel({ data: initialData }) {
   })
   const [errors, setErrors] = useState({})
 
-  // Handle escape key for all modals
+  // Enhanced escape key handling for search functionality
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
+        // Handle search bar escape functionality
+        if (document.activeElement === searchInputRef.current) {
+          if (searchTerm) {
+            // First escape: clear search
+            setSearchTerm("")
+          } else {
+            // Second escape: deselect search bar
+            searchInputRef.current.blur()
+          }
+          return
+        }
+
+        // Handle modal escapes
         if (isAddEmployeeOpen) closeModal("addEmployee")
         if (isLogoutOpen) closeModal("logout")
       }
@@ -63,7 +61,7 @@ export default function AdminPanel({ data: initialData }) {
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddEmployeeOpen, isLogoutOpen])
+  }, [isAddEmployeeOpen, isLogoutOpen, searchTerm])
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
@@ -94,9 +92,9 @@ export default function AdminPanel({ data: initialData }) {
     let filtered = data
 
     if (activeFilter === "clients") {
-      filtered = filtered.filter((person) => person?.marketingConsent !== undefined);
+      filtered = filtered.filter((person) => person?.marketingConsent !== undefined)
     } else if (activeFilter === "employees") {
-      filtered = filtered.filter((person) => person?.marketingConsent === undefined);
+      filtered = filtered.filter((person) => person?.marketingConsent === undefined)
     }
 
     // Apply search filter
@@ -290,38 +288,27 @@ export default function AdminPanel({ data: initialData }) {
     }, 200)
   }
 
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      username: "",
-      password: "",
-    })
-    setErrors({})
-    setShowNewPassword(false)
-  }
-
   const renderPersonList = () => {
     return filteredData.map((person) => (
       <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
         <div className="user-card-content">
-          <div className={`user-icon ${person.type}`}>
-            {person.marketingConsent === undefined ? <Briefcase size={20} /> : <User size={20} />}
+          <div className={`user-icon ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
+            {person.marketingConsent !== undefined ? <User size={20} /> : <Briefcase size={20} />}
           </div>
           <div className="user-info">
             <div className="user-header">
               <h3 className="user-name">
                 {person.firstName} {person.lastName}
               </h3>
-              <span className={`user-badge ${person.marketingConsent !== undefined ? 'client' : 'employee'}`}>
-                {person.marketingConsent !== undefined ? 'client' : 'employee'}
+              <span className={`user-badge ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
+                {person.marketingConsent !== undefined ? "client" : "employee"}
               </span>
-
             </div>
-            {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 && (
+            {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 ? (
               <p className="user-preview">Last interaction: {person.crmEntries[0].date}</p>
-            )}
+            ) : person.marketingConsent !== undefined ? (
+              <p className="user-preview no-recent-activities">No recent activities</p>
+            ) : null}
             {person.marketingConsent === undefined && <p className="user-preview">{person.email}</p>}
           </div>
         </div>
@@ -594,34 +581,29 @@ export default function AdminPanel({ data: initialData }) {
   }
 
   return (
-    <div className="admin-panel">
-      {/* Success message toast */}
+    <div className="admin-panel dashboard-fade-in">
       {successMessage && (
         <div className="success-toast">
-          <CheckCircle size={20} />
           <span>{successMessage}</span>
         </div>
       )}
 
       {/* Left Sidebar */}
       <div className="sidebar">
-        {/* Header */}
         <div className="header">
           <div className="logo-section">
             <div className="logo-icon">
-              <Building size={24} color="white" />
+              <Briefcase size={24} color="white" />
             </div>
             <div className="logo-text">
               <h1>SimBank</h1>
-              <p>Admin Panel</p>
-            </div>
-            <div className="vegova-logo-sidebar">
-              <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
+              <p>Admin Portal</p>
             </div>
           </div>
           <div className="search-container">
             <Search className="search-icon" />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search users..."
               value={searchTerm}
@@ -631,51 +613,39 @@ export default function AdminPanel({ data: initialData }) {
           </div>
         </div>
 
-        {/* Filter Section */}
         <div className="filter-section">
           <div className="filter-buttons">
             <button
               className={`filter-button ${activeFilter === "all" ? "active" : ""}`}
               onClick={() => setActiveFilter("all")}
             >
-              <Users size={16} style={{ marginRight: "8px" }} />
-              All
+              All Users
             </button>
             <button
               className={`filter-button ${activeFilter === "employees" ? "active" : ""}`}
               onClick={() => setActiveFilter("employees")}
             >
-              <Briefcase size={16} style={{ marginRight: "8px" }} />
               Employees
             </button>
             <button
               className={`filter-button ${activeFilter === "clients" ? "active" : ""}`}
               onClick={() => setActiveFilter("clients")}
             >
-              <User size={16} style={{ marginRight: "8px" }} />
               Clients
             </button>
           </div>
         </div>
 
-        {/* User List */}
         <div className="user-list">
-          <h3>Users:</h3>
+          <h3>Users ({filteredData.length})</h3>
           {renderPersonList()}
         </div>
 
-        {/* Bottom Section */}
         <div className="bottom-section">
           <div className="bottom-buttons">
-            <button
-              className="primary-button"
-              onClick={() => {
-                resetForm()
-                setIsAddEmployeeOpen(true)
-              }}
-            >
-              <Plus size={16} style={{ marginRight: "8px" }} />
-              Add Employee
+            <button className="primary-button" onClick={() => setIsAddEmployeeOpen(true)}>
+              <UserPlus size={16} style={{ marginRight: "8px" }} />
+              New Employee
             </button>
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
@@ -683,17 +653,6 @@ export default function AdminPanel({ data: initialData }) {
           </div>
         </div>
       </div>
-
-      {/* Middle Panel */}
-      <div className="middle-panel">
-        <div className="middle-content">
-          <h2 className="panel-title">Personal Data</h2>
-          {renderPersonalInfo()}
-        </div>
-      </div>
-
-      {/* Right Panel */}
-      <div className="right-panel">{renderCRMRequests()}</div>
 
       {/* Logout Confirmation Modal */}
       {isLogoutOpen && (
@@ -738,8 +697,8 @@ export default function AdminPanel({ data: initialData }) {
           >
             <div className="modal-header">
               <h3 className="modal-title">
-                <Briefcase size={20} color="#8b5cf6" />
-                Add New Employee
+                <UserPlus size={20} color="#8b5cf6" />
+                Create New Employee
               </h3>
               <button className="modal-close" onClick={() => closeModal("addEmployee")}>
                 <X size={18} />
@@ -747,28 +706,28 @@ export default function AdminPanel({ data: initialData }) {
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label className="form-label">First Name *</label>
-                  <input
-                    className={`form-input ${errors.firstName ? "error" : ""}`}
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    placeholder="Enter first name"
-                  />
-                  {errors.firstName && <p className="error-message">{errors.firstName}</p>}
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      placeholder="Enter first name"
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Last Name *</label>
-                  <input
-                    className={`form-input ${errors.lastName ? "error" : ""}`}
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    placeholder="Enter last name"
-                  />
-                  {errors.lastName && <p className="error-message">{errors.lastName}</p>}
-                </div>
-
                 <div className="form-group">
                   <label className="form-label">Email *</label>
                   <input
@@ -776,58 +735,45 @@ export default function AdminPanel({ data: initialData }) {
                     className={`form-input ${errors.email ? "error" : ""}`}
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="user@example.com"
+                    placeholder="Enter email"
                   />
-                  {errors.email && <p className="error-message">{errors.email}</p>}
+                  {errors.email && <div className="error-message">{errors.email}</div>}
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Username *</label>
                   <input
                     className={`form-input ${errors.username ? "error" : ""}`}
                     value={formData.username}
                     onChange={(e) => handleInputChange("username", e.target.value)}
-                    placeholder="Enter username (4-20 characters)"
+                    placeholder="Enter username"
                   />
-                  {errors.username && <p className="error-message">{errors.username}</p>}
+                  {errors.username && <div className="error-message">{errors.username}</div>}
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Password *</label>
-                  <div style={{ position: "relative" }}>
+                  <div className="password-container">
                     <input
                       type={showNewPassword ? "text" : "password"}
                       className={`form-input ${errors.password ? "error" : ""}`}
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
-                      placeholder="Enter password (min 8 characters)"
-                      style={{ paddingRight: "40px" }}
+                      placeholder="Enter password"
                     />
                     <button
                       type="button"
+                      className="password-toggle"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      style={{
-                        position: "absolute",
-                        right: "12px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "none",
-                        border: "none",
-                        color: "#6b7280",
-                        cursor: "pointer",
-                      }}
                     >
                       {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  {errors.password && <p className="error-message">{errors.password}</p>}
+                  {errors.password && <div className="error-message">{errors.password}</div>}
                 </div>
-
                 <div className="form-actions">
-                  <button type="button" className="button-secondary small" onClick={() => closeModal("addEmployee")}>
+                  <button type="button" className="button-secondary" onClick={() => closeModal("addEmployee")}>
                     Cancel
                   </button>
-                  <button type="submit" className="button-primary small">
+                  <button type="submit" className="button-primary">
                     Create Employee
                   </button>
                 </div>
