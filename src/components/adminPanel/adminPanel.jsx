@@ -135,11 +135,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     return username
   }
 
-  // Generate random password
   const generatePassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     let password = ""
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 6; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     return password
@@ -932,15 +931,16 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   {errors.email && <div className="error-message">{errors.email}</div>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Username (Auto-generated)</label>
-                  <div className="username-container">
-                    <input
-                      className="form-input"
-                      value={employeeFormData.username}
-                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, username: e.target.value }))}
-                    />
-                  </div>
+                <label className="form-label">Username (Auto-generated)</label>
+                <div className="username-container">
+                  <input
+                    className="form-input"
+                    value={employeeFormData.username}
+                    disabled 
+                  />
                 </div>
+              </div>
+
                 <div className="form-group">
                   <label className="form-label">Password (Auto-generated)</label>
                   <div className="password-container">
@@ -949,6 +949,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                       className="form-input"
                       value={employeeFormData.password}
                       onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
+                      disabled
                     />
                     <button
                       type="button"
