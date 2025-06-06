@@ -42,6 +42,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [successMessage, setSuccessMessage] = useState("")
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
 
+
+  
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
     addEmployee: false,
