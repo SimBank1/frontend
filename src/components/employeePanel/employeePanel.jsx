@@ -416,56 +416,116 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   }
 
   // ADD CLIENT
-  const handleAddClient = (e) => {
-    e.preventDefault()
-    if (!validateClientForm()) return
-
-    const newClient = {
-      id: (data.length + 1).toString(),
-      type: "client",
-      ...clientFormData,
-      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
-      accounts: [],
-      crmEntries: [],
+  const handleAddClient = async (e) => {
+    e.preventDefault();
+    if (!validateClientForm()) return;
+  
+    // Build payload for backend
+    const payload = {
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
+      email: clientFormData.email,
+      personal_code: clientFormData.personalCode,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      date_of_birth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
+      phone_number: clientFormData.phone,
+      marketing_consent: clientFormData.marketingConsent,
+      reg_address: {
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion,
+        city: clientFormData.registrationCity,
+        street: clientFormData.registrationStreet,
+        house_number: clientFormData.registrationHouse,
+        apartment: clientFormData.registrationApartment,
+        postal_code: clientFormData.registrationPostalCode,
+      },
+      cor_address: {
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion,
+        city: clientFormData.correspondenceCity,
+        street: clientFormData.correspondenceStreet,
+        house_number: clientFormData.correspondenceHouse,
+        apartment: clientFormData.correspondenceApartment,
+        postal_code: clientFormData.correspondencePostalCode,
+      },
+      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
+      other_bank_accounts: JSON.stringify({
+        bank: "ABC Bank",
+        iban: "DE89370400440532013000",
+      }),
+    };
+  
+    try {
+      const response = await fetch("/createClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create client");
+      }
+  
+      // Add to local state
+      const newClient = {
+        id: (data.length + 1).toString(),
+        type: "client",
+        ...clientFormData,
+        dateOfBirth: payload.date_of_birth,
+        accounts: [],
+        crmEntries: [],
+      };
+  
+      setData((prev) => [...prev, newClient]);
+  
+      // Reset form
+      setClientFormData({
+        firstName: "",
+        lastName: "",
+        personalCode: "",
+        email: "",
+        phone: "",
+        phoneCountryCode: "+370",
+        secondPhone: "",
+        secondPhoneCountryCode: "+370",
+        documentType: "ID Card",
+        documentNumber: "",
+        documentExpiry: "",
+        dateOfBirth: "",
+        registrationCountry: "",
+        registrationRegion: "",
+        registrationCity: "",
+        registrationStreet: "",
+        registrationHouse: "",
+        registrationApartment: "",
+        registrationPostalCode: "",
+        correspondenceCountry: "",
+        correspondenceRegion: "",
+        correspondenceCity: "",
+        correspondenceStreet: "",
+        correspondenceHouse: "",
+        correspondenceApartment: "",
+        correspondencePostalCode: "",
+        marketingConsent: false,
+      });
+  
+      setErrors({});
+      closeModal("addClient");
+  
+      setTimeout(() => {
+        setSelectedPerson(newClient);
+        showSuccess("Client profile created successfully!");
+      }, 200);
+    } catch (error) {
+      console.error("Error creating client:", error);
+      showError("Failed to create client.");
     }
-
-    setData((prev) => [...prev, newClient])
-    setClientFormData({
-      firstName: "",
-      lastName: "",
-      personalCode: "",
-      email: "",
-      phone: "",
-      phoneCountryCode: "+370",
-      secondPhone: "",
-      secondPhoneCountryCode: "+370",
-      documentType: "ID Card",
-      documentNumber: "",
-      documentExpiry: "",
-      dateOfBirth: "",
-      registrationCountry: "",
-      registrationRegion: "",
-      registrationCity: "",
-      registrationStreet: "",
-      registrationHouse: "",
-      registrationApartment: "",
-      registrationPostalCode: "",
-      correspondenceCountry: "",
-      correspondenceRegion: "",
-      correspondenceCity: "",
-      correspondenceStreet: "",
-      correspondenceHouse: "",
-      correspondenceApartment: "",
-      correspondencePostalCode: "",
-      marketingConsent: false,
-    })
-    setErrors({})
-    closeModal("addClient")
-    setTimeout(() => {
-      setSelectedPerson(newClient)
-      showSuccess("Client profile created successfully!")
-    }, 200)
-  }
+  };
+  
 
   const validateClientForm = () => {
     const newErrors = {}
