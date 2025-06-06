@@ -80,7 +80,7 @@ export default function EmployeePanel({ data: initialData }) {
     iban: "",
     currency: "EUR",
     balance: "",
-    cardType: "Debeto",
+    cardType: "None",
     servicePlan: "Standard",
     openingDate: new Date().toISOString().split("T")[0],
   });
@@ -100,6 +100,70 @@ export default function EmployeePanel({ data: initialData }) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isAddClientOpen, isAddAccountOpen, isAddCrmOpen, isEditCrmOpen, isLogoutOpen]);
 
+
+
+  const handleCreateNewClient = async (e) => {
+    e.preventDefault();
+  
+    const payload = {
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
+      email: clientFormData.email,
+      personal_code: clientFormData.personalCode,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      date_of_birth: clientFormData.dateOfBirth,
+      phone_number: clientFormData.phone,
+      marketing_consent: clientFormData.marketingConsent,
+      reg_address: {
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion,
+        city: clientFormData.registrationCity,
+        street: clientFormData.registrationStreet,
+        house_number: clientFormData.registrationHouse,
+        apartment: clientFormData.registrationApartment,
+        postal_code: clientFormData.registrationPostalCode
+      },
+      cor_address: {
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion,
+        city: clientFormData.correspondenceCity,
+        street: clientFormData.correspondenceStreet,
+        house_number: clientFormData.correspondenceHouse,
+        apartment: clientFormData.correspondenceApartment,
+        postal_code: clientFormData.correspondencePostalCode
+      },
+      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
+      other_bank_accounts: JSON.stringify({
+        bank: "ABC Bank",
+        iban: "DE89370400440532013000"
+      })
+    };
+  
+    try {
+      const response = await fetch("/createClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create client");
+      }
+  
+      alert("Client created successfully");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error creating client");
+    }
+  };
+
+  
+
+  
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }));
     setTimeout(() => {
@@ -1251,7 +1315,7 @@ export default function EmployeePanel({ data: initialData }) {
                         Driver's License
                       </option>
                       <option value="Temporary Residence Permit">
-                        Temporary Residence Permit
+                        Residence Permit
                       </option>
                     </select>
                   </div>
@@ -1683,7 +1747,7 @@ export default function EmployeePanel({ data: initialData }) {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="button-primary">
+                  <button type="submit" className="button-primary" onClick={handleCreateNewClient}>
                     Create Client
                   </button>
                 </div>
@@ -1809,6 +1873,7 @@ export default function EmployeePanel({ data: initialData }) {
                     }
                     required
                   >
+                    <option value="None">None</option>
                     <option value="Debeto">Debeto</option>
                     <option value="Kredito">Kredito</option>
                   </select>
@@ -1826,6 +1891,8 @@ export default function EmployeePanel({ data: initialData }) {
                     <option value="Jaunimo">Jaunimo</option>
                     <option value="Standard">Standard</option>
                     <option value="Gold">Gold</option>
+                    <option value="Saving account">Saving account</option>
+                    <option value="Investment account">Investment account</option>
                   </select>
                 </div>
                 <div className="form-group">
