@@ -344,23 +344,21 @@
 }
 
 .middle-panel::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .middle-panel::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
+  background: transparent;
 }
 
 .middle-panel::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
   transition: background 0.15s ease-in-out;
 }
 
 .middle-panel::-webkit-scrollbar-thumb:hover {
-  transition: all 0.2s;
-  background: #94a3b8;
+  background: rgba(148, 163, 184, 0.5);
 }
 
 .middle-content {

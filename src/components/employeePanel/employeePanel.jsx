@@ -792,6 +792,114 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
           </div>
         </div>
 
+        {/* Document Information */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <FileText size={16} />
+              Document Information
+            </h3>
+          </div>
+          <div className="card-content">
+            <div className="info-item">
+              <div className="info-label">Document Type</div>
+              <div className="info-value">{selectedPerson?.docType ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Document Number</div>
+              <div className="info-value">{selectedPerson?.docNumber ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Document Expiry</div>
+              <div className="info-value">{selectedPerson?.docExpiryDate ?? "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Registration Address */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <Building size={16} />
+              Registration Address
+            </h3>
+          </div>
+          <div className="card-content">
+            <div className="info-item">
+              <div className="info-label">Country</div>
+              <div className="info-value">{selectedPerson?.regAddress?.country ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Region</div>
+              <div className="info-value">{selectedPerson?.regAddress?.region ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">City</div>
+              <div className="info-value">{selectedPerson?.regAddress?.cityOrVillage ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Street</div>
+              <div className="info-value">{selectedPerson?.regAddress?.street ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">House</div>
+              <div className="info-value">{selectedPerson?.regAddress?.house ?? "-"}</div>
+            </div>
+            {selectedPerson?.regAddress?.apartment && (
+              <div className="info-item">
+                <div className="info-label">Apartment</div>
+                <div className="info-value">{selectedPerson.regAddress.apartment}</div>
+              </div>
+            )}
+            <div className="info-item">
+              <div className="info-label">Postal Code</div>
+              <div className="info-value">{selectedPerson?.regAddress?.postalCode ?? "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Correspondence Address */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <Mail size={16} />
+              Correspondence Address
+            </h3>
+          </div>
+          <div className="card-content">
+            <div className="info-item">
+              <div className="info-label">Country</div>
+              <div className="info-value">{selectedPerson?.corAddress?.country ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Region</div>
+              <div className="info-value">{selectedPerson?.corAddress?.region ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">City</div>
+              <div className="info-value">{selectedPerson?.corAddress?.cityOrVillage ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Street</div>
+              <div className="info-value">{selectedPerson?.corAddress?.street ?? "-"}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">House</div>
+              <div className="info-value">{selectedPerson?.corAddress?.house ?? "-"}</div>
+            </div>
+            {selectedPerson?.corAddress?.apartment && (
+              <div className="info-item">
+                <div className="info-label">Apartment</div>
+                <div className="info-value">{selectedPerson.corAddress.apartment}</div>
+              </div>
+            )}
+            <div className="info-item">
+              <div className="info-label">Postal Code</div>
+              <div className="info-value">{selectedPerson?.corAddress?.postalCode ?? "-"}</div>
+            </div>
+          </div>
+        </div>
+
         {/* Contact Information */}
         <div className="info-card">
           <div className="card-header">
@@ -811,18 +919,8 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             </div>
             <div className="contact-item">
               <Phone className="contact-icon" />
-              <span>
-                {selectedPerson.phoneCountryCode} {selectedPerson.phone}
-              </span>
+              <span>{selectedPerson.phoneNumber}</span>
             </div>
-            {selectedPerson.secondPhone && (
-              <div className="contact-item">
-                <Phone className="contact-icon" />
-                <span>
-                  {selectedPerson.secondPhoneCountryCode} {selectedPerson.secondPhone}
-                </span>
-              </div>
-            )}
           </div>
         </div>
 

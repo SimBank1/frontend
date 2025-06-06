@@ -650,22 +650,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               <span>{selectedPerson.email}</span>
             </div>
             {selectedPerson.type === "client" && (
-              <>
-                <div className="contact-item">
-                  <Phone className="contact-icon" />
-                  <span>
-                    {selectedPerson.phoneCountryCode} {selectedPerson.phone}
-                  </span>
-                </div>
-                {selectedPerson.secondPhone && (
-                  <div className="contact-item">
-                    <Phone className="contact-icon" />
-                    <span>
-                      {selectedPerson.secondPhoneCountryCode} {selectedPerson.secondPhone}
-                    </span>
-                  </div>
-                )}
-              </>
+              <div className="contact-item">
+                <Phone className="contact-icon" />
+                <span>{selectedPerson.phoneNumber}</span>
+              </div>
             )}
           </div>
         </div>
@@ -872,10 +860,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               <UserPlus size={16} style={{ marginRight: "8px" }} />
               New Employee
             </button>
-            <button className="primary-button" onClick={() => setIsAddClientOpen(true)}>
-              <User size={16} style={{ marginRight: "8px" }} />
-              New Client
-            </button>
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
             </button>
@@ -950,13 +934,22 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <div className="form-group">
                   <label className="form-label">Username (Auto-generated)</label>
                   <div className="username-container">
-                    <input className="form-input readonly" value={employeeFormData.username} readOnly />
+                    <input
+                      className="form-input"
+                      value={employeeFormData.username}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, username: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Password (Auto-generated)</label>
                   <div className="password-container">
-                    <input type="text" className="form-input readonly" value={employeeFormData.password} readOnly />
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={employeeFormData.password}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
+                    />
                     <button
                       type="button"
                       className="copy-button"
@@ -1112,6 +1105,254 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <label className="form-label">Date of Birth (Auto-filled from Personal Code)</label>
                   <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
                 </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Type *</label>
+                    <select
+                      className={`form-input ${errors.documentType ? "error" : ""}`}
+                      value={clientFormData.documentType}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentType: e.target.value }))}
+                    >
+                      <option value="ID Card">ID Card</option>
+                      <option value="passport">Passport</option>
+                      <option value="driver_license">Driver's License</option>
+                    </select>
+                    {errors.documentType && <div className="error-message">{errors.documentType}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Document Number *</label>
+                    <input
+                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
+                      value={clientFormData.documentNumber}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentNumber: e.target.value }))}
+                      placeholder="Enter document number"
+                    />
+                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Document Expiry *</label>
+                    <input
+                      type="date"
+                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
+                      value={clientFormData.documentExpiry}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentExpiry: e.target.value }))}
+                    />
+                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
+                  </div>
+                </div>
+
+                <h4 style={{ margin: "24px 0 16px 0", color: "#374151", fontSize: "16px", fontWeight: "600" }}>
+                  Registration Address
+                </h4>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Country *</label>
+                    <input
+                      className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                      value={clientFormData.registrationCountry}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationCountry: e.target.value }))}
+                      placeholder="Enter country"
+                    />
+                    {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Region *</label>
+                    <input
+                      className={`form-input ${errors.registrationRegion ? "error" : ""}`}
+                      value={clientFormData.registrationRegion}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationRegion: e.target.value }))}
+                      placeholder="Enter region"
+                    />
+                    {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">City *</label>
+                    <input
+                      className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                      value={clientFormData.registrationCity}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationCity: e.target.value }))}
+                      placeholder="Enter city"
+                    />
+                    {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Street *</label>
+                    <input
+                      className={`form-input ${errors.registrationStreet ? "error" : ""}`}
+                      value={clientFormData.registrationStreet}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationStreet: e.target.value }))}
+                      placeholder="Enter street"
+                    />
+                    {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">House Number *</label>
+                    <input
+                      className={`form-input ${errors.registrationHouse ? "error" : ""}`}
+                      value={clientFormData.registrationHouse}
+                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationHouse: e.target.value }))}
+                      placeholder="Enter house number"
+                    />
+                    {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Apartment</label>
+                    <input
+                      className="form-input"
+                      value={clientFormData.registrationApartment}
+                      onChange={(e) =>
+                        setClientFormData((prev) => ({ ...prev, registrationApartment: e.target.value }))
+                      }
+                      placeholder="Enter apartment number"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Postal Code *</label>
+                  <input
+                    className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                    value={clientFormData.registrationPostalCode}
+                    onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationPostalCode: e.target.value }))}
+                    placeholder="Enter postal code"
+                  />
+                  {errors.registrationPostalCode && (
+                    <div className="error-message">{errors.registrationPostalCode}</div>
+                  )}
+                </div>
+
+                <div className="form-checkbox">
+                  <input
+                    type="checkbox"
+                    id="sameAsRegistration"
+                    checked={sameAsRegistration}
+                    onChange={(e) => setSameAsRegistration(e.target.checked)}
+                  />
+                  <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
+                </div>
+
+                {!sameAsRegistration && (
+                  <>
+                    <h4 style={{ margin: "24px 0 16px 0", color: "#374151", fontSize: "16px", fontWeight: "600" }}>
+                      Correspondence Address
+                    </h4>
+
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">Country *</label>
+                        <input
+                          className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                          value={clientFormData.correspondenceCountry}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceCountry: e.target.value }))
+                          }
+                          placeholder="Enter country"
+                        />
+                        {errors.correspondenceCountry && (
+                          <div className="error-message">{errors.correspondenceCountry}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Region *</label>
+                        <input
+                          className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
+                          value={clientFormData.correspondenceRegion}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceRegion: e.target.value }))
+                          }
+                          placeholder="Enter region"
+                        />
+                        {errors.correspondenceRegion && (
+                          <div className="error-message">{errors.correspondenceRegion}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">City *</label>
+                        <input
+                          className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                          value={clientFormData.correspondenceCity}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceCity: e.target.value }))
+                          }
+                          placeholder="Enter city"
+                        />
+                        {errors.correspondenceCity && <div className="error-message">{errors.correspondenceCity}</div>}
+                      </div>
+                    </div>
+
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">Street *</label>
+                        <input
+                          className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                          value={clientFormData.correspondenceStreet}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceStreet: e.target.value }))
+                          }
+                          placeholder="Enter street"
+                        />
+                        {errors.correspondenceStreet && (
+                          <div className="error-message">{errors.correspondenceStreet}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">House Number *</label>
+                        <input
+                          className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                          value={clientFormData.correspondenceHouse}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceHouse: e.target.value }))
+                          }
+                          placeholder="Enter house number"
+                        />
+                        {errors.correspondenceHouse && (
+                          <div className="error-message">{errors.correspondenceHouse}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Apartment</label>
+                        <input
+                          className="form-input"
+                          value={clientFormData.correspondenceApartment}
+                          onChange={(e) =>
+                            setClientFormData((prev) => ({ ...prev, correspondenceApartment: e.target.value }))
+                          }
+                          placeholder="Enter apartment number"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Postal Code *</label>
+                      <input
+                        className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                        value={clientFormData.correspondencePostalCode}
+                        onChange={(e) =>
+                          setClientFormData((prev) => ({ ...prev, correspondencePostalCode: e.target.value }))
+                        }
+                        placeholder="Enter postal code"
+                      />
+                      {errors.correspondencePostalCode && (
+                        <div className="error-message">{errors.correspondencePostalCode}</div>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <div className="form-checkbox">
                   <input
