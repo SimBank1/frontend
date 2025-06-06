@@ -697,49 +697,61 @@ export default function EmployeePanel({ data: initialData }) {
           </div>
           <div className="profile-info">
             <h2>
-              {selectedPerson.firstName} {selectedPerson.lastName}
+            {selectedPerson?.firstName ?? ''} {selectedPerson?.lastName ?? ''}
             </h2>
             <p>Client Profile</p>
           </div>
         </div>
 
-        {/* Basic Information */}
-        <div className="info-card"
-          <div className="card-header">
-            <h3 className="card-title">
-              <User size={16} />
-              Basic Information
-            </h3>
-          </div>
-          <div className="card-content">
-            <div className="info-item">
-              <div className="info-label">Personal Code</div>
-              <div className="info-value">{selectedPerson.personalCode}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Date of Birth</div>
-              <div className="info-value">{selectedPerson.dateOfBirth}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Document Type</div>
-              <div className="info-value">{selectedPerson.docType}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-value">{selectedPerson.docNumber}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Document Expiry</div>
-              <div className="info-value">{selectedPerson.docExpiryDate}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Other Bank Accounts</div>
-              <div className="info-value">{selectedPerson.otherBankAccounts || "None"}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-label">Marketing Consent</div>
-              <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
-            </div>
+
+    {/* Basic Information */}
+    <div className="info-card">
+      <div className="card-header">
+        <h3 className="card-title">
+          <User size={16} />
+          Basic Information
+        </h3>
+      </div>
+      <div className="card-content">
+        <div className="info-item">
+          <div className="info-label">Personal Code</div>
+          <div className="info-value">{selectedPerson?.personalCode ?? '-'}</div>
         </div>
+        <div className="info-item">
+          <div className="info-label">Date of Birth</div>
+          <div className="info-value">{selectedPerson?.dateOfBirth ?? '-'}</div>
+        </div>
+        <div className="info-item">
+          <div className="info-label">Document Type</div>
+          <div className="info-value">{selectedPerson?.docType ?? '-'}</div>
+        </div>
+        <div className="info-item">
+          <div className="info-label">Document Number</div>
+          <div className="info-value">{selectedPerson?.docNumber ?? '-'}</div>
+        </div>
+        <div className="info-item">
+          <div className="info-label">Document Expiry</div>
+          <div className="info-value">{selectedPerson?.docExpiryDate ?? '-'}</div>
+        </div>
+        <div className="info-item">
+          <div className="info-label">Other Bank Accounts</div>
+          <div className="info-value">{selectedPerson?.otherBankAccounts || "None"}</div>
+        </div>
+        <div className="info-item">
+          <div className="info-label">Marketing Consent</div>
+          <div className="info-value">
+            {selectedPerson?.marketingConsent === true
+              ? "Yes"
+              : selectedPerson?.marketingConsent === false
+              ? "No"
+              : "-"}
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+
 
         {/* Contact Information */}
         <div className="info-card">
