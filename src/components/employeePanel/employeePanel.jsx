@@ -2057,16 +2057,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     readOnly
                     style={{ userSelect: "none" }}
                   />
-                  <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            locale={lt}
-            initialFocus
-            captionLayout="dropdown"
-            fromYear={1900}
-            toYear={new Date().getFullYear()}
-          />
 
                   {errors.date && (
                     <div className="error-message">{errors.date}</div>
