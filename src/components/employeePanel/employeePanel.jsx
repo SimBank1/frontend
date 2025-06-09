@@ -420,7 +420,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     e.preventDefault();
     if (!validateClientForm()) return;
   
-    // Build payload for backend
     const payload = {
       first_name: clientFormData.firstName,
       last_name: clientFormData.lastName,
@@ -433,24 +432,20 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       phone_number: clientFormData.phone,
       marketing_consent: clientFormData.marketingConsent,
       reg_address: {
-        country: clientFormData.registrationCountry,
-        region: clientFormData.registrationRegion,
-        city: clientFormData.registrationCity,
         street: clientFormData.registrationStreet,
         house_number: clientFormData.registrationHouse,
-        apartment: clientFormData.registrationApartment,
+        city: clientFormData.registrationCity,
         postal_code: clientFormData.registrationPostalCode,
+        country: clientFormData.registrationCountry,
       },
       cor_address: {
-        country: clientFormData.correspondenceCountry,
-        region: clientFormData.correspondenceRegion,
-        city: clientFormData.correspondenceCity,
         street: clientFormData.correspondenceStreet,
         house_number: clientFormData.correspondenceHouse,
-        apartment: clientFormData.correspondenceApartment,
+        city: clientFormData.correspondenceCity,
         postal_code: clientFormData.correspondencePostalCode,
+        country: clientFormData.correspondenceCountry,
       },
-      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
+      bank_accs: [101, 202, 303], // Update dynamically if needed
       other_bank_accounts: JSON.stringify({
         bank: "ABC Bank",
         iban: "DE89370400440532013000",
@@ -466,11 +461,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         body: JSON.stringify(payload),
       });
   
-      if (!response.ok) {
-        throw new Error("Failed to create client");
-      }
+      if (!response.ok) throw new Error("Failed to create client");
   
-      // Add to local state
+      // Add to local UI state
       const newClient = {
         id: (data.length + 1).toString(),
         type: "client",
@@ -526,7 +519,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }
   };
   
-
   const validateClientForm = () => {
     const newErrors = {}
 
