@@ -23,6 +23,9 @@ import {
 import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
 
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+
 export default function EmployeePanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -432,7 +435,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!validateClientForm()) return;
-  
+
     // Build payload for backend
     const payload = {
       first_name: clientFormData.firstName,
@@ -442,7 +445,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       doc_type: clientFormData.documentType,
       doc_number: clientFormData.documentNumber,
       doc_expiry_date: clientFormData.documentExpiry,
-      date_of_birth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
+      date_of_birth: getDateOfBirthFromPersonalCode(
+        clientFormData.personalCode
+      ),
       phone_number: clientFormData.phone,
       marketing_consent: clientFormData.marketingConsent,
       reg_address: {
@@ -469,7 +474,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         iban: "DE89370400440532013000",
       }),
     };
-  
+
     try {
       const response = await fetch("/createClient", {
         method: "POST",
@@ -478,11 +483,11 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         },
         body: JSON.stringify(payload),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to create client");
       }
-  
+
       // Add to local state
       const newClient = {
         id: (data.length + 1).toString(),
@@ -492,9 +497,9 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         accounts: [],
         crmEntries: [],
       };
-  
+
       setData((prev) => [...prev, newClient]);
-  
+
       // Reset form
       setClientFormData({
         firstName: "",
@@ -525,10 +530,10 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         correspondencePostalCode: "",
         marketingConsent: false,
       });
-  
+
       setErrors({});
       closeModal("addClient");
-  
+
       setTimeout(() => {
         setSelectedPerson(newClient);
         showSuccess("Client profile created successfully!");
@@ -538,7 +543,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       showError("Failed to create client.");
     }
   };
-  
 
   const validateClientForm = () => {
     const newErrors = {};
@@ -1863,7 +1867,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   )}
                 </div>
 
-                <div className="form-grid">
+                <div className="form-grid-account">
                   <div className="form-group">
                     <label className="form-label">Currency *</label>
                     <select
@@ -1922,7 +1926,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   </div>
                 </div>
 
-                <div className="form-grid">
+                <div className="form-grid-account">
                   <div className="form-group">
                     <label className="form-label">Service Plan *</label>
                     <select
@@ -1972,9 +1976,11 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   <label className="form-label">Opening Date</label>
                   <input
                     type="date"
-                    className="form-input readonly"
+                    className="form-input readonly pointer-events-none bg-white text-black select-none"
                     value={accountFormData.openingDate}
+                    tabIndex={-1}
                     readOnly
+                    style={{ userSelect: "none" }}
                   />
                 </div>
 
@@ -2045,6 +2051,16 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     readOnly
                     style={{ userSelect: "none" }}
                   />
+                  <Calendar
+            mode="single"
+            selected={date}
+            onSelect={setDate}
+            locale={lt}
+            initialFocus
+            captionLayout="dropdown"
+            fromYear={1900}
+            toYear={new Date().getFullYear()}
+          />
 
                   {errors.date && (
                     <div className="error-message">{errors.date}</div>
@@ -2151,15 +2167,16 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Date of Contact *</label>
-                  <input
-                    type="date"
-                    className={`form-input ${errors.date ? "error" : ""}`}
-                    value={crmFormData.date}
-                    onChange={(e) =>
-                      handleCrmFormChange("date", e.target.value)
-                    }
-                    required
+                  <Calendar
+                    mode="single"
+                    selected={new Date(crmFormData.date)}
+                    onSelect={(date) => {
+                      const formatted = format(date, "yyyy-MM-dd");
+                      handleCrmFormChange("date", formatted);
+                    }}
+                    className="rounded-md border"
                   />
+
                   {errors.date && (
                     <div className="error-message">{errors.date}</div>
                   )}
