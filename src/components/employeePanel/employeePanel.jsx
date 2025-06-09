@@ -2053,7 +2053,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     type="date"
                     className="form-input readonly pointer-events-none bg-white text-black select-none"
                     value={accountFormData.openingDate}
-                    tabIndex={-1}
+                    tabIndex={-1}   
                     readOnly
                     style={{ userSelect: "none" }}
                   />
