@@ -995,17 +995,17 @@ const filteredData = useMemo(() => {
                 {(() => {
                   if (!selectedPerson?.phoneNumber) return "";
 
-                  const raw = selectedPerson.phoneNumber.replace(/\s+/g, "");
-                  let number = raw.startsWith("8") ? raw.slice(1) : raw;
+                  const raw = selectedPerson.phoneNumber;
 
-                  if (number.length === 8) {
-                    const part1 = number.slice(0, 2);
-                    const part2 = number.slice(2, 5);
-                    const part3 = number.slice(5, 8);
-                    return `+370 ${part1} ${part2} ${part3}`;
+                  // Call validatePhone, it returns formatted string or false
+                  const formatted = validatePhone(raw);
+
+                  if (formatted) {
+                    return formatted;
+                  } else {
+                    // fallback: show raw number cleaned from spaces
+                    return raw.replace(/\s+/g, '');
                   }
-
-                  return `+370 ${number}`;
                 })()}
               </span>
             </div>
@@ -1452,6 +1452,7 @@ const filteredData = useMemo(() => {
                       }
                       placeholder="Enter 11-digit personal code"
                       required
+                      maxLength={11}   
                     />
                     {errors.personalCode && (
                       <div className="error-message">{errors.personalCode}</div>
