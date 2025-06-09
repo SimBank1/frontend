@@ -19,6 +19,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  SquareUser ,
 } from "lucide-react";
 import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
@@ -255,43 +256,42 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       setErrors((prev) => ({ ...prev, iban: null }));
     }
   };
+  const highlightText = (text, searchTerm) => {
 
-// Highlight search terms in text
-const highlightText = (text, searchTerm) => {
-  if (!searchTerm || !text) return text;
-
-  const normText = normalize(text);
-  const normSearch = normalize(searchTerm);
-
-  const matchIndex = normText.indexOf(normSearch);
-  if (matchIndex === -1) return text;
-
-  // Find original positions by iterating
-  let start = -1;
-  let normIndex = 0;
-
-  for (let i = 0; i < text.length; i++) {
-    const currentChar = normalize(text[i]);
-    if (currentChar) {
-      if (normIndex === matchIndex) start = i;
-      normIndex++;
-      if (normIndex === matchIndex + normSearch.length) {
-        const end = i + 1;
-        return (
-          <>
-            {text.slice(0, start)}
-            <span className="highlight-search">
-              {text.slice(start, end)}
-            </span>
-            {text.slice(end)}
-          </>
-        );
+    if (!searchTerm || !text) return text;
+  
+    const normText = normalize(text);
+    const normSearch = normalize(searchTerm);
+  
+    const matchIndex = normText.indexOf(normSearch);
+    if (matchIndex === -1) return text;
+  
+    let normCount = 0;
+    let start = -1;
+    let end = -1;
+    for (let i = 0; i < text.length; i++) {
+      if (normalize(text[i])) {
+        if (normCount === matchIndex) start = i;
+        if (normCount === matchIndex + normSearch.length - 1) {
+          end = i + 1;
+          break;
+        }
+        normCount++;
       }
     }
-  }
-
-  return text;
-};
+  
+    if (start === -1 || end === -1) return text;
+  
+    return (
+      <>
+        {text.slice(0, start)}
+        <span className="highlight-search">{text.slice(start, end)}</span>
+        {text.slice(end)}
+      </>
+    );
+  };
+  
+  
 
 
   // VALIDATION HELPERS
@@ -864,39 +864,65 @@ const highlightText = (text, searchTerm) => {
       showSuccess("Client deleted successfully!");
     }, 200);
   };
-
-  // FILTER + SEARCH including phone numbers
-const normalize = (str) =>
-  str
-    .normalize("NFD")               // decompose accented characters
-    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
-    .toLowerCase()
-    .replace(/\s+/g, "");           // remove spaces
-
-const filteredData = useMemo(() => {
-  if (!searchTerm) return data;
-
-  const normSearch = normalize(searchTerm);
-
-  return data.filter((person) => {
-    const fullName = normalize(person.firstName + person.lastName);
-    const first = normalize(person.firstName);
-    const last = normalize(person.lastName);
-    const code = person.personalCode || "";
-    const phone = (person.phoneNumber || "").replace(/\s+/g, "");
-
-    return (
-      fullName.includes(normSearch) ||
-      first.includes(normSearch) ||
-      last.includes(normSearch) ||
-      code.includes(searchTerm) ||
-      phone.includes(searchTerm.replace(/\s+/g, ""))
-    );
-  });
-}, [searchTerm, data]);
-
+  const normalize = (str) =>
+    str
+      ?.normalize("NFD")                // decompose accents
+      .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+      .toLowerCase()
+      .replace(/\s+/g, " ")             // normalize all spaces to single space
+      .trim() || "";
   
-
+  // Normalize phone for comparison: remove spaces, +, 00 prefixes
+  const normalizePhoneForCompare = (phone) => {
+    if (!phone) return "";
+    let cleaned = phone.replace(/\s+/g, ""); // remove spaces
+  
+    // Convert '00' prefix to '+'
+    if (cleaned.startsWith("00")) {
+      cleaned = "+" + cleaned.slice(2);
+    }
+  
+    // Remove leading '+' for comparison simplicity
+    if (cleaned.startsWith("+")) {
+      cleaned = cleaned.slice(1);
+    }
+  
+    return cleaned;
+  };
+  
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return data;
+  
+    const normSearch = normalize(searchTerm);
+    const searchTokens = normSearch.split(" ").filter(Boolean);
+    const normSearchPhone = normalizePhoneForCompare(searchTerm);
+  
+    return data.filter((person) => {
+      const fullName = normalize(`${person.firstName} ${person.lastName}`);
+      const first = normalize(person.firstName);
+      const last = normalize(person.lastName);
+      const code = normalize(person.personalCode || "");
+      const phone = normalizePhoneForCompare(person.phoneNumber || "");
+  
+      // Check all tokens appear in fullName
+      const fullNameMatches = searchTokens.every((token) =>
+        fullName.includes(token)
+      );
+  
+      // Check personal code includes normalized search term fully (not tokenized)
+      const personalCodeMatches = code.includes(normSearch);
+  
+      return (
+        fullNameMatches ||
+        first.includes(normSearch) ||
+        last.includes(normSearch) ||
+        personalCodeMatches ||
+        phone.includes(normSearchPhone)
+      );
+    });
+  }, [searchTerm, data]);
+  
+  
   const handlePersonClick = (person) => {
     setSelectedPerson(person);
   };
@@ -917,12 +943,10 @@ const filteredData = useMemo(() => {
           <User className="client-icon" />
           <div className="client-info">
             <div className="client-header">
-              <h3 className="client-name">
-                {highlightText(
-                  `${person.firstName} ${person.lastName}`,
-                  searchTerm
-                )}
-              </h3>
+            <h3 className="client-name">
+  {highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}
+</h3>
+
               <span className="client-badge">client</span>
             </div>
             {person.crmEntries && person.crmEntries.length > 0 ? (
@@ -989,8 +1013,9 @@ const filteredData = useMemo(() => {
               <Mail className="contact-icon" />
               <span>{selectedPerson.email}</span>
             </div>
+            
             <div className="contact-item">
-              <Phone className="contact-icon" />
+              <Phone className="contact-icon"/>
               <span>
                 {(() => {
                   if (!selectedPerson?.phoneNumber) return "";
@@ -1009,6 +1034,18 @@ const filteredData = useMemo(() => {
                 })()}
               </span>
             </div>
+            <div className="address-item">
+              <SquareUser className="address-icon" />
+              <div className="address-content">
+                <div className="info-label">Personal code</div>
+                <div className="info-value">
+           
+                    <div>{selectedPerson?.personalCode ?? ""}</div>
+
+                </div>
+              </div>
+            </div>
+
             <div className="address-item">
               <MapPin className="address-icon" />
               <div className="address-content">
