@@ -1104,6 +1104,11 @@ body {
   cursor: not-allowed;
 }
 
+.special{
+  background-color: #f9fafb;
+  cursor: not-allowed;
+}
+
 .form-textarea {
   resize: vertical;
   min-height: 100px;
