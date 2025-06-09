@@ -135,64 +135,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     isLogoutOpen,
   ]);
 
-  const handleCreateNewClient = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      first_name: clientFormData.firstName,
-      last_name: clientFormData.lastName,
-      email: clientFormData.email,
-      personal_code: clientFormData.personalCode,
-      doc_type: clientFormData.documentType,
-      doc_number: clientFormData.documentNumber,
-      doc_expiry_date: clientFormData.documentExpiry,
-      date_of_birth: clientFormData.dateOfBirth,
-      phone_number: clientFormData.phone,
-      marketing_consent: clientFormData.marketingConsent,
-      reg_address: {
-        country: clientFormData.registrationCountry,
-        region: clientFormData.registrationRegion,
-        city: clientFormData.registrationCity,
-        street: clientFormData.registrationStreet,
-        house_number: clientFormData.registrationHouse,
-        apartment: clientFormData.registrationApartment,
-        postal_code: clientFormData.registrationPostalCode,
-      },
-      cor_address: {
-        country: clientFormData.correspondenceCountry,
-        region: clientFormData.correspondenceRegion,
-        city: clientFormData.correspondenceCity,
-        street: clientFormData.correspondenceStreet,
-        house_number: clientFormData.correspondenceHouse,
-        apartment: clientFormData.correspondenceApartment,
-        postal_code: clientFormData.correspondencePostalCode,
-      },
-      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
-      other_bank_accounts: JSON.stringify({
-        bank: "ABC Bank",
-        iban: "DE89370400440532013000",
-      }),
-    };
-
-    try {
-      const response = await fetch("/createClient", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create client");
-      }
-
-      alert("Client created successfully");
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Error creating client");
-    }
-  };
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }));
@@ -318,23 +260,43 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }
   };
 
-  // Highlight search terms in text
-  const highlightText = (text, searchTerm) => {
-    if (!searchTerm || !text) return text;
+// Highlight search terms in text
+const highlightText = (text, searchTerm) => {
+  if (!searchTerm || !text) return text;
 
-    const regex = new RegExp(`(${searchTerm})`, "gi");
-    const parts = text.split(regex);
+  const normText = normalize(text);
+  const normSearch = normalize(searchTerm);
 
-    return parts.map((part, index) =>
-      regex.test(part) ? (
-        <span key={index} className="highlight-search">
-          {part}
-        </span>
-      ) : (
-        part
-      )
-    );
-  };
+  const matchIndex = normText.indexOf(normSearch);
+  if (matchIndex === -1) return text;
+
+  // Find original positions by iterating
+  let start = -1;
+  let normIndex = 0;
+
+  for (let i = 0; i < text.length; i++) {
+    const currentChar = normalize(text[i]);
+    if (currentChar) {
+      if (normIndex === matchIndex) start = i;
+      normIndex++;
+      if (normIndex === matchIndex + normSearch.length) {
+        const end = i + 1;
+        return (
+          <>
+            {text.slice(0, start)}
+            <span className="highlight-search">
+              {text.slice(start, end)}
+            </span>
+            {text.slice(end)}
+          </>
+        );
+      }
+    }
+  }
+
+  return text;
+};
+
 
   // VALIDATION HELPERS
   const validatePersonalCode = (code) => {
@@ -431,7 +393,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     return null;
   };
 
-  // ADD CLIENT
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!validateClientForm()) return;
@@ -450,33 +411,32 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       ),
       phone_number: clientFormData.phone,
       marketing_consent: clientFormData.marketingConsent,
+  
       reg_address: {
-        country: clientFormData.registrationCountry,
-        region: clientFormData.registrationRegion,
-        city: clientFormData.registrationCity,
         street: clientFormData.registrationStreet,
         house_number: clientFormData.registrationHouse,
-        apartment: clientFormData.registrationApartment,
+        city: clientFormData.registrationCity,
         postal_code: clientFormData.registrationPostalCode,
+        country: clientFormData.registrationCountry,
       },
+  
       cor_address: {
-        country: clientFormData.correspondenceCountry,
-        region: clientFormData.correspondenceRegion,
-        city: clientFormData.correspondenceCity,
         street: clientFormData.correspondenceStreet,
         house_number: clientFormData.correspondenceHouse,
-        apartment: clientFormData.correspondenceApartment,
+        city: clientFormData.correspondenceCity,
         postal_code: clientFormData.correspondencePostalCode,
+        country: clientFormData.correspondenceCountry,
       },
-      bank_accs: [101, 202, 303], // Replace with dynamic values if needed
+  
+      bank_accs: [], // Fill in if applicable
       other_bank_accounts: JSON.stringify({
-        bank: "ABC Bank",
-        iban: "DE89370400440532013000",
+        bank: "", // Optional - replace with actual form data
+        iban: "",
       }),
     };
 
     try {
-      const response = await fetch("/createClient", {
+      const response = await fetch(getServerLink()+"/createClient", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -546,33 +506,63 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
 
   const validateClientForm = () => {
     const newErrors = {};
-
-    const firstNameError = validateName(clientFormData.firstName, "First name");
-    if (firstNameError) newErrors.firstName = firstNameError;
-
-    const lastNameError = validateName(clientFormData.lastName, "Last name");
-    if (lastNameError) newErrors.lastName = lastNameError;
-
-    const personalCodeError = validatePersonalCode(clientFormData.personalCode);
-    if (personalCodeError) newErrors.personalCode = personalCodeError;
-
-    const documentNumberError = validateDocumentNumber(
-      clientFormData.documentNumber
-    );
-    if (documentNumberError) newErrors.documentNumber = documentNumberError;
-
-    const emailError = validateEmail(clientFormData.email);
-    if (emailError) newErrors.email = emailError;
-
-    const phoneError = validatePhone(clientFormData.phone);
-    if (phoneError) newErrors.phone = phoneError;
-
-    const expiryError = validateFutureDate(clientFormData.documentExpiry);
-    if (expiryError) newErrors.documentExpiry = expiryError;
-
+  
+    // First Name
+    if (!clientFormData.firstName?.trim()) {
+      newErrors.firstName = "First name is required.";
+    } else {
+      const firstNameError = validateName(clientFormData.firstName, "First name");
+      if (firstNameError) newErrors.firstName = firstNameError;
+    }
+  
+    // Last Name
+    if (!clientFormData.lastName?.trim()) {
+      newErrors.lastName = "Last name is required.";
+    } else {
+      const lastNameError = validateName(clientFormData.lastName, "Last name");
+      if (lastNameError) newErrors.lastName = lastNameError;
+    }
+  
+    // Personal Code
+    if (!clientFormData.personalCode?.trim()) {
+      newErrors.personalCode = "Personal code is required.";
+    } else {
+      const personalCodeError = validatePersonalCode(clientFormData.personalCode);
+      if (personalCodeError) newErrors.personalCode = personalCodeError;
+    }
+  
+    // Document Number
+    if (!clientFormData.documentNumber?.trim()) {
+      newErrors.documentNumber = "Document number is required.";
+    } else {
+      const documentNumberError = validateDocumentNumber(clientFormData.documentNumber);
+      if (documentNumberError) newErrors.documentNumber = documentNumberError;
+    }
+  
+    // Document Expiry
+    if (!clientFormData.documentExpiry) {
+      newErrors.documentExpiry = "Document expiry date is required.";
+    } else {
+      const expiryError = validateFutureDate(clientFormData.documentExpiry);
+      if (expiryError) newErrors.documentExpiry = expiryError;
+    }
+  
+    // Email
+    if (clientFormData.email?.trim()) {
+      const emailError = validateEmail(clientFormData.email);
+      if (emailError) newErrors.email = emailError;
+    }
+  
+    // Phone
+    if (clientFormData.phone?.trim()) {
+      const phoneError = validatePhone(clientFormData.phone);
+      if (phoneError) newErrors.phone = phoneError;
+    }
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
 
   const handleClientFormChange = (field, value) => {
     if (field === "personalCode") {
@@ -866,23 +856,36 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   };
 
   // FILTER + SEARCH including phone numbers
-  const filteredData = useMemo(() => {
-    let result = data;
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (person) =>
-          person.firstName.toLowerCase().includes(lowerSearch) ||
-          person.lastName.toLowerCase().includes(lowerSearch) ||
-          person.personalCode.includes(searchTerm) ||
-          (person.phoneNumber &&
-            person.phoneNumber
-              .replace(/\s+/g, "")
-              .includes(searchTerm.replace(/\s+/g, "")))
-      );
-    }
-    return result;
-  }, [searchTerm, data]);
+const normalize = (str) =>
+  str
+    .normalize("NFD")               // decompose accented characters
+    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+    .toLowerCase()
+    .replace(/\s+/g, "");           // remove spaces
+
+const filteredData = useMemo(() => {
+  if (!searchTerm) return data;
+
+  const normSearch = normalize(searchTerm);
+
+  return data.filter((person) => {
+    const fullName = normalize(person.firstName + person.lastName);
+    const first = normalize(person.firstName);
+    const last = normalize(person.lastName);
+    const code = person.personalCode || "";
+    const phone = (person.phoneNumber || "").replace(/\s+/g, "");
+
+    return (
+      fullName.includes(normSearch) ||
+      first.includes(normSearch) ||
+      last.includes(normSearch) ||
+      code.includes(searchTerm) ||
+      phone.includes(searchTerm.replace(/\s+/g, ""))
+    );
+  });
+}, [searchTerm, data]);
+
+  
 
   const handlePersonClick = (person) => {
     setSelectedPerson(person);
@@ -892,7 +895,8 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   const renderPersonList = () =>
     filteredData.map((person, idx) => (
       <div
-        key={person.id}
+      key={`${person.id}-${idx}`}
+
         className={`client-card ${
           selectedPerson?.id === person.id ? "selected" : ""
         }`}
@@ -1762,19 +1766,6 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                     </div>
                   </div>
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">
-                    Date of Birth (Auto-filled from Personal Code)
-                  </label>
-                  <input
-                    type="date"
-                    className="form-input readonly"
-                    value={clientFormData.dateOfBirth}
-                    readOnly
-                  />
-                </div>
-
                 <div className="form-checkbox">
                   <input
                     type="checkbox"
@@ -1801,7 +1792,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
                   <button
                     type="submit"
                     className="button-primary"
-                    onClick={handleCreateNewClient}
+                    onClick={handleAddClient }
                   >
                     Create Client
                   </button>
