@@ -927,7 +927,8 @@ body {
 }
 
 .logout-modal {
-  max-width: 20rem;
+  max-width: 32rem;
+  width: 100%;
 }
 
 .logout-message {
@@ -1110,7 +1111,6 @@ body {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 

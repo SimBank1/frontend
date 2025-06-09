@@ -667,10 +667,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <CreditCard size={16} />
                 Bank Accounts
               </h3>
-              <button className="add-account-button" onClick={() => setIsAddAccountOpen(true)}>
-                <Plus size={14} />
-                Add Account
-              </button>
             </div>
             <div className="card-content">
               {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
@@ -1380,128 +1376,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   </button>
                   <button type="submit" className="button-primary">
                     Create Client
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Account Modal */}
-      {isAddAccountOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addAccount")}>
-          <div
-            className={`modal-content ${modalClosing.addAccount ? "closing" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3 className="modal-title">
-                <CreditCard size={20} color="#8b5cf6" />
-                Create New Account
-              </h3>
-              <button className="modal-close" onClick={() => closeModal("addAccount")}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <form onSubmit={handleAccountSubmit}>
-                <div className="form-group">
-                  <label className="form-label">IBAN *</label>
-                  <div className="iban-input-group">
-                    <input
-                      className={`form-input ${errors.iban ? "error" : ""}`}
-                      value={accountFormData.iban}
-                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, iban: e.target.value }))}
-                      placeholder="LT817044..."
-                    />
-                    <button
-                      type="button"
-                      className="button-secondary"
-                      onClick={() => setAccountFormData((prev) => ({ ...prev, iban: generateIBAN() }))}
-                    >
-                      Generate
-                    </button>
-                  </div>
-                  {errors.iban && <div className="error-message">{errors.iban}</div>}
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Currency *</label>
-                    <select
-                      className={`form-input ${errors.currency ? "error" : ""}`}
-                      value={accountFormData.currency}
-                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, currency: e.target.value }))}
-                    >
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                      <option value="GBP">GBP</option>
-                      <option value="PLN">PLN</option>
-                    </select>
-                    {errors.currency && <div className="error-message">{errors.currency}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Balance *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className={`form-input ${errors.balance ? "error" : ""}`}
-                      value={accountFormData.balance}
-                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, balance: e.target.value }))}
-                      placeholder="0.00"
-                    />
-                    {errors.balance && <div className="error-message">{errors.balance}</div>}
-                  </div>
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Service Plan *</label>
-                    <select
-                      className="form-input"
-                      value={accountFormData.servicePlan}
-                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, servicePlan: e.target.value }))}
-                    >
-                      <option value="Jaunimo">Jaunimo</option>
-                      <option value="Standard">Standard</option>
-                      <option value="Gold">Gold</option>
-                      <option value="Investment">Investment</option>
-                      <option value="Loan">Loan</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Card Type</label>
-                    <select
-                      className="form-input"
-                      value={accountFormData.cardType}
-                      onChange={(e) => setAccountFormData((prev) => ({ ...prev, cardType: e.target.value }))}
-                      disabled={!["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan)}
-                    >
-                      <option value="none">No Card</option>
-                      {["Jaunimo", "Standard", "Gold"].includes(accountFormData.servicePlan) && (
-                        <>
-                          <option value="Debeto">Debit Card</option>
-                          <option value="Kredito">Credit Card</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Opening Date</label>
-                  <input type="date" className="form-input readonly" value={accountFormData.openingDate} readOnly />
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => closeModal("addAccount")}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="button-primary">
-                    Create Account
                   </button>
                 </div>
               </form>
