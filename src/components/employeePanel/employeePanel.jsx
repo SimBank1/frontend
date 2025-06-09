@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function EmployeePanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,9 +65,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     personalCode: "",
     email: "",
     phone: "",
-    phoneCountryCode: "+370",
     secondPhone: "",
-    secondPhoneCountryCode: "+370",
     documentType: "ID Card",
     documentNumber: "",
     documentExpiry: "",
@@ -329,13 +328,34 @@ const highlightText = (text, searchTerm) => {
     return null;
   };
 
-  const validatePhone = (phone) => {
-    if (!/^0\d{8}$/.test(phone)) {
-      return "Phone number must start with 0 and contain exactly 9 digits";
-    }
-    return null;
-  };
 
+  const validatePhone = (phone) => {
+    if (!phone) return false;
+  
+    let cleanedPhone = phone.replace(/\s+/g, '');
+  
+    if (cleanedPhone.startsWith('00')) {
+      cleanedPhone = '+' + cleanedPhone.slice(2);
+    }
+  
+    const localPattern = /^0\d{8}$/;
+  
+    if (localPattern.test(cleanedPhone)) {
+      const localWithCountry = parsePhoneNumberFromString(cleanedPhone, 'LT');
+      if (localWithCountry && localWithCountry.isValid()) {
+        return localWithCountry.formatInternational(); // return formatted
+      }
+    }
+  
+
+    const parsed = parsePhoneNumberFromString(cleanedPhone);
+    if (parsed && parsed.isValid()) {
+      return parsed.formatInternational();
+    }
+  
+    return false;
+  };
+  
   const validateIBAN = (iban) => {
     if (!/^LT817044\d{12}$/.test(iban)) {
       return "IBAN must start with LT817044 followed by exactly 12 digits";
@@ -404,7 +424,7 @@ const highlightText = (text, searchTerm) => {
       doc_number: clientFormData.documentNumber,
       doc_expiry_date: clientFormData.documentExpiry,
       date_of_birth: clientFormData.dateOfBirth,
-      phone_number: clientFormData.phoneCountryCode + clientFormData.phone,
+      phone_number: validatePhone(clientFormData.phone),
       marketing_consent: clientFormData.marketingConsent,
   
       reg_address: {
@@ -459,9 +479,7 @@ const highlightText = (text, searchTerm) => {
         personalCode: "",
         email: "",
         phone: "",
-        phoneCountryCode: "+370",
         secondPhone: "",
-        secondPhoneCountryCode: "+370",
         documentType: "ID Card",
         documentNumber: "",
         documentExpiry: "",
@@ -1462,25 +1480,7 @@ const filteredData = useMemo(() => {
                   <div className="form-group">
                     <label className="form-label">Phone *</label>
                     <div className="phone-input-group">
-                      <select
-                        className="country-code-select"
-                        value={clientFormData.phoneCountryCode}
-                        onChange={(e) =>
-                          handleClientFormChange(
-                            "phoneCountryCode",
-                            e.target.value
-                          )
-                        }
-                      >
-                        <option value="+370">+370 (LT)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                        <option value="+39">+39 (IT)</option>
-                        <option value="+34">+34 (ES)</option>
-                        <option value="+48">+48 (PL)</option>
-                      </select>
+                     
                       <input
                         className={`form-input ${errors.phone ? "error" : ""}`}
                         value={clientFormData.phone}
@@ -1728,25 +1728,7 @@ const filteredData = useMemo(() => {
                       Second Phone (Optional)
                     </label>
                     <div className="phone-input-group">
-                      <select
-                        className="country-code-select"
-                        value={clientFormData.secondPhoneCountryCode}
-                        onChange={(e) =>
-                          handleClientFormChange(
-                            "secondPhoneCountryCode",
-                            e.target.value
-                          )
-                        }
-                      >
-                        <option value="+370">+370 (LT)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                        <option value="+39">+39 (IT)</option>
-                        <option value="+34">+34 (ES)</option>
-                        <option value="+48">+48 (PL)</option>
-                      </select>
+                      
                       <input
                         className="form-input"
                         value={clientFormData.secondPhone}
