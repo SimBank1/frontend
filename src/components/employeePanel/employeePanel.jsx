@@ -21,6 +21,7 @@ import {
   ChevronRight,
   SquareUser, 
   PlugZap,
+  Pyramid,
 } from "lucide-react";
 import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
@@ -432,116 +433,166 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   }
 
   const handleAddClient = async (e) => {
-    e.preventDefault()
-    if (!validateClientForm()) return
+    e.preventDefault();
+    if (!validateClientForm()) return;
 
-    // Build payload for backend
+    // Construct the payload with keys matching the exact snake_case JSON structure your backend expects
     const payload = {
-      first_name: clientFormData.firstName,
-      last_name: clientFormData.lastName,
-      email: clientFormData.email,
-      personal_code: clientFormData.personalCode,
-      doc_type: clientFormData.documentType,
-      doc_number: clientFormData.documentNumber,
-      doc_expiry_date: clientFormData.documentExpiry,
-      date_of_birth: clientFormData.dateOfBirth,
-      phone_number: clientFormData.phone,
-      marketing_consent: clientFormData.marketingConsent,
+        // Top-level fields (snake_case)
+        first_name: clientFormData.firstName,
+        last_name: clientFormData.lastName,
+        email: clientFormData.email,
+        personal_code: clientFormData.personalCode,
+        doc_type: clientFormData.documentType,
+        doc_number: clientFormData.documentNumber,
+        doc_expiry_date: clientFormData.documentExpiry,
+        date_of_birth: clientFormData.dateOfBirth,
+        phone_number: clientFormData.phone,
+        other_phone_number: clientFormData.secondPhone, // Ensure this maps correctly from your form data
+        marketing_consent: clientFormData.marketingConsent,
 
-      reg_address: {
-        street: clientFormData.registrationStreet,
-        house_number: clientFormData.registrationHouse,
-        city: clientFormData.registrationCity,
-        postal_code: clientFormData.registrationPostalCode,
-        country: clientFormData.registrationCountry,
-      },
-
-      cor_address: {
-        street: clientFormData.correspondenceStreet,
-        house_number: clientFormData.correspondenceHouse,
-        city: clientFormData.correspondenceCity,
-        postal_code: clientFormData.correspondencePostalCode,
-        country: clientFormData.correspondenceCountry,
-      },
-
-      bank_accs: [],
-      other_bank_accounts: JSON.stringify({
-        bank: "",
-        iban: "",
-      }),
-    };
-    console.log(payload)
-    try {
-      const response = await fetch(getServerLink() + "/createClient", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+        // Nested Address objects (snake_case for the object names, but cityOrVillage/postalCode are still camelCase within them as per your provided perfect input)
+        reg_address: { // Matches 'reg_address' in your perfect JSON
+            country: clientFormData.registrationCountry,
+            region: clientFormData.registrationRegion || null,
+            cityOrVillage: clientFormData.registrationCity || null, // Still camelCase here as per your input
+            street: clientFormData.registrationStreet,
+            house: clientFormData.registrationHouse || null,
+            apartment: clientFormData.registrationApartment || null,
+            postalCode: clientFormData.registrationPostalCode || null // Still camelCase here as per your input
         },
-        body: JSON.stringify(payload),
-      })
 
-      if (!response.ok) {
-        throw new Error("Failed to create client");
-        console.log("hejoo");
-      }
-      else{
-        console.log("hej");
-        location.reload();
-      }
+        cor_address: { // Matches 'cor_address' in your perfect JSON
+            country: clientFormData.correspondenceCountry,
+            region: clientFormData.correspondenceRegion || null,
+            cityOrVillage: clientFormData.correspondenceCity || null,
+            street: clientFormData.correspondenceStreet,
+            house: clientFormData.correspondenceHouse || null,
+            apartment: clientFormData.correspondenceApartment || null,
+            postalCode: clientFormData.correspondencePostalCode || null
+        },
 
-      // Add to local state
-      const newClient = {
-        id: (data.length + 1).toString(),
-        ...clientFormData,
-        dateOfBirth: payload.date_of_birth,
-        accounts: [],
-        crmEntries: [],
-      }
+        // Array fields (snake_case as per your perfect JSON)
+        bank_accs: [],
+        crm: [],
 
-      setData((prev) => [...prev, newClient])
+        // Stringified JSON object (snake_case as per your perfect JSON)
+        other_bank_accounts: JSON.stringify({
+            bank: "",
+            iban: "",
+        }),
+    };
 
-      // Reset form
-      setClientFormData({
-        firstName: "",
-        lastName: "",
-        personalCode: "",
-        email: "",
-        phone: "",
-        secondPhone: "",
-        documentType: "ID Card",
-        documentNumber: "",
-        documentExpiry: "",
-        dateOfBirth: "",
-        registrationCountry: "",
-        registrationRegion: "",
-        registrationCity: "",
-        registrationStreet: "",
-        registrationHouse: "",
-        registrationApartment: "",
-        registrationPostalCode: "",
-        correspondenceCountry: "",
-        correspondenceRegion: "",
-        correspondenceCity: "",
-        correspondenceStreet: "",
-        correspondenceHouse: "",
-        correspondenceApartment: "",
-        correspondencePostalCode: "",
-        marketingConsent: false,
-      })
+    try {
+        const response = await fetch(getServerLink() + "/createClient", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+            credentials: "include",
+        });
 
-      setErrors({})
-      closeModal("addClient")
+        if (response.ok) {
+            // As discussed, if backend returns empty string, read as text.
+            // If backend starts returning JSON, change this back to `await response.json()`.
+            console.log(payload);
+            const responseText = await response.text(); 
+            console.log("Client creation successful. Backend response:", responseText);
 
-      setTimeout(() => {
-        setSelectedPerson(newClient)
-        showSuccess("Client profile created successfully!")
-      }, 200)
+            // Add to local state (assuming client creation was successful based on response.ok)
+            // Note: Since backend returns empty string, you don't get the actual ID back.
+            // You might need to generate a temporary ID or refetch data if real ID is crucial.
+            const newClient = {
+                id: (data.length + 1).toString(), // Temporary ID
+                // Map from original clientFormData to the frontend's expected display format
+                firstName: clientFormData.firstName,
+                lastName: clientFormData.lastName,
+                personalCode: clientFormData.personalCode,
+                email: clientFormData.email,
+                phoneNumber: clientFormData.phone,
+                otherPhoneNumber: clientFormData.secondPhone,
+                docType: clientFormData.documentType,
+                docNumber: clientFormData.documentNumber,
+                docExpiryDate: clientFormData.documentExpiry,
+                dateOfBirth: clientFormData.dateOfBirth,
+                marketingConsent: clientFormData.marketingConsent,
+                
+                // Address objects are now constructed to match the payload's structure
+                regAddress: {
+                    country: clientFormData.registrationCountry,
+                    region: clientFormData.registrationRegion || null,
+                    cityOrVillage: clientFormData.registrationCity || null,
+                    street: clientFormData.registrationStreet,
+                    house: clientFormData.registrationHouse || null,
+                    apartment: clientFormData.registrationApartment || null,
+                    postalCode: clientFormData.registrationPostalCode || null
+                },
+                corAddress: {
+                    country: clientFormData.correspondenceCountry,
+                    region: clientFormData.correspondenceRegion || null,
+                    cityOrVillage: clientFormData.correspondenceCity || null,
+                    street: clientFormData.correspondenceStreet,
+                    house: clientFormData.correspondenceHouse || null,
+                    apartment: clientFormData.correspondenceApartment || null,
+                    postalCode: clientFormData.correspondencePostalCode || null
+                },
+
+                // These are the frontend's internal names, mapping from the snake_case payload
+                accounts: [], // Assuming this maps to bank_accs
+                crmEntries: [], // Assuming this maps to crm
+                otherBankAccounts: JSON.parse(payload.other_bank_accounts) // Parse string back to object for frontend state
+            };
+
+
+            setData((prev) => [...prev, newClient]);
+
+            // Reset form
+            setClientFormData({
+                firstName: "",
+                lastName: "",
+                personalCode: "",
+                email: "",
+                phone: "",
+                secondPhone: "",
+                documentType: "ID Card",
+                documentNumber: "",
+                documentExpiry: "",
+                dateOfBirth: "",
+                registrationCountry: "",
+                registrationRegion: "",
+                registrationCity: "",
+                registrationStreet: "",
+                registrationHouse: "",
+                registrationApartment: "",
+                registrationPostalCode: "",
+                correspondenceCountry: "",
+                correspondenceRegion: "",
+                correspondenceCity: "",
+                correspondenceStreet: "",
+                correspondenceHouse: "",
+                correspondenceApartment: "",
+                correspondencePostalCode: "",
+                marketingConsent: false,
+            });
+
+            setErrors({});
+            closeModal("addClient");
+
+            setTimeout(() => {
+                setSelectedPerson(newClient);
+                showSuccess("Client profile created successfully!");
+            }, 200);
+        } else {
+            const errorText = await response.text();
+            throw new Error(`Failed to create client: ${errorText}`);
+        }
+
     } catch (error) {
-      console.error("Error creating client:", error)
-      showSuccess("Failed to create client.")
+        console.error("Error creating client:", error);
+        showSuccess(`Failed to create client. Error: ${error.message}`);
     }
-  }
-
+};
   const validateClientForm = () => {
     const newErrors = {}
 

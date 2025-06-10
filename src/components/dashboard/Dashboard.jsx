@@ -16,11 +16,19 @@ const Dashboard = () => {
       try {
         const response = await fetch(getServerLink() + "/rand", {
           method: "GET",
-          credentials: "include",
           headers: {
-            "Content-Type": "application/json",
+            // Only include essential, non-browser-controlled headers here.
+            // For a simple GET request that doesn't send a body and just expects data,
+            // you might not even need any custom headers.
+            // If you need a specific Accept header (e.g., for JSON response), add it:
+            // "Accept": "application/json"
           },
-        })
+          referrer: "http://localhost:5173/",
+          referrerPolicy: "strict-origin-when-cross-origin",
+          body: null, // Explicitly null for clarity with GET, though often omitted entirely
+          mode: "cors",
+          credentials: "include"
+        });
 
         const data = await response.json()
         console.log(data)
