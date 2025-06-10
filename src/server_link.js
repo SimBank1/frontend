@@ -1,3 +1,3 @@
 export function getServerLink() {
-    return "http://localhost:8080";
+    return "http://backend.majmohar.eu";
   }
