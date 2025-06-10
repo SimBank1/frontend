@@ -27,7 +27,7 @@ import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
-export default function EmployeePanel({ data: initialData, currentUser }) {
+export default function EmployeePanel({ data: initialData, currentUser, username}) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [data, setData] = useState(initialData?.clients || [])
@@ -44,9 +44,11 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
+  const [employeeUsername, setEmployeeUsername] = useState(username);
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
+
 
   // Tracks which modal is in the process of closing (for fade‐out animation)
   const [modalClosing, setModalClosing] = useState({
@@ -496,9 +498,8 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         if (response.ok) {
             // As discussed, if backend returns empty string, read as text.
             // If backend starts returning JSON, change this back to `await response.json()`.
-            console.log(payload);
+          
             const responseText = await response.text(); 
-            console.log("Client creation successful. Backend response:", responseText);
 
             // Add to local state (assuming client creation was successful based on response.ok)
             // Note: Since backend returns empty string, you don't get the actual ID back.
@@ -795,139 +796,165 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }
   }
 
+  console.log(employeeUsername)
   const handleAddCrm = async (e) => {
-    e.preventDefault()
-    if (!selectedPerson) return
-    if (!validateCrmForm()) return
+    e.preventDefault();
+    if (!selectedPerson) return;
+    if (!validateCrmForm()) return;
 
-    // Create CRM entry with the required structure including employee username
+    // Generate a 1-based numeric ID for the new CRM entry
+    // This ID will be used for both local state and sent to the backend.
+    const newId = (selectedPerson.crm && selectedPerson.crm.length > 0)
+        ? Math.max(...selectedPerson.crm.map(entry => entry.id || 0)) + 1 // Find max existing ID and add 1
+        : 1; // Start with 1 if no existing CRM entries
+
     const crmData = {
-      personal_code: selectedPerson.personalCode,
-      date_of_contact: crmFormData.date,
-      contact_type: crmFormData.contactType,
-      title: crmFormData.title,
-      content: crmFormData.content,
-      employee_username: currentUser?.username || "unknown",
-    }
-
-    try {
-      // Send to server using the proper format
-      const response = await fetch(getServerLink() + "/createCRM", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(crmData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create CRM entry")
-      }
-
-      // Update local state
-      const newCrmEntry = {
-        id: `crm${selectedPerson.crmEntries ? selectedPerson.crmEntries.length + 1 : 1}`,
-        title: crmFormData.title,
-        employeeName: currentUser?.username || "Current Employee",
-        canEdit: true,
-        contactType: crmFormData.contactType,
-        content: crmFormData.content,
-        date: crmFormData.date,
-      }
-
-      const updatedPerson = {
-        ...selectedPerson,
-        crmEntries: [...(selectedPerson.crmEntries || []), newCrmEntry],
-      }
-
-      setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-      setSelectedPerson(updatedPerson)
-      setCrmFormData({
-        title: "",
-        contactType: "phone",
-        content: "",
-        date: new Date().toISOString().split("T")[0],
-      })
-      setErrors({})
-      closeModal("addCrm")
-      setTimeout(() => {
-        showSuccess("CRM entry added successfully!")
-      }, 200)
-    } catch (error) {
-      console.error("Error creating CRM entry:", error)
-      showSuccess("Error creating CRM entry. Please try again.")
-    }
-  }
-
-  const handleEditCrm = (entry) => {
-    setEditingCrmEntry(entry)
-    setCrmFormData({
-      title: entry.title || "",
-      contactType: entry.contactType,
-      content: entry.content,
-      date: entry.date,
-    })
-    setIsEditCrmOpen(true)
-  }
-
-  const handleUpdateCrm = async (e) => {
-    e.preventDefault()
-    if (!validateCrmForm()) return
-
-    try {
-      // Send update to server
-      const crmData = {
-        personal_code: Number.parseInt(selectedPerson.personalCode),
+        id: newId, // Assign the new 1-based ID
+        personal_code: selectedPerson.personalCode,
         date_of_contact: crmFormData.date,
         contact_type: crmFormData.contactType,
         title: crmFormData.title,
         content: crmFormData.content,
-        employee_username: currentUser?.username || "unknown",
-      }
+        username: employeeUsername|| "unknown",
+    };
 
-      const response = await fetch(getServerLink() + "/crm/" + editingCrmEntry.id, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(crmData),
-      })
+    
+
+    try {
+        const response = await fetch(getServerLink() + "/createCRM", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(crmData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to create CRM entry");
+        }
+
+        // The newCrmEntry for local state should match the structure you display
+        const newCrmEntry = {
+            id: newId, // Use the generated 1-based ID
+            title: crmFormData.title,
+            username: employeeUsername || "unknown",
+            canEdit: true, // Assuming this is derived logic, not from DB
+            contactType: crmFormData.contactType,
+            content: crmFormData.content,
+            date: crmFormData.date, // Use the frontend date format
+        };
+        
+        const updatedPerson = {
+            ...selectedPerson,
+            crm: [...(selectedPerson.crm || []), newCrmEntry],
+        };
+
+        setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
+        setSelectedPerson(updatedPerson);
+        setCrmFormData({
+            title: "",
+            contactType: "phone",
+            content: "",
+            date: new Date().toISOString().split("T")[0],
+        });
+        setErrors({});
+        closeModal("addCrm");
+        setTimeout(() => {
+            showSuccess("CRM entry added successfully!");
+        }, 200);
+    } catch (error) {
+        console.error("Error creating CRM entry:", error);
+        showSuccess("Error creating CRM entry. Please try again.");
+    }
+};
+
+
+const handleEditCrm = (entry) => {
+  // When editing, load existing data, using snake_case properties from DB
+  setEditingCrmEntry(entry);
+  setCrmFormData({
+      title: entry.title || "",
+      contactType: entry.contact_type, // Use contact_type from DB
+      content: entry.content,
+      date: entry.date_of_contact,    // Use date_of_contact from DB
+  });
+  setIsEditCrmOpen(true);
+};
+const handleUpdateCrm = async (e) => {
+  e.preventDefault();
+  if (!validateCrmForm()) return;
+  if (!editingCrmEntry || !selectedPerson) return;
+
+  // Construct the payload for the API with the 1-based ID
+  const updatedCrmData = {
+      id: editingCrmEntry.id, // Pass the existing 1-based ID from the selected entry
+      personal_code: selectedPerson.personalCode,
+      title: crmFormData.title,
+      contact_type: crmFormData.contactType,
+      content: crmFormData.content,
+      date_of_contact: crmFormData.date,
+      // employee_username: currentUser?.username || "unknown", // Include if this field can also be updated
+  };
+
+  try {
+      const response = await fetch(getServerLink() + "/editCRM", {
+          method: "POST", // Keep as POST to match your @PostMapping backend
+          headers: {
+              "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(updatedCrmData),
+      });
+
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Failed to update CRM entry")
+          throw new Error(data.message || "Failed to update CRM entry");
       }
 
-      // Update local state
+      // Update the local state's `crm` array
+      const updatedCrmEntries = selectedPerson.crm.map((entry) =>
+          entry.id === editingCrmEntry.id
+              ? {
+                    ...entry,
+                    // Update specific fields. Ensure snake_case from form matches DB fields.
+                    title: crmFormData.title,
+                    contact_type: crmFormData.contactType,
+                    content: crmFormData.content,
+                    date_of_contact: crmFormData.date,
+                    // employeeName: currentUser?.username || "Current Employee", // Update if necessary
+                }
+              : entry
+      );
+
       const updatedPerson = {
-        ...selectedPerson,
-        crmEntries: selectedPerson.crmEntries.map((ent) =>
-          ent.id === editingCrmEntry.id ? { ...ent, ...crmFormData } : ent,
-        ),
-      }
+          ...selectedPerson,
+          crm: updatedCrmEntries,
+      };
 
-      setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-      setSelectedPerson(updatedPerson)
+      setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
+      setSelectedPerson(updatedPerson); // Update selected person to show changes immediately
+
+      setEditingCrmEntry(null);
       setCrmFormData({
-        title: "",
-        contactType: "phone",
-        content: "",
-        date: new Date().toISOString().split("T")[0],
-      })
-      setErrors({})
-      closeModal("editCrm")
+          title: "",
+          contactType: "phone",
+          content: "",
+          date: new Date().toISOString().split("T")[0],
+      });
+      setErrors({});
+      closeModal("editCrm");
       setTimeout(() => {
-        showSuccess("CRM entry updated successfully!")
-      }, 200)
-    } catch (error) {
-      console.error("Error updating CRM entry:", error)
-      showSuccess("Error updating CRM entry. Please try again.")
-    }
+          showSuccess("CRM entry updated successfully!");
+      }, 200);
+  } catch (error) {
+      console.error("Error updating CRM entry:", error);
+      showSuccess("Error updating CRM entry. Please try again.");
   }
-
+};
   const handleDeleteCrm = (entry) => {
     setDeletingCrmEntry(entry)
     setIsDeleteCrmOpen(true)
@@ -1284,49 +1311,49 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             <Plus size={16} style={{ marginRight: "8px" }} /> Add CRM Entry
           </button>
         </div>
-
         <div className="crm-entries">
-          {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
-            selectedPerson.crmEntries.map((entry, i) => (
-              <div key={entry.id} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
+    {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
+        selectedPerson.crm.map((entry, i) => ( // Changed from selectedPerson.crmEntries to selectedPerson.crm
+            <div key={entry.id || `crm-${i}`} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="crm-entry-header">
-                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id)}>
-                    {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <span style={{ fontWeight: 600, marginLeft: "8px" }}>{entry.title || "Untitled Entry"}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span className="crm-entry-badge">{entry.contactType}</span>
-                    <span className="crm-entry-date">{entry.date}</span>
-                    <span className="crm-entry-employee">by {entry.employeeName}</span>
-                    <div className="crm-entry-actions">
-                      {canEditCrmEntry(entry) && (
-                        <button className="edit-button" onClick={() => handleEditCrm(entry)}>
-                          <Edit size={16} />
-                        </button>
-                      )}
-                      {canDeleteCrmEntry(entry) && (
-                        <button
-                          className="delete-crm-button"
-                          onClick={() => handleDeleteCrm(entry)}
-                          title="Delete CRM entry"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                    <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
+                        {expandedCrmEntries[entry.id || `crm-${i}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        <span style={{ fontWeight: 600, marginLeft: "8px" }}>{entry.title || "Untitled Entry"}</span>
                     </div>
-                  </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span> {/* Uses contact_type from DB */}
+                        <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span> {/* Uses date_of_contact from DB */}
+                        <span className="crm-entry-employee">by {entry.username}</span> {/* Uses username from DB */}
+                        <div className="crm-entry-actions">
+                            {canEditCrmEntry(entry) && (
+                                <button className="edit-button" onClick={() => handleEditCrm(entry)}>
+                                    <Edit size={16} />
+                                </button>
+                            )}
+                            {canDeleteCrmEntry(entry) && (
+                                <button
+                                    className="delete-crm-button"
+                                    onClick={() => handleDeleteCrm(entry)}
+                                    title="Delete CRM entry"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                {expandedCrmEntries[entry.id] && <div className="crm-entry-content">{entry.content}</div>}
-              </div>
-            ))
-          ) : (
-            <div className="no-data">
-              <FileText className="no-data-icon" />
-              <p className="no-data-text">No recent activities</p>
-              <p className="no-data-subtext">Create a new entry to start tracking client interactions</p>
+                {expandedCrmEntries[entry.id || `crm-${i}`] && <div className="crm-entry-content">{entry.content}</div>}
             </div>
-          )}
+        ))
+    ) : (
+        <div className="no-data">
+            <FileText className="no-data-icon" />
+            <p className="no-data-text">No recent activities</p>
+            <p className="no-data-subtext">Create a new entry to start tracking client interactions</p>
         </div>
+    )}
+</div>
+      
       </div>
     )
   }
