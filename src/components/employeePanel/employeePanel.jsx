@@ -19,7 +19,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
-  SquareUser ,
+  SquareUser, 
+  PlugZap,
 } from "lucide-react";
 import "./EmployeePanel.css";
 import { getServerLink } from "@/server_link";
@@ -59,6 +60,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     content: "",
     date: new Date().toISOString().split("T")[0],
   });
+
 
   const [clientFormData, setClientFormData] = useState({
     firstName: "",
@@ -293,14 +295,25 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   
   
 
-
-  // VALIDATION HELPERS
   const validatePersonalCode = (code) => {
     if (!/^\d{11}$/.test(code)) {
       return "Personal code must be exactly 11 digits";
     }
+  
+    const inputCode = Number(code.trim());
+  
+    const codeExists = data.some(
+      (person) => Number(person.personalCode) === inputCode
+    );
+  
+    if (codeExists) {
+      return "Personal code already in use";
+    }
+  
     return null;
   };
+  
+  
 
   const validateName = (name, fieldName) => {
     if (!/^[A-Za-zĄąČčĘęĖėĮįŠšŲųŪūŽž\s]{3,50}$/.test(name)) {
@@ -332,25 +345,24 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
   const validatePhone = (phone) => {
     if (!phone) return false;
   
+    // Remove all whitespace
     let cleanedPhone = phone.replace(/\s+/g, '');
   
+    // Convert '00' to '+'
     if (cleanedPhone.startsWith('00')) {
       cleanedPhone = '+' + cleanedPhone.slice(2);
     }
   
-    const localPattern = /^0\d{8}$/;
+    try {
+      // Try parsing as international number
+      const parsed = parsePhoneNumber(cleanedPhone, 'LT'); // fallback region
   
-    if (localPattern.test(cleanedPhone)) {
-      const localWithCountry = parsePhoneNumberFromString(cleanedPhone, 'LT');
-      if (localWithCountry && localWithCountry.isValid()) {
-        return localWithCountry.formatInternational(); // return formatted
+      if (parsed && parsed.isValid()) {
+        return parsed.formatInternational(); // returns formatted string
       }
-    }
-  
-
-    const parsed = parsePhoneNumberFromString(cleanedPhone);
-    if (parsed && parsed.isValid()) {
-      return parsed.formatInternational();
+    } catch (err) {
+      // If parsing fails, return false
+      return false;
     }
   
     return false;
@@ -424,7 +436,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       doc_number: clientFormData.documentNumber,
       doc_expiry_date: clientFormData.documentExpiry,
       date_of_birth: clientFormData.dateOfBirth,
-      phone_number: validatePhone(clientFormData.phone),
+      phone_number: clientFormData.phone,
       marketing_consent: clientFormData.marketingConsent,
   
       reg_address: {
@@ -449,7 +461,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
         iban: "",
       }),
     };
-
+    console.log(payload)
     try {
       const response = await fetch(getServerLink()+"/createClient", {
         method: "POST",
@@ -461,12 +473,16 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
 
       if (!response.ok) {
         throw new Error("Failed to create client");
+        console.log("hejoo");
+      }
+      else{
+        console.log("hej");
+        location.reload();
       }
 
       // Add to local state
       const newClient = {
         id: (data.length + 1).toString(),
-        type: "client",
         ...clientFormData,
         dateOfBirth: payload.date_of_birth,
         accounts: [],
@@ -587,6 +603,7 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
       }));
       return;
     }
+
     setClientFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
@@ -868,12 +885,13 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
     }, 200);
   };
   const normalize = (str) =>
-    str
-      ?.normalize("NFD")                // decompose accents
-      .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+    String(str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/\s+/g, " ")             // normalize all spaces to single space
-      .trim() || "";
+      .replace(/\s+/g, " ")
+      .trim();
+  
   
   // Normalize phone for comparison: remove spaces, +, 00 prefixes
   const normalizePhoneForCompare = (phone) => {
@@ -1019,23 +1037,16 @@ export default function EmployeePanel({ data: initialData, currentUser }) {
             
             <div className="contact-item">
               <Phone className="contact-icon"/>
-              <span>
+                <span>
                 {(() => {
-                  if (!selectedPerson?.phoneNumber) return "";
+                  const raw = selectedPerson?.phoneNumber;
+                  if (!raw) return raw;
 
-                  const raw = selectedPerson.phoneNumber;
-
-                  // Call validatePhone, it returns formatted string or false
                   const formatted = validatePhone(raw);
-
-                  if (formatted) {
-                    return formatted;
-                  } else {
-                    // fallback: show raw number cleaned from spaces
-                    return raw.replace(/\s+/g, '');
-                  }
+                  return formatted || raw.replace(/\s+/g, "");
                 })()}
-              </span>
+            </span>
+
             </div>
             <div className="address-item">
               <SquareUser className="address-icon" />
