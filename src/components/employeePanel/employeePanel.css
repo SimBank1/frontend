@@ -783,6 +783,11 @@ body {
   animation: fadeInUp 0.0s ease-out forwards;
   opacity: 1;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.crm-entry:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .crm-entry-header {
@@ -798,6 +803,13 @@ body {
   gap: 8px;
   cursor: pointer;
   flex: 1;
+  font-weight: 600;
+  color: #111827;
+  font-size: 15px;
+}
+
+.crm-entry-title:hover {
+  color: #8b5cf6;
 }
 
 .crm-entry-actions {
@@ -823,6 +835,11 @@ body {
 .crm-entry-content {
   color: #374151;
   line-height: 1.5;
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #8b5cf6;
 }
 
 .edit-button {
@@ -920,6 +937,12 @@ body {
 
 .modal-content.large-modal {
   max-width: 48rem;
+}
+
+/* Make CRM modal wider */
+.modal-content.crm-modal {
+  max-width: 56rem;
+  width: 95%;
 }
 
 .modal-content.closing {
@@ -1104,14 +1127,14 @@ body {
   cursor: not-allowed;
 }
 
-.special{
+.special {
   background-color: #f9fafb;
   cursor: not-allowed;
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .form-grid {
@@ -1230,6 +1253,14 @@ body {
   margin-top: 4px;
 }
 
+.character-count.warning {
+  color: #f59e0b;
+}
+
+.character-count.error {
+  color: #ef4444;
+}
+
 .client-info-box {
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -1328,7 +1359,6 @@ body {
     width: 100%;
   }
 }
-
 
 .vegova-logo-sidebar {
   margin-left: auto;
