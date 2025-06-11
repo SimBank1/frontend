@@ -2398,20 +2398,10 @@ const handleUpdateCrm = async (e) => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Contact Type *</label>
-                  <select
-                    className={`form-select ${errors.contactType ? "error" : ""}`}
-                    value={crmFormData.contactType}
-                    onChange={(e) => handleCrmFormChange("contactType", e.target.value)}
-                    required
-                  >
-                    <option value="phone">Phone</option>
-                    <option value="visit">Visit</option>
-                    <option value="website">Website</option>
-                  </select>
-                  {errors.contactType && <div className="error-message">{errors.contactType}</div>}
+                  <label className="form-label">Contact Type (Read-only)</label>
+                  <input type="text" className="form-input readonly" value={crmFormData.contactType ? crmFormData.contactType.charAt(0).toUpperCase() + crmFormData.contactType.slice(1).toLowerCase() : ''} readOnly />
+                  {errors.date && <div className="error-message">{errors.date}</div>}
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Content * (max 750 characters)</label>
                   <textarea
