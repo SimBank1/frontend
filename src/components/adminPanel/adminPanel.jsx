@@ -12,6 +12,7 @@ import {
   CheckCircle,
   CreditCard,
   Mail,
+  Plus,
   Phone,
   FileText,
   Trash2,
@@ -830,6 +831,62 @@ export default function AdminPanel({ data: initialData, currentUser }) {
             )}
           </div>
         </div>
+
+        {/* Bank Accounts for clients */}
+        {isClient && (
+          <div className="info-card">
+          <div className="card-header bank-accounts-header">
+            <h3 className="card-title">
+              <CreditCard size={16} style={{ marginRight: "6px" }} />
+              Bank Accounts
+            </h3>
+            <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
+              <Plus size={14} style={{ marginRight: "4px" }} />
+              Add Account
+            </button>
+          </div>
+          <div className="card-content">
+          {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
+  selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
+    <div key={`${account.id}-${index}`} className="account-item"> 
+      <div className="account-header">
+        <span className="account-iban">{account.iban}</span>
+        <span className="account-badge">{account.currency}</span>
+      </div>
+      <div className="account-details">
+        <div className="account-detail">
+          <div className="info-label">Balance</div>
+          <div className="info-value">
+            {Number(account.balance).toFixed(2)} {account.currency}
+          </div>
+        </div>
+        <div className="account-detail">
+          <div className="info-label">Plan</div>
+          <div className="info-value">{account.plan}</div>
+        </div>
+        <div className="account-detail">
+          <div className="info-label">Card Type</div>
+          <div className="info-value">
+            {account.type === "none"
+              ? "No Card"
+              : account.type === "Debeto"
+              ? "Debit Card"
+              : "Credit Card"}
+          </div>
+        </div>
+      </div>
+    </div>
+  ))
+) : (
+  <div className="no-data">
+    <CreditCard className="no-data-icon" />
+    <p className="no-data-text">No accounts found</p>
+  </div>
+)}
+</div>
+
+            </div>
+          )}
 
         {/* Bank Accounts for clients */}
         {isClient && (
