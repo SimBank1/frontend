@@ -533,15 +533,39 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     }, 200)
   }
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (!selectedPerson) return
 
-    setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
-    setSelectedPerson(null)
-    closeModal("deleteClient")
-    setTimeout(() => {
-      showSuccess("Client deleted successfully!")
-    }, 200)
+    try {
+      // If you have a backend API for deletion, uncomment and modify this:
+      // const response = await fetch(`${getServerLink()}/deleteClient/${selectedPerson.id}`, {
+      //   method: "DELETE",
+      //   credentials: "include",
+      // })
+      //
+      // if (!response.ok) {
+      //   throw new Error("Failed to delete client from server")
+      // }
+
+      // Remove client from local state
+      setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+
+      // Clear the selected person
+      setSelectedPerson(null)
+
+      // Close the modal
+      closeModal("deleteClient")
+
+      // Show success message
+      setTimeout(() => {
+        showSuccess("Client deleted successfully!")
+      }, 200)
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      setTimeout(() => {
+        showSuccess("Error deleting client. Please try again.")
+      }, 200)
+    }
   }
 
   const handleDeleteEmployee = () => {
@@ -1347,6 +1371,52 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <button type="button" className="button-danger" onClick={handleDeleteEmployee}>
                   <Trash2 size={16} style={{ marginRight: "8px" }} />
                   Delete Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Client Modal */}
+      {isDeleteClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+          <div
+            className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Client
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteClient")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete{" "}
+                <strong>
+                  {selectedPerson?.firstName} {selectedPerson?.lastName}
+                </strong>
+                ?
+              </p>
+              <p className="delete-warning" style={{ marginTop: "12px", fontSize: "14px", color: "#6b7280" }}>
+                This action cannot be undone and will permanently remove:
+              </p>
+              <ul style={{ marginTop: "8px", marginLeft: "20px", color: "#6b7280", fontSize: "14px" }}>
+                <li>All personal information</li>
+                <li>All bank accounts ({selectedPerson?.accounts?.length || 0} accounts)</li>
+                <li>All CRM entries ({selectedPerson?.crmEntries?.length || 0} entries)</li>
+                <li>All associated data</li>
+              </ul>
+              <div className="form-actions" style={{ marginTop: "24px" }}>
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteClient")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteClient}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Client Permanently
                 </button>
               </div>
             </div>
