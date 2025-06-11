@@ -908,8 +908,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     // Generate a 1-based numeric ID for the new CRM entry
     // This ID will be used for both local state and sent to the backend.
-    const newId = (selectedPerson.crm && selectedPerson.crm.length > 0)
-      ? Math.max(...selectedPerson.crm.map(entry => entry.id || 0)) + 1 // Find max existing ID and add 1
+    const newId = (selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0)
+      ? Math.max(...selectedPerson.crmEntries.map(entry => entry.id || 0)) + 1 // Find max existing ID and add 1
       : 1; // Start with 1 if no existing CRM entries
 
     const crmData = {
@@ -953,7 +953,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       const updatedPerson = {
         ...selectedPerson,
-        crm: [...(selectedPerson.crm || []), newCrmEntry],
+        crmEntries: [...(selectedPerson.crmEntries || []), newCrmEntry],
       };
 
       setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
@@ -996,7 +996,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (!validateCrmForm()) return;
     if (!editingCrmEntry || !selectedPerson) return;
 
-    const entryIndex = selectedPerson.crm.findIndex(
+    const entryIndex = selectedPerson.crmEntries.findIndex(
       (entry) =>
         entry.id === editingCrmEntry.id &&
         entry.username === editingCrmEntry.username &&
@@ -1033,7 +1033,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       }
 
       // Update the local state's `crm` array
-      const updatedCrmEntries = selectedPerson.crm.map((entry) =>
+      const updatedCrmEntries = selectedPerson.crmEntries.map((entry) =>
         entry.id === editingCrmEntry.id &&
           entry.title === editingCrmEntry.title &&
           entry.contact_type === editingCrmEntry.contact_type &&
@@ -1054,7 +1054,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       const updatedPerson = {
         ...selectedPerson,
-        crm: updatedCrmEntries,
+        crmEntries: updatedCrmEntries,
       };
 
       setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
@@ -1089,7 +1089,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (!deletingCrmEntry || !selectedPerson) return;
 
 
-    const entryIndex = selectedPerson.crm.findIndex(
+    const entryIndex = selectedPerson.crmEntries.findIndex(
       (entry) =>
         entry &&
         entry.username === deletingCrmEntry.username &&
@@ -1139,7 +1139,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       }
 
-      const updatedCrmEntries = selectedPerson.crm.filter(
+      const updatedCrmEntries = selectedPerson.crmEntries.filter(
         (entry) =>
           !(
             entry.username === deletingCrmEntry.username &&
@@ -1152,7 +1152,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       const updatedPerson = {
         ...selectedPerson,
-        crm: updatedCrmEntries,
+        crmEntries: updatedCrmEntries,
       };
 
       setData((prev) =>
@@ -1174,11 +1174,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
 
   const canDeleteCrmEntry = (entry) => {
-    return entry.employeeName === currentUser?.username
+    return entry.username === currentUser?.username
   }
 
   const canEditCrmEntry = (entry) => {
-    return entry.employeeName === currentUser?.username
+    return entry.username === currentUser?.username
   }
 
   const handleDeleteClient = () => {
@@ -1265,9 +1265,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               <h3 className="client-name">{highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}</h3>
               <span className="client-badge">client</span>
             </div>
-            {person.crm && person.crm.length > 0 ? (
+            {person.crmEntries && person.crmEntries.length > 0 ? (
               <p className="client-preview">
-                Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact : "No interactions"}
+                Last interaction: {person.crmEntries.length > 0 ? person.crmEntries[person.crmEntries.length - 1].date_of_contact : "No interactions"}
               </p>
             ) : (
               <p className="client-preview no-recent-activities">No recent activities</p>
@@ -1647,21 +1647,21 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               <div className="card-content">
                 <div className="info-item">
                   <div className="info-label">Total CRM Entries</div>
-                  <div className="info-value">{selectedPerson.crm ? selectedPerson.crm.length : 0}</div>
+                  <div className="info-value">{selectedPerson.crmEntries ? selectedPerson.crmEntries.length : 0}</div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Last Contact Date</div>
                   <div className="info-value">
-                    {selectedPerson.crm && selectedPerson.crm.length > 0
-                      ? selectedPerson.crm[selectedPerson.crm.length - 1].date_of_contact
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[selectedPerson.crmEntries.length - 1].date_of_contact
                       : "No contact recorded"}
                   </div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Last Contact Type</div>
                   <div className="info-value">
-                    {selectedPerson.crm && selectedPerson.crm.length > 0
-                      ? selectedPerson.crm[selectedPerson.crm.length - 1].contact_type
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[selectedPerson.crmEntries.length - 1].contact_type
                       : "N/A"}
                   </div>
                 </div>
@@ -1712,8 +1712,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           </button>
         </div>
         <div className="crm-entries">
-          {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
-            selectedPerson.crm.map((entry, i) => ( // Changed from selectedPerson.crmEntries to selectedPerson.crm
+          {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
+            selectedPerson.crmEntries.map((entry, i) => (
               <div key={entry.id || `crm-${i}`} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="crm-entry-header">
                   <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
