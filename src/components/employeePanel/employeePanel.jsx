@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import "./employeePanel.css";
 import { getServerLink } from "@/server_link";
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { parsePhoneNumberFromString } from 'libphonenumber-js'
 
 export default function EmployeePanel({ data: initialData, currentUser, username}) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -46,10 +46,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [errors, setErrors] = useState({})
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const [sameAsRegistration, setSameAsRegistration] = useState(true)
+  const sameAsRegistration = true
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
-  const [employeeUsername, setEmployeeUsername] = useState(username);
-  const [crmTickets, setCrmTickets] = useState([]);
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closingCrmEntry])
+  const employeeUsername = username
 
 
   // Apple-style success animation states
@@ -218,9 +225,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
-      // Close all other entries and toggle the clicked one
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
       const newState = {}
-      newState[entryId] = !prev[entryId]
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
       return newState
     })
   }
@@ -250,7 +265,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }, 200)
   }
 
-  const fetchGeneratedIBAN = async (personalCode) => {
+  const fetchGeneratedIBAN = async () => {
   
     try {
       const response = await fetch(`${getServerLink()}/generateIBAN`, {
@@ -397,26 +412,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const validatePhone = (phone) => {
-    if (!phone) return false;
-  
-    // Remove all whitespace
-    let cleanedPhone = phone.replace(/\s+/g, '');
-  
-    // Convert '00' to '+'
+    if (!phone) return false
+
+    let cleanedPhone = phone.replace(/\s+/g, '')
     if (cleanedPhone.startsWith('00')) {
-      cleanedPhone = '+' + cleanedPhone.slice(2);
+      cleanedPhone = '+' + cleanedPhone.slice(2)
     }
-  
+
     try {
-      // Try parsing as international number
-      const parsed = parsePhoneNumber(cleanedPhone, 'LT'); // fallback region
-  
+      const parsed = parsePhoneNumberFromString(cleanedPhone, 'LT')
       if (parsed && parsed.isValid()) {
-        return parsed.formatInternational(); // returns formatted string
+        return parsed.formatInternational()
       }
-    } catch (err) {
-      // If parsing fails, return false
-      return false;
+    } catch {
+      return false
     }
 
     return false
@@ -445,7 +454,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const validateDateIsToday = (date) => {
-    //my function is to exist
+    if (date) {
+      // Placeholder for future validation logic
+    }
     return null
   }
 
@@ -543,7 +554,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             // As discussed, if backend returns empty string, read as text.
             // If backend starts returning JSON, change this back to `await response.json()`.
           
-            const responseText = await response.text(); 
+
+            await response.text();
 
             // Add to local state (assuming client creation was successful based on response.ok)
             // Note: Since backend returns empty string, you don't get the actual ID back.
@@ -713,12 +725,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   
       return;
     }
-    // Fetch IBAN and update label
-    const generatedIban = await fetchGeneratedIBAN(person.personalCode);
-    console.log("Generated IBAN:", generatedIban);
-    if (generatedIban) {
-      document.getElementById("generated-iban-label").innerText = generatedIban;
-    }
+
   
     setClientFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -1262,18 +1269,6 @@ const handleUpdateCrm = async (e) => {
                 <Trash2 size={16} />
               </button>
             )}
-            {isEmployee && (
-              <button
-                className="delete-client-button"
-                onClick={() => {
-                  setDeletingEmployee(selectedPerson)
-                  setIsDeleteEmployeeOpen(true)
-                }}
-                title="Delete Employee"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
           </div>
   
           {/* Basic Information */}
@@ -1725,7 +1720,14 @@ const handleUpdateCrm = async (e) => {
                         </div>
                     </div>
                 </div>
-                {expandedCrmEntries[entry.id || `crm-${i}`] && <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}} className="crm-entry-content">{entry.content}</div>}
+                {(expandedCrmEntries[entry.id || `crm-${i}`] || closingCrmEntry === (entry.id || `crm-${i}`)) && (
+                  <div
+                    style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}
+                    className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? 'closing' : 'opening'}`}
+                  >
+                    {entry.content}
+                  </div>
+                )}
             </div>
         ))
     ) : (

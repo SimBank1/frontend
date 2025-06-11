@@ -37,12 +37,13 @@ body {
   position: fixed;
   top: 20px;
   left: 50%;
+  transform: translate(-50%, -100%);
   transform-origin: top center;
 
   background: linear-gradient(to right, #8b5cf6, #3b82f6);
   color: white;
-  padding: 18px 32px;
-  border-radius: 18px;
+  padding: 16px 28px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   gap: 14px;
@@ -55,8 +56,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 1;
-  transform: translate(-50%, -110%) scale(0.85) rotateX(8deg);
+  opacity: 0;
   z-index: 1000;
 
   /* Start hidden by default */
@@ -65,37 +65,32 @@ body {
 
 .success-toast.showing {
   visibility: visible;
-  animation: toastDropDown 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  animation: toastFadeIn 0.3s ease-out forwards;
 }
 
 .success-toast.closing {
-  animation: toastPopUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: toastFadeOut 0.3s ease-in forwards;
 }
 
-@keyframes toastDropDown {
-  0% {
-    transform: translate(-50%, -110%) scale(0.85) rotateX(8deg);
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%);
   }
-  50% {
-    transform: translate(-50%, 25%) scale(1.1) rotateX(-5deg);
-  }
-  75% {
-    transform: translate(-50%, -5%) scale(0.95) rotateX(3deg);
-  }
-  100% {
-    transform: translate(-50%, 0) scale(1) rotateX(0);
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
-@keyframes toastPopUp {
-  0% {
-    transform: translate(-50%, 0) scale(1) rotateX(0);
+@keyframes toastFadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
-  40% {
-    transform: translate(-50%, -30%) scale(1.2) rotateX(-12deg);
-  }
-  100% {
-    transform: translate(-50%, -130%) scale(0) rotateX(0);
+  to {
+    opacity: 0;
+    transform: translate(-50%, -100%);
   }
 }
 
@@ -873,6 +868,15 @@ body {
   background-color: #f8fafc;
   border-radius: 8px;
   border-left: 3px solid #8b5cf6;
+  transform-origin: top center;
+}
+
+.crm-entry-content.opening {
+  animation: crmExpand 0.25s ease-out forwards;
+}
+
+.crm-entry-content.closing {
+  animation: crmCollapse 0.2s ease-in forwards;
 }
 
 .edit-button {
@@ -1348,6 +1352,28 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes crmExpand {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes crmCollapse {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0.95);
   }
 }
 

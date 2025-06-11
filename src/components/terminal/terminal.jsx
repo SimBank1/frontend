@@ -12,7 +12,7 @@ export default function Terminal() {
     "Secure connection established. Welcome, Agent 404.",
     "",
   ])
-  const [currentPath, setCurrentPath] = useState("/")
+  const currentPath = "/"
   const [accessLevel, setAccessLevel] = useState("standard")
   const [matrixMode, setMatrixMode] = useState(false)
   const [matrixChars, setMatrixChars] = useState([])

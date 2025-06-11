@@ -231,6 +231,10 @@ export default function Login({ onLogin }) {
     }, 200)
   }
 
+  const showPopup = (message, type = "success") => {
+    setPopup({ message, type, show: true, isClosing: false })
+  }
+
   const triggerShake = (field) => {
     setShakeField(field)
     setTimeout(() => {
