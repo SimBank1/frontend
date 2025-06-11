@@ -17,7 +17,6 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
-  Plus,
 } from "lucide-react"
 import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
@@ -27,6 +26,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [showPassword, setShowPassword] = useState({})
+  const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
+  const [deletingEmployee, setDeletingEmployee] = useState(null)
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
@@ -42,8 +43,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [successMessage, setSuccessMessage] = useState("")
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
 
-
-  
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
     addEmployee: false,
@@ -51,6 +50,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     addAccount: false,
     deleteClient: false,
     logout: false,
+    deleteEmployee: false,
   })
 
   // Employee form state with auto-generation
@@ -173,12 +173,21 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         if (isAddAccountOpen) closeModal("addAccount")
         if (isDeleteClientOpen) closeModal("deleteClient")
         if (isLogoutOpen) closeModal("logout")
+        if (isDeleteEmployeeOpen) closeModal("deleteEmployee")
       }
     }
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddEmployeeOpen, isAddClientOpen, isAddAccountOpen, isDeleteClientOpen, isLogoutOpen, searchTerm])
+  }, [
+    isAddEmployeeOpen,
+    isAddClientOpen,
+    isAddAccountOpen,
+    isDeleteClientOpen,
+    isLogoutOpen,
+    searchTerm,
+    isDeleteEmployeeOpen,
+  ])
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
@@ -199,6 +208,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           break
         case "logout":
           setIsLogoutOpen(false)
+          break
+        case "deleteEmployee":
+          setIsDeleteEmployeeOpen(false)
+          setDeletingEmployee(null)
           break
       }
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
@@ -240,7 +253,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
-    
 
     if (activeFilter === "clients") {
       filtered = filtered.filter((person) => person?.marketingConsent !== undefined)
@@ -374,9 +386,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleEmployeeSubmit = async (e) => { // Added 'async' keyword
-    e.preventDefault();
-    if (!validateEmployeeForm()) return;
+  const handleEmployeeSubmit = async (e) => {
+    // Added 'async' keyword
+    e.preventDefault()
+    if (!validateEmployeeForm()) return
 
     // Data to be sent in the request body
     const employeeDataForBody = {
@@ -385,61 +398,62 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       username: employeeFormData.username,
       password: employeeFormData.password,
       email: employeeFormData.email,
-    };
+    }
 
     try {
-        const response = await fetch(`${getServerLink()}/createEmployee`, {
-            method: "POST", // Changed method to POST
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(employeeDataForBody), // Added request body
-        });
-        console.log(response);
-        if (!response.ok) {
-            // Handle HTTP errors
-            const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const response = await fetch(`${getServerLink()}/createEmployee`, {
+        method: "POST", // Changed method to POST
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(employeeDataForBody), // Added request body
+      })
+      console.log(response)
+      if (!response.ok) {
+        // Handle HTTP errors
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // You might want to check `result` to see if the employee was actually created on the server
+      // For example, if the server returns a success field or the created employee data.
+      if (response.ok) {
+        // Assuming your server response has a 'success' field
+        // It's highly recommended to use the ID returned from the server if available
+        const newEmployee = {
+          id: (data.length + 1).toString(), // Use server ID or fallback
+          type: "employee",
+          ...employeeFormData,
+          createdAt: new Date().toISOString().split("T")[0],
         }
 
-        // You might want to check `result` to see if the employee was actually created on the server
-        // For example, if the server returns a success field or the created employee data.
-        if (response.ok) { // Assuming your server response has a 'success' field
-            // It's highly recommended to use the ID returned from the server if available
-            const newEmployee = {
-                id: (data.length + 1).toString(), // Use server ID or fallback
-                type: "employee",
-                ...employeeFormData,
-                createdAt: new Date().toISOString().split("T")[0],
-            };
-
-            setData((prev) => [...prev, newEmployee]);
-            setEmployeeFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                username: "",
-                password: "",
-            });
-            setErrors({});
-            closeModal("addEmployee");
-            setTimeout(() => {
-                showSuccess("Employee created successfully!");
-            }, 200);
-        } else {
-            // Handle cases where the server indicates a failure even with a 200 OK status
-            throw new Error(result.message || "Failed to create employee on server.");
-        }
-
-    } catch (error) {
-        console.error("Error creating employee:", error);
-        // You might want to show an error message to the user
+        setData((prev) => [...prev, newEmployee])
+        setEmployeeFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          username: "",
+          password: "",
+        })
+        setErrors({})
+        closeModal("addEmployee")
         setTimeout(() => {
-            showError(`Error creating employee: ${error.message}`);
-        }, 200);
+          showSuccess("Employee created successfully!")
+        }, 200)
+      } else {
+        // Handle cases where the server indicates a failure even with a 200 OK status
+        const result = await response.json()
+        throw new Error(result.message || "Failed to create employee on server.")
+      }
+    } catch (error) {
+      console.error("Error creating employee:", error)
+      // You might want to show an error message to the user
+      setTimeout(() => {
+        showError(`Error creating employee: ${error.message}`)
+      }, 200)
     }
-}
+  }
 
   const handleClientSubmit = (e) => {
     e.preventDefault()
@@ -536,6 +550,19 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     }, 200)
   }
 
+  const handleDeleteEmployee = () => {
+    if (!deletingEmployee) return
+
+    setData((prev) => prev.filter((person) => person.id !== deletingEmployee.id))
+    if (selectedPerson && selectedPerson.id === deletingEmployee.id) {
+      setSelectedPerson(null)
+    }
+    closeModal("deleteEmployee")
+    setTimeout(() => {
+      showSuccess("Employee deleted successfully!")
+    }, 200)
+  }
+
   const deleteCrmEntry = (entryId) => {
     if (!selectedPerson) return
 
@@ -566,7 +593,12 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           </div>
           <div className="user-info">
             <div className="user-header">
-              <h3 className="user-name">{highlightText(`${person.firstName || person.first_name} ${person.lastName || person.last_name}`, searchTerm)}</h3>
+              <h3 className="user-name">
+                {highlightText(
+                  `${person.firstName || person.first_name || ""} ${person.lastName || person.last_name || ""}`,
+                  searchTerm,
+                )}
+              </h3>
               <span className={`user-badge ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
                 {person.marketingConsent !== undefined ? "client" : "employee"}
               </span>
@@ -607,12 +639,25 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           </div>
           <div className="profile-info">
             <h2>
-              {selectedPerson.firstName} {selectedPerson.lastName}
+              {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
+              {selectedPerson.lastName || selectedPerson.last_name || ""}
             </h2>
-            <p>{selectedPerson.type}</p>
+            <p>{selectedPerson.marketingConsent !== undefined ? "client" : "employee"}</p>
           </div>
-          {selectedPerson.type === "client" && (
+          {selectedPerson.marketingConsent !== undefined && (
             <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+              <Trash2 size={16} />
+            </button>
+          )}
+          {selectedPerson.marketingConsent === undefined && (
+            <button
+              className="delete-client-button"
+              onClick={() => {
+                setDeletingEmployee(selectedPerson)
+                setIsDeleteEmployeeOpen(true)
+              }}
+              title="Delete Employee"
+            >
               <Trash2 size={16} />
             </button>
           )}
@@ -627,7 +672,35 @@ export default function AdminPanel({ data: initialData, currentUser }) {
             </h3>
           </div>
           <div className="card-content">
-            {selectedPerson.marketingConsent !== undefined ? (
+            {selectedPerson.marketingConsent === undefined ? (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{selectedPerson.username || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Email</div>
+                  <div className="info-value">{selectedPerson.email || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Password</div>
+                  <div className="password-container">
+                    <span className="password-value">{selectedPerson.password || "N/A"}</span>
+                    <button
+                      className="copy-button"
+                      onClick={() => {
+                        const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
+                        navigator.clipboard.writeText(credentials)
+                        showSuccess("Credentials copied!")
+                      }}
+                      title="Copy credentials"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
               <>
                 <div className="info-item">
                   <div className="info-label">Personal Code</div>
@@ -646,34 +719,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="info-value">{selectedPerson.docNumber}</div>
                 </div>
               </>
-            ) : (
-              <>
-                <div className="info-item">
-                  <div className="info-label">Username</div>
-                  <div className="info-value">{selectedPerson.username}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Email</div>
-                  <div className="info-value">{selectedPerson.email}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Password</div>
-                  <div className="password-container">
-                    <span className="password-value">{selectedPerson.password}</span>
-                    <button
-                      className="copy-button"
-                      onClick={() => {
-                        const credentials = `Username: ${selectedPerson.username}\nPassword: ${selectedPerson.password}`
-                        navigator.clipboard.writeText(credentials)
-                        showSuccess("Credentials copied!")
-                      }}
-                      title="Copy credentials"
-                    >
-                      <Copy size={16} />
-                    </button>
-                  </div>
-                </div>
-              </>
             )}
           </div>
         </div>
@@ -689,12 +734,12 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           <div className="card-content">
             <div className="contact-item">
               <Mail className="contact-icon" />
-              <span>{selectedPerson.email}</span>
+              <span>{selectedPerson.email || "N/A"}</span>
             </div>
-            {selectedPerson.type === "client" && (
+            {selectedPerson.marketingConsent !== undefined && (
               <div className="contact-item">
                 <Phone className="contact-icon" />
-                <span>{selectedPerson.phoneNumber}</span>
+                <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
               </div>
             )}
           </div>
@@ -851,11 +896,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               <p>Admin Portal</p>
             </div>
             <div className="vegova-logo-sidebar">
-              <img
-                src="/vegova-logo.png"
-                alt="Vegova Ljubljana"
-                className="vegova-logo-sidebar-img"
-              />
+              <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
             </div>
           </div>
           <div className="search-container">
@@ -977,15 +1018,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   {errors.email && <div className="error-message">{errors.email}</div>}
                 </div>
                 <div className="form-group">
-                <label className="form-label">Username (Auto-generated)</label>
-                <div className="username-container">
-                  <input
-                    className="form-input"
-                    value={employeeFormData.username}
-                    disabled 
-                  />
+                  <label className="form-label">Username (Auto-generated)</label>
+                  <div className="username-container">
+                    <input className="form-input" value={employeeFormData.username} disabled />
+                  </div>
                 </div>
-              </div>
 
                 <div className="form-group">
                   <label className="form-label">Password (Auto-generated)</label>
@@ -1487,6 +1524,41 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <button type="button" className="button-primary logout-confirm" onClick={confirmLogout}>
                   <LogOut size={16} style={{ marginRight: "8px" }} />
                   Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Employee Modal */}
+      {isDeleteEmployeeOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteEmployee")}>
+          <div
+            className={`modal-content ${modalClosing.deleteEmployee ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Employee
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteEmployee")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete employee {deletingEmployee?.firstName} {deletingEmployee?.lastName}?
+                This action cannot be undone.
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteEmployee")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteEmployee}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Employee
                 </button>
               </div>
             </div>

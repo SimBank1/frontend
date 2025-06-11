@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
+import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useCookies } from "react-cookie"
 import "./login.css"
@@ -217,13 +217,12 @@ export default function Login({ onLogin }) {
       if (anthemRef.current) {
         anthemRef.current.play().catch(console.error)
       }
-      setUsername("");
+      setUsername("")
     } else if (anthemRef.current && !anthemRef.current.paused) {
       anthemRef.current.pause()
       anthemRef.current.currentTime = 0
     }
   }, [username])
-
 
   const hidePopup = () => {
     setPopup((prev) => ({ ...prev, isClosing: true }))
@@ -277,22 +276,21 @@ export default function Login({ onLogin }) {
         mode: "cors",
         credentials: "include", // Correct, keeps session/cookies
         body: JSON.stringify({ username, password }), // Correct, the actual request body
-      });
-      
-      console.log("Response status:", response.status, response.statusText);
+      })
 
-        // While you can't see the 'Set-Cookie' header value directly here,
-        // you can log other response headers for debugging if needed.
-        // Note: 'Set-Cookie' is typically not exposed here due to security.
-        console.log("All response headers:");
-        for (let pair of response.headers.entries()) {
-            // This will log headers like 'Content-Type', 'Cache-Control', etc.
-            // 'Set-Cookie' will likely NOT be present in this list due to browser security restrictions.
-            console.log(pair[0] + ': ' + pair[1]);
-        }
-        
-      const data = await response.json()  
+      console.log("Response status:", response.status, response.statusText)
 
+      // While you can't see the 'Set-Cookie' header value directly here,
+      // you can log other response headers for debugging if needed.
+      // Note: 'Set-Cookie' is typically not exposed here due to security.
+      console.log("All response headers:")
+      for (const pair of response.headers.entries()) {
+        // This will log headers like 'Content-Type', 'Cache-Control', etc.
+        // 'Set-Cookie' will likely NOT be present in this list due to browser security restrictions.
+        console.log(pair[0] + ": " + pair[1])
+      }
+
+      const data = await response.json()
 
       if (!response.ok) {
         setServerErr(true)
@@ -303,17 +301,15 @@ export default function Login({ onLogin }) {
       if (data.error) {
         setAuthError(true)
       }
-      if(data.mode){
+      if (data.mode) {
         setIsLoading(false)
-        window.location.href = "/dashboard";
+        window.location.href = "/dashboard"
       }
-    } catch(error){
+    } catch (error) {
       setServerErr(true)
       console.log("Error during login:", error)
     } finally {
       setIsLoading(false)
-      
-
     }
   }
 
@@ -437,6 +433,24 @@ export default function Login({ onLogin }) {
         <div className="bg-element bg-element-1"></div>
         <div className="bg-element bg-element-2"></div>
         <div className="bg-element bg-element-3"></div>
+        <div className="bg-element bg-element-4"></div>
+        <div className="bg-element bg-element-5"></div>
+        <div className="bg-particles">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-particle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 6 + 2}px`,
+                height: `${Math.random() * 6 + 2}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${Math.random() * 10 + 10}s`,
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Content */}
@@ -473,7 +487,6 @@ export default function Login({ onLogin }) {
 
         {/* Main Content */}
         <div className="main-content">
-
           {/* Right Side - Login Form */}
           <div className="login-form-section">
             <div className="login-form">
