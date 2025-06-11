@@ -187,6 +187,39 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       setSuccessMessage("")
     }, 3000)
   }
+  function EmployeePanel(props) {
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [closing, setClosing] = useState(false);
+  
+    // Show the toast and reset closing state
+    function triggerSuccess() {
+      setShowSuccess(true);
+      setClosing(false);
+    }
+  
+    // Automatically start closing after 3.5s
+    useEffect(() => {
+      if (showSuccess) {
+        const timer = setTimeout(() => {
+          setClosing(true);
+        }, 3500);
+  
+        // Cleanup timeout if unmounted or toast hidden early
+        return () => clearTimeout(timer);
+      }
+    }, [showSuccess]);
+  
+    // Remove toast after closing animation ends (~400ms)
+    useEffect(() => {
+      if (closing) {
+        const timer = setTimeout(() => {
+          setShowSuccess(false);
+          setClosing(false);
+        }, 400);
+  
+        return () => clearTimeout(timer);
+      }
+    }, [closing]);
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
