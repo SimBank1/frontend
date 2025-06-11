@@ -395,7 +395,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const handleEmployeeSubmit = async (e) => {
     e.preventDefault()
     if (!validateEmployeeForm()) return
-
+  
     const employeeDataForBody = {
       first_name: employeeFormData.firstName,
       last_name: employeeFormData.lastName,
@@ -403,7 +403,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       password: employeeFormData.password,
       email: employeeFormData.email,
     }
-
+  
     try {
       const response = await fetch(`${getServerLink()}/createEmployee`, {
         method: "POST",
@@ -413,41 +413,44 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         },
         body: JSON.stringify(employeeDataForBody),
       })
-
+  
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
-
-      if (response.ok) {
-        const newEmployee = {
-          id: (data.length + 1).toString(),
-          type: "employee",
-          ...employeeFormData,
-          createdAt: new Date().toISOString().split("T")[0],
-        }
-
-        setData((prev) => [...prev, newEmployee])
-        setEmployeeFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          username: "",
-          password: "",
-        })
-        setErrors({})
-        closeModal("addEmployee")
-        setTimeout(() => {
-          showSuccess("Employee created successfully!")
-        }, 200)
+  
+      const newEmployee = {
+        id: (data.length + 1).toString(),
+        type: "employee",
+        ...employeeFormData,
+        createdAt: new Date().toISOString().split("T")[0],
       }
+  
+      setData((prev) => [...prev, newEmployee])
+      setEmployeeFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        username: "",
+        password: "",
+      })
+      setErrors({})
+      closeModal("addEmployee")
+      setTimeout(() => {
+        showSuccess("Employee created successfully!")
+      }, 200)
     } catch (error) {
       console.error("Error creating employee:", error)
+  
+      const errorMessage = error.message === "Failed to fetch"
+        ? "Server is not reachable"
+        : `Error creating employee: ${error.message}`
+  
       setTimeout(() => {
-        showSuccess(`Error creating employee: ${error.message}`)
+        showSuccess(errorMessage)
       }, 200)
     }
-  }
+  }  
 
   const handleClientSubmit = (e) => {
     e.preventDefault()
@@ -1040,7 +1043,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="info-value">
                     {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
                       ? selectedPerson.crmEntries[0].contactType
-                      : "N/A"}
+                      : "No records"}
                   </div>
                 </div>
               </div>
@@ -1271,7 +1274,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <div className="form-group">
                   <label className="form-label">Username (Auto-generated)</label>
                   <div className="username-container">
-                    <input className="form-input" value={employeeFormData.username} disabled />
+                  <input className="form-input auto-generated" value={employeeFormData.username} disabled />
                   </div>
                 </div>
 
@@ -1280,7 +1283,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="password-container">
                     <input
                       type="text"
-                      className="form-input"
+                      className="form-input auto-generated"
                       value={employeeFormData.password}
                       onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
                       disabled
