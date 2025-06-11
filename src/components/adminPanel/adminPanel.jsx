@@ -240,6 +240,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
+    
 
     if (activeFilter === "clients") {
       filtered = filtered.filter((person) => person?.marketingConsent !== undefined)
@@ -253,10 +254,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       filtered = filtered.filter((person) => {
         const nameMatch =
-          (person.firstName?.toLowerCase() ?? "").includes(lowerSearch) ||
-          (person.lastName?.toLowerCase() ?? "").includes(lowerSearch)
-        const codeMatch = (person.personalCode?.toLowerCase() ?? "").includes(lowerSearch)
-        const docMatch = (person.docNumber?.toLowerCase() ?? "").includes(lowerSearch)
+          ((person.firstName || person.first_name)?.toString().toLowerCase() ?? "").includes(lowerSearch) ||
+          ((person.lastName || person.last_name)?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const codeMatch = (person.personalCode?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const docMatch = (person.docNumber?.toString().toLowerCase() ?? "").includes(lowerSearch)
         const phoneMatch = (person.phoneNumber?.replace(/\s+/g, "") ?? "").includes(searchTerm.replace(/\s+/g, ""))
 
         return nameMatch || codeMatch || docMatch || phoneMatch
@@ -373,31 +374,72 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleEmployeeSubmit = (e) => {
-    e.preventDefault()
-    if (!validateEmployeeForm()) return
+  const handleEmployeeSubmit = async (e) => { // Added 'async' keyword
+    e.preventDefault();
+    if (!validateEmployeeForm()) return;
 
-    const newEmployee = {
-      id: (data.length + 1).toString(),
-      type: "employee",
-      ...employeeFormData,
-      createdAt: new Date().toISOString().split("T")[0],
+    // Data to be sent in the request body
+    const employeeDataForBody = {
+      first_name: employeeFormData.firstName,
+      last_name: employeeFormData.lastName,
+      username: employeeFormData.username,
+      password: employeeFormData.password,
+      email: employeeFormData.email,
+    };
+
+    try {
+        const response = await fetch(`${getServerLink()}/createEmployee`, {
+            method: "POST", // Changed method to POST
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(employeeDataForBody), // Added request body
+        });
+        console.log(response);
+        if (!response.ok) {
+            // Handle HTTP errors
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        // You might want to check `result` to see if the employee was actually created on the server
+        // For example, if the server returns a success field or the created employee data.
+        if (response.ok) { // Assuming your server response has a 'success' field
+            // It's highly recommended to use the ID returned from the server if available
+            const newEmployee = {
+                id: (data.length + 1).toString(), // Use server ID or fallback
+                type: "employee",
+                ...employeeFormData,
+                createdAt: new Date().toISOString().split("T")[0],
+            };
+
+            setData((prev) => [...prev, newEmployee]);
+            setEmployeeFormData({
+                firstName: "",
+                lastName: "",
+                email: "",
+                username: "",
+                password: "",
+            });
+            setErrors({});
+            closeModal("addEmployee");
+            setTimeout(() => {
+                showSuccess("Employee created successfully!");
+            }, 200);
+        } else {
+            // Handle cases where the server indicates a failure even with a 200 OK status
+            throw new Error(result.message || "Failed to create employee on server.");
+        }
+
+    } catch (error) {
+        console.error("Error creating employee:", error);
+        // You might want to show an error message to the user
+        setTimeout(() => {
+            showError(`Error creating employee: ${error.message}`);
+        }, 200);
     }
-
-    setData((prev) => [...prev, newEmployee])
-    setEmployeeFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      username: "",
-      password: "",
-    })
-    setErrors({})
-    closeModal("addEmployee")
-    setTimeout(() => {
-      showSuccess("Employee created successfully!")
-    }, 200)
-  }
+}
 
   const handleClientSubmit = (e) => {
     e.preventDefault()
@@ -524,7 +566,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           </div>
           <div className="user-info">
             <div className="user-header">
-              <h3 className="user-name">{highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}</h3>
+              <h3 className="user-name">{highlightText(`${person.firstName || person.first_name} ${person.lastName || person.last_name}`, searchTerm)}</h3>
               <span className={`user-badge ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
                 {person.marketingConsent !== undefined ? "client" : "employee"}
               </span>
@@ -553,7 +595,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         </div>
       )
     }
-
     return (
       <div>
         <div className="profile-header">

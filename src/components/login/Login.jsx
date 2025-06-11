@@ -266,15 +266,33 @@ export default function Login({ onLogin }) {
 
     try {
       const response = await fetch(getServerLink() + "/login", {
-        method: "POST",
+        method: "POST", // This is a top-level option
         headers: {
           "Content-Type": "application/json",
+          // ONLY HTTP headers go here. Remove 'referrer', 'referrerPolicy', 'body', 'method', 'mode' from here.
         },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
-      })
+        // These are top-level options for fetch:
+        referrer: "http://localhost:5173/",
+        referrerPolicy: "strict-origin-when-cross-origin",
+        mode: "cors",
+        credentials: "include", // Correct, keeps session/cookies
+        body: JSON.stringify({ username, password }), // Correct, the actual request body
+      });
+      
+      console.log("Response status:", response.status, response.statusText);
 
-      const data = await response.json()
+        // While you can't see the 'Set-Cookie' header value directly here,
+        // you can log other response headers for debugging if needed.
+        // Note: 'Set-Cookie' is typically not exposed here due to security.
+        console.log("All response headers:");
+        for (let pair of response.headers.entries()) {
+            // This will log headers like 'Content-Type', 'Cache-Control', etc.
+            // 'Set-Cookie' will likely NOT be present in this list due to browser security restrictions.
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
+      const data = await response.json()  
+
 
       if (!response.ok) {
         setServerErr(true)

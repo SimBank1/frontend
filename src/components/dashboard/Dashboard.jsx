@@ -3,6 +3,7 @@ import AdminPanel from "../adminPanel/AdminPanel";
 import EmployeePanel from "../employeePanel/EmployeePanel";
 import Terminal from "../terminal/terminal";
 import { getServerLink } from "@/server_link";
+import { data } from "react-router-dom";
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true)
@@ -10,6 +11,7 @@ const Dashboard = () => {
   const [isEmployee, setIsEmployee] = useState(false)
   const [sessionData, setSessionData] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
+  const [employee_username, setEmployee_username] = useState(null)
 
   useEffect(() => {
     const checkSession = async () => {
@@ -23,7 +25,6 @@ const Dashboard = () => {
         })
 
         const data = await response.json()
-        console.log(data)
 
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch session data")
@@ -33,11 +34,13 @@ const Dashboard = () => {
         const hasEmployees = Array.isArray(data.employees)
 
         setSessionData(data)
+        setEmployee_username(data.first_name)
 
         // Set current user from session data if available
         if (data.currentUser) {
           setCurrentUser(data.currentUser)
         }
+
 
         if (hasClients && hasEmployees) {
           setIsAdmin(true)
@@ -62,7 +65,7 @@ const Dashboard = () => {
 
   if (isLoading) return <div>Loading dashboard...</div>
   if (isAdmin) return <AdminPanel data={sessionData} currentUser={currentUser} />
-  if (isEmployee) return <EmployeePanel data={sessionData} currentUser={currentUser} />
+  if (isEmployee) return <EmployeePanel data={sessionData} currentUser={currentUser} username={employee_username} />
   return null
 }
 
