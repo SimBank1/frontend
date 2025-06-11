@@ -560,17 +560,41 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     if (!selectedPerson) return
 
     try {
-      // If you have a backend API for deletion, uncomment and modify this:
-      // const response = await fetch(`${getServerLink()}/deleteClient/${selectedPerson.id}`, {
-      //   method: "DELETE",
-      //   credentials: "include",
-      // })
-      //
-      // if (!response.ok) {
-      //   throw new Error("Failed to delete client from server")
-      // }
+      const response = await fetch(`${getServerLink()}/deleteClient`, {
+        method: "POST", // Changed method to POST
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ personal_code: selectedPerson.personalCode }), // Added request body
+      })
 
-      // Remove client from local state
+      if (!response.ok) {
+        // Handle HTTP errors
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // You might want to check `result` to see if the employee was actually created on the server
+      // For example, if the server returns a success field or the created employee data.
+      if (response.ok) {
+        setTimeout(() => {
+          showSuccess("Client deleted successfully!")
+        }, 200)
+       
+      } else {
+        // Handle cases where the server indicates a failure even with a 200 OK status
+        const result = await response.json()
+        throw new Error(result.message || "Failed to create employee on server.")
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      // You might want to show an error message to the user
+      setTimeout(() => {
+        showError(`Error deleting client: ${error.message}`)
+      }, 200)
+    }
+
       setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
 
       // Clear the selected person
@@ -578,30 +602,51 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       // Close the modal
       closeModal("deleteClient")
-
-      // Show success message
-      setTimeout(() => {
-        showSuccess("Client deleted successfully!")
-      }, 200)
-    } catch (error) {
-      console.error("Error deleting client:", error)
-      setTimeout(() => {
-        showSuccess("Error deleting client. Please try again.")
-      }, 200)
-    }
+    
   }
 
-  const handleDeleteEmployee = () => {
+  const handleDeleteEmployee = async () => {
     if (!deletingEmployee) return
+    try {
+      const response = await fetch(`${getServerLink()}/deleteEmployee`, {
+        method: "POST", // Changed method to POST
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: deletingEmployee.username }), // Added request body
+      })
+      if (!response.ok) {
+        // Handle HTTP errors
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // You might want to check `result` to see if the employee was actually created on the server
+      // For example, if the server returns a success field or the created employee data.
+      if (response.ok) {
+        setTimeout(() => {
+          showSuccess("Employee deleted successfully!")
+        }, 200)
+       
+      } else {
+        // Handle cases where the server indicates a failure even with a 200 OK status
+        const result = await response.json()
+        throw new Error(result.message || "Failed to create employee on server.")
+      }
+    } catch (error) {
+      console.error("Error deleting employee:", error)
+      // You might want to show an error message to the user
+      setTimeout(() => {
+        showError(`Error deleting employee: ${error.message}`)
+      }, 200)
+    }
 
     setData((prev) => prev.filter((person) => person.id !== deletingEmployee.id))
     if (selectedPerson && selectedPerson.id === deletingEmployee.id) {
       setSelectedPerson(null)
     }
     closeModal("deleteEmployee")
-    setTimeout(() => {
-      showSuccess("Employee deleted successfully!")
-    }, 200)
   }
 
   const deleteCrmEntry = (entryId) => {
