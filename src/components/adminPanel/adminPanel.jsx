@@ -531,7 +531,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   }
 
   const canDeleteCrmEntry = (entry) => {
-    return entry.employeeName === currentUser?.username
+    return (entry.employeeName || entry.username) === currentUser?.username
   }
 
   const renderPersonList = () => {
@@ -1024,7 +1024,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                     {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     <span className="crm-entry-badge">{entry.contactType}</span>
                     <span className="crm-entry-meta">{entry.date}</span>
-                    <span className="crm-entry-meta">by {entry.employeeName}</span>
+                    <span className="crm-entry-meta">by {entry.employeeName || entry.username}</span>
                   </div>
                   {canDeleteCrmEntry(entry) && (
                     <button
