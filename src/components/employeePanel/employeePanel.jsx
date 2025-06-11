@@ -738,13 +738,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       }
 
       return;
-    }
-    // Fetch IBAN and update label
-    const generatedIban = await fetchGeneratedIBAN(personalCode);
-    console.log("Generated IBAN:", generatedIban);
-    if (generatedIban) {
-      document.getElementById("generated-iban-label").innerText = generatedIban;
-    }
+    } 
 
     setClientFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
