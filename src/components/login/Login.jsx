@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Users, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useCookies } from "react-cookie"
-import "./Login.css"
+import "./login.css"
 import { getServerLink } from "@/server_link"
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("")
