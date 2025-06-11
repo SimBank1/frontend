@@ -33,57 +33,74 @@ body {
   }
 }
 
-/* CSS */
 .success-toast {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  top: 20px;
+  left: 50%;
+  transform-origin: top center;
+
   background: linear-gradient(to right, #8b5cf6, #3b82f6);
   color: white;
-  padding: 10px 18px;
-  border-radius: 14px;
+  padding: 18px 32px;
+  border-radius: 18px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
+  gap: 14px;
+  font-size: 16px;
+  font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  max-width: 320px;
-  height: 42px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15), 0 20px 40px rgba(0, 0, 0, 0.25);
+  max-width: 360px;
+  height: 56px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 1;
+  transform: translate(-50%, -110%) scale(0.85) rotateX(8deg);
+  z-index: 1000;
 
-  /* start hidden off-screen */
-  opacity: 0;
-  transform: translateY(100%) scale(0.98);
-
-  /* slide in immediately, then fade+slide out after 3.5s */
-  animation:
-    toastSlideUp 0.25s ease-out forwards,
-    toastFadeOut 0.25s ease-in forwards 3.5s;
+  /* Start hidden by default */
+  visibility: hidden;
 }
 
-@keyframes toastSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%) scale(0.98);
+.success-toast.showing {
+  visibility: visible;
+  animation: toastDropDown 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+}
+
+.success-toast.closing {
+  animation: toastPopUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes toastDropDown {
+  0% {
+    transform: translate(-50%, -110%) scale(0.85) rotateX(8deg);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  50% {
+    transform: translate(-50%, 25%) scale(1.1) rotateX(-5deg);
+  }
+  75% {
+    transform: translate(-50%, -5%) scale(0.95) rotateX(3deg);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1) rotateX(0);
   }
 }
 
-@keyframes toastFadeOut {
-  to {
-    opacity: 0;
-    transform: translateY(100%) scale(0.95);
+@keyframes toastPopUp {
+  0% {
+    transform: translate(-50%, 0) scale(1) rotateX(0);
+  }
+  40% {
+    transform: translate(-50%, -30%) scale(1.2) rotateX(-12deg);
+  }
+  100% {
+    transform: translate(-50%, -130%) scale(0) rotateX(0);
   }
 }
+
+
+
 
 
 /* Layout */

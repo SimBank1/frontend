@@ -44,15 +44,49 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [editingCrmEntry, setEditingCrmEntry] = useState(null)
   const [deletingCrmEntry, setDeletingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
-  const [successMessage, setSuccessMessage] = useState("")
+
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [employeeUsername, setEmployeeUsername] = useState(username);
   const [crmTickets, setCrmTickets] = useState([]);
 
+
+  // Apple-style success animation states
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+
   // Search input ref for focus management
   const searchInputRef = useRef(null)
+
+   // Apple-style success animation implementation
+   const triggerSuccess = (message) => {
+    setSuccessMessage(message)
+    setShowSuccess(true)
+    setClosing(false)
+  }
+  // Automatically start closing after 3.5s
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setClosing(true)
+      }, 3500)
+      // Cleanup timeout if unmounted or toast hidden early
+      return () => clearTimeout(timer)
+    }
+  }, [showSuccess])
+  // Remove toast after closing animation ends (~400ms)
+  useEffect(() => {
+    if (closing) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false)
+        setClosing(false)
+        setSuccessMessage("")
+      }, 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closing])
 
 
   // Tracks which modal is in the process of closing (for fade‐out animation)
@@ -149,26 +183,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     searchTerm,
   ])
 
-
-  useEffect(() => {
-    if (selectedPerson) {
-      localStorage.setItem("lastSelectedPersonId", selectedPerson.id);
-    } 
-  }, [selectedPerson]);
-
-  useEffect(() => {
-    const lastSelectedPersonId = localStorage.getItem("lastSelectedPersonId");
-    if (lastSelectedPersonId && data.length > 0) {
-      const foundPerson = data.find(
-        (person) => String(person.id) === String(lastSelectedPersonId)
-      );
-      if (foundPerson) {
-        setSelectedPerson(foundPerson);
-      }
-    }
-  }, [data]);
-
-
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
     setTimeout(() => {
@@ -200,13 +214,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
     }, 200)
   }
-
-  const showSuccess = (message) => {
-    setSuccessMessage(message)
-    setTimeout(() => {
-      setSuccessMessage("")
-    }, 3000)
-  }
+  
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
@@ -303,7 +311,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
            setErrors((prev) => ({ ...prev, iban: null }))
          }
        } else {
-         showSuccess("Failed to generate IBAN. Please try again.")
+        triggerSuccess("Failed to generate IBAN. Please try again.")
        }
      }
 
@@ -618,7 +626,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
             setTimeout(() => {
                 setSelectedPerson(newClient);
-                showSuccess("Client profile created successfully!");
+                triggerSuccess("Client profile created successfully!");
             }, 200);
         } else {
             const errorText = await response.text();
@@ -627,7 +635,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     } catch (error) {
         console.error("Error creating client:", error);
-        showSuccess(`Failed to create client. Error: ${error.message}`);
+        triggerSuccess(`Failed to create client. Error: ${error.message}`);
     }
 };
   const validateClientForm = () => {
@@ -764,7 +772,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     // Check currency limits - unlimited EUR, only one of each other currency
     if (selectedPerson && accountFormData.currency !== "EUR") {
       const existingCurrencyAccounts =
-        selectedPerson.bank_accs?.filter((acc) => acc.currency === accountFormData.currency) || []
+        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
       if (existingCurrencyAccounts.length >= 1) {
         newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
       }
@@ -787,73 +795,38 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }
 
-  const handleAddAccount = async (e) => {
-    e.preventDefault();
-    if (!selectedPerson) return;
-    if (!validateAccountForm()) return;
-  
+  const handleAddAccount = (e) => {
+    e.preventDefault()
+    if (!selectedPerson) return
+    if (!validateAccountForm()) return
+
     const newAccount = {
-      first_name: selectedPerson.firstName || "", // optional but included if expected
-      personal_code: selectedPerson.personalCode,
-      iban: accountFormData.iban,
-      currency: accountFormData.currency,
-      balance: accountFormData.balance,
-      type: accountFormData.cardType,
-      plan: accountFormData.servicePlan,
-      opening_date: accountFormData.openingDate, // should be YYYY-MM-DD
-    };
-  
-    try {
-      const response = await fetch(getServerLink() + "/createBankAcc", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // ensures session is sent
-        body: JSON.stringify(newAccount),
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create bank account");
-      }
-
-      const updatedPerson = {
-        ...selectedPerson,
-        bank_accs: [...(selectedPerson.bank_accs || []), data],
-      };
-
-      setData((prev) =>
-        prev.map((person) =>
-          person.id === selectedPerson.id ? updatedPerson : person
-        )
-      );
-      setSelectedPerson(updatedPerson); // This line updates the currently selected person
-  
-      // Reset form
-      setAccountFormData({
-        iban: "",
-        currency: "EUR",
-        balance: "",
-        cardType: "none",
-        servicePlan: "Standard",
-        openingDate: new Date().toISOString().split("T")[0],
-      });
-      setErrors({});
-      closeModal("addAccount");
-  
-      setTimeout(() => {
-        showSuccess("Bank account created successfully!");
-      }, 200);
-    } catch (error) {
-      console.error("Error creating bank account:", error);
-      showSuccess("Error creating bank account. Please try again.");
+      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
+      ...accountFormData,
+      balance: Number.parseFloat(accountFormData.balance),
     }
-  };
-  
 
+    const updatedPerson = {
+      ...selectedPerson,
+      accounts: [...(selectedPerson.accounts || []), newAccount],
+    }
 
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    setAccountFormData({
+      iban: "",
+      currency: "EUR",
+      balance: "",
+      cardType: "none",
+      servicePlan: "Standard",
+      openingDate: new Date().toISOString().split("T")[0],
+    })
+    setErrors({})
+    closeModal("addAccount")
+    setTimeout(() => {
+        triggerSuccess("Bank account created successfully!")
+    }, 200)
+  }
 
   // ADD CRM ENTRY with new structure and employee username
   const validateCrmForm = () => {
@@ -945,11 +918,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         setErrors({});
         closeModal("addCrm");
         setTimeout(() => {
-            showSuccess("CRM entry added successfully!");
+            triggerSuccess("CRM entry added successfully!");
         }, 200);
     } catch (error) {
         console.error("Error creating CRM entry:", error);
-        showSuccess("Error creating CRM entry. Please try again.");
+        triggerSuccess("Error creating CRM entry. Please try again.");
     }
 };
 
@@ -1048,11 +1021,11 @@ const handleUpdateCrm = async (e) => {
       setErrors({});
       closeModal("editCrm");
       setTimeout(() => {
-          showSuccess("CRM entry updated successfully!");
+          triggerSuccess("CRM entry updated successfully!");
       }, 200);
   } catch (error) {
       console.error("Error updating CRM entry:", error);
-      showSuccess("Error updating CRM entry. Please try again.");
+      triggerSuccess("Error updating CRM entry. Please try again.");
   }
 };
 
@@ -1079,7 +1052,7 @@ const handleUpdateCrm = async (e) => {
   
   
     if (entryIndex === -1) {
-      showSuccess("CRM entry not found.");
+      triggerSuccess("CRM entry not found.");
       return;
     }
   
@@ -1110,7 +1083,7 @@ const handleUpdateCrm = async (e) => {
       if(data.error){
 
         setTimeout(() => {
-          showSuccess("You must be the creator of this CRM to delete it!");
+          triggerSuccess("You must be the creator of this CRM to delete it!");
         }, 200);  
         return
 
@@ -1141,11 +1114,11 @@ const handleUpdateCrm = async (e) => {
       setDeletingCrmEntry(null);
       closeModal("deleteCrm");
       setTimeout(() => {
-        showSuccess("CRM entry deleted successfully!");
+        triggerSuccess("CRM entry deleted successfully!");
       }, 200);
     } catch (error) {
       console.error("Error deleting CRM entry:", error);
-      showSuccess("Error deleting CRM entry. Please try again.");
+      triggerSuccess("Error deleting CRM entry. Please try again.");
     }
   };
   
@@ -1166,7 +1139,7 @@ const handleUpdateCrm = async (e) => {
     setSelectedPerson(null)
     closeModal("deleteClient")
     setTimeout(() => {
-      showSuccess("Client deleted successfully!")
+      triggerSuccess("Client deleted successfully!")
     }, 200)
   }
 
@@ -1226,27 +1199,6 @@ const handleUpdateCrm = async (e) => {
   const handlePersonClick = (person) => {
     setSelectedPerson(person)
   }
-
-
-  const formatPhoneNumber = (phoneNumberString) => {
-    if (!phoneNumberString) {
-      return "N/A";
-    }
-    try {
-      // Attempt to parse the phone number. 'LT' is used as a default region for better parsing.
-      const phoneNumber = parsePhoneNumberFromString(phoneNumberString, 'LT');
-      if (phoneNumber && phoneNumber.isValid()) {
-        return phoneNumber.formatInternational(); // Formats it to international standard
-      }
-    } catch (error) {
-      console.error("Error parsing phone number:", error);
-      // Fallback to original string or 'N/A' if parsing fails
-    }
-    return "N/A"; // If not valid or parsing fails
-  };
-
-
-
 
   // RENDER LIST OF CLIENTS
   const renderPersonList = () =>
@@ -1324,53 +1276,87 @@ const handleUpdateCrm = async (e) => {
             )}
           </div>
   
-       
-        {/* Contact Information */}
-<div className="info-card">
-  <div className="card-header">
-    <h3 className="card-title">
-      <Mail size={16} />
-      Contact
-    </h3>
-  </div>
-  <div className="card-content">
-    {/* Email */}
-    <div className="contact-item">
-      <Mail className="contact-icon" />
-      <span>{selectedPerson.email || "N/A"}</span>
-    </div>
-
-    {/* Primary Phone */}
-    {/* This block handles both `phoneNumber` and `phone` properties,
-        and applies the formatting. */}
-    {(selectedPerson.phoneNumber || selectedPerson.phone) && (
-      <div className="contact-item">
-        <Phone className="contact-icon" />
-        <div className="contact-text">
-          <div className="info-label">Primary Phone</div>
-          <div className="info-value">
-            {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}
+          {/* Basic Information */}
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <User size={16} />
+                Basic Information
+              </h3>
+            </div>
+            <div className="card-content">
+              {isEmployee ? (
+                <>
+                  <div className="info-item">
+                    <div className="info-label">Username</div>
+                    <div className="info-value">{selectedPerson.username || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Email</div>
+                    <div className="info-value">{selectedPerson.email || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Password</div>
+                    <div className="password-container">
+                      <span className="password-value">{selectedPerson.password || "N/A"}</span>
+                      <button
+                        className="copy-button"
+                        onClick={() => {
+                          const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
+                          navigator.clipboard.writeText(credentials)
+                          triggerSuccess("Credentials copied!")
+                        }}
+                        title="Copy credentials"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="info-item">
+                    <div className="info-label">Personal Code</div>
+                    <div className="info-value">{selectedPerson.personalCode}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Date of Birth</div>
+                    <div className="info-value">{selectedPerson.dateOfBirth}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Type</div>
+                    <div className="info-value">{selectedPerson.docType}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Number</div>
+                    <div className="info-value">{selectedPerson.docNumber}</div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-    )}
-
-    {/* Secondary Phone (only display if it exists) */}
-    {selectedPerson.otherPhoneNumber && (
-      <div className="contact-item">
-        <Phone className="contact-icon" />
-        <div className="contact-text">
-          <div className="info-label">Secondary Phone</div>
-          <div className="info-value">
-            {formatPhoneNumber(selectedPerson.otherPhoneNumber)}
+  
+          {/* Contact Information */}
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <Mail size={16} />
+                Contact
+              </h3>
+            </div>
+            <div className="card-content">
+              <div className="contact-item">
+                <Mail className="contact-icon" />
+                <span>{selectedPerson.email || "N/A"}</span>
+              </div>
+              {isClient && (
+                <div className="contact-item">
+                  <Phone className="contact-icon" />
+                  <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-    )}
-  </div>
-</div>
-
-{/* Remove the original "Additional Contact Information" div block completely */}
   
           {/* Bank Accounts for clients */}
           {isClient && (
@@ -1428,70 +1414,6 @@ const handleUpdateCrm = async (e) => {
             </div>
           )}
   
-
-     {/* Basic Information */}
-     <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <User size={16} />
-                Basic Information
-              </h3>
-            </div>
-            <div className="card-content">
-              {isEmployee ? (
-                <>
-                  <div className="info-item">
-                    <div className="info-label">Username</div>
-                    <div className="info-value">{selectedPerson.username || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Email</div>
-                    <div className="info-value">{selectedPerson.email || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Password</div>
-                    <div className="password-container">
-                      <span className="password-value">{selectedPerson.password || "N/A"}</span>
-                      <button
-                        className="copy-button"
-                        onClick={() => {
-                          const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
-                          navigator.clipboard.writeText(credentials)
-                          showSuccess("Credentials copied!")
-                        }}
-                        title="Copy credentials"
-                      >
-                        <Copy size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="info-item">
-                    <div className="info-label">Personal Code</div>
-                    <div className="info-value">{selectedPerson.personalCode}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Date of Birth</div>
-                    <div className="info-value">{selectedPerson.dateOfBirth}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Type</div>
-                    <div className="info-value">{selectedPerson.docType}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Number</div>
-                    <div className="info-value">{selectedPerson.docNumber}</div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-  
-
-
-
           {/* Additional Client Information */}
           {isClient && (
             <>
@@ -1617,6 +1539,34 @@ const handleUpdateCrm = async (e) => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+  
+              {/* Additional Contact Information */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <Phone size={16} />
+                    Additional Contact Details
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="contact-item">
+                    <Phone className="contact-icon" />
+                    <div className="contact-text">
+                      <div className="info-label">Primary Phone</div>
+                      <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
+                    </div>
+                  </div>
+                  {selectedPerson.otherPhoneNumber && (
+                    <div className="contact-item">
+                      <Phone className="contact-icon" />
+                      <div className="contact-text">
+                        <div className="info-label">Secondary Phone</div>
+                        <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
   
@@ -1793,8 +1743,14 @@ const handleUpdateCrm = async (e) => {
 
   return (
     <div className="employee-panel dashboard-fade-in">
-      {successMessage && (
-        <div className="success-toast">
+      {/* Apple-style Success Toast */}
+      {showSuccess && (
+        <div
+          className={`success-toast ${closing ? "closing" : "showing"}`}
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
           <CheckCircle size={20} />
           <span>{successMessage}</span>
         </div>
@@ -2446,10 +2402,20 @@ const handleUpdateCrm = async (e) => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Contact Type (Read-only)</label>
-                  <input type="text" className="form-input readonly" value={crmFormData.contactType ? crmFormData.contactType.charAt(0).toUpperCase() + crmFormData.contactType.slice(1).toLowerCase() : ''} readOnly />
-                  {errors.date && <div className="error-message">{errors.date}</div>}
+                  <label className="form-label">Contact Type *</label>
+                  <select
+                    className={`form-select ${errors.contactType ? "error" : ""}`}
+                    value={crmFormData.contactType}
+                    onChange={(e) => handleCrmFormChange("contactType", e.target.value)}
+                    required
+                  >
+                    <option value="phone">Phone</option>
+                    <option value="visit">Visit</option>
+                    <option value="website">Website</option>
+                  </select>
+                  {errors.contactType && <div className="error-message">{errors.contactType}</div>}
                 </div>
+
                 <div className="form-group">
                   <label className="form-label">Content * (max 750 characters)</label>
                   <textarea
@@ -2508,7 +2474,7 @@ const handleUpdateCrm = async (e) => {
                 <br />
                 <strong>Entry:</strong> {deletingCrmEntry?.title || "Untitled Entry"}
                 <br />
-                <strong>Date:</strong> {deletingCrmEntry?.date_of_contact}
+                <strong>Date:</strong> {deletingCrmEntry?.date}
               </p>
               <div className="form-actions">
                 <button type="button" className="button-secondary" onClick={() => closeModal("deleteCrm")}>
