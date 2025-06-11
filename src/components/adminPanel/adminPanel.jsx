@@ -19,7 +19,7 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react"
-import "./AdminPanel.css"
+import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
 
 export default function AdminPanel({ data: initialData, currentUser }) {

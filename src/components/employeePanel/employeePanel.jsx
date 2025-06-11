@@ -23,7 +23,7 @@ import {
   PlugZap,
   Pyramid,
 } from "lucide-react";
-import "./EmployeePanel.css";
+import "./employeePanel.css";
 import { getServerLink } from "@/server_link";
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
