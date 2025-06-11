@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import "./employeePanel.css";
 import { getServerLink } from "@/server_link";
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function EmployeePanel({ data: initialData, currentUser, username}) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -56,8 +55,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return () => clearTimeout(timer)
     }
   }, [closingCrmEntry])
-  const [employeeUsername, setEmployeeUsername] = useState(username);
-  const [crmTickets, setCrmTickets] = useState([]);
 
 
   // Apple-style success animation states
@@ -266,7 +263,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }, 200)
   }
 
-  const fetchGeneratedIBAN = async (personalCode) => {
+  const fetchGeneratedIBAN = async () => {
   
     try {
       const response = await fetch(`${getServerLink()}/generateIBAN`, {
@@ -430,7 +427,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       if (parsed && parsed.isValid()) {
         return parsed.formatInternational(); // returns formatted string
       }
-    } catch (err) {
+    } catch {
       // If parsing fails, return false
       return false;
     }
@@ -460,7 +457,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return null
   }
 
-  const validateDateIsToday = (date) => {
+  const validateDateIsToday = () => {
     //my function is to exist
     return null
   }
@@ -556,17 +553,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         });
 
         if (response.ok) {
-            // As discussed, if backend returns empty string, read as text.
-            // If backend starts returning JSON, change this back to `await response.json()`.
-          
-            const responseText = await response.text(); 
-
-            // Add to local state (assuming client creation was successful based on response.ok)
-            // Note: Since backend returns empty string, you don't get the actual ID back.
-            // You might need to generate a temporary ID or refetch data if real ID is crucial.
             const newClient = {
                 id: (data.length + 1).toString(), // Temporary ID
-                // Map from original clientFormData to the frontend's expected display format
                 firstName: clientFormData.firstName,
                 lastName: clientFormData.lastName,
                 personalCode: clientFormData.personalCode,
@@ -579,7 +567,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 dateOfBirth: clientFormData.dateOfBirth,
                 marketingConsent: clientFormData.marketingConsent,
                 
-                // Address objects are now constructed to match the payload's structure
                 regAddress: {
                     country: clientFormData.registrationCountry,
                     region: clientFormData.registrationRegion || null,
@@ -730,7 +717,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return;
     }
     // Fetch IBAN and update label
-    const generatedIban = await fetchGeneratedIBAN(person.personalCode);
+    const generatedIban = await fetchGeneratedIBAN(personalCode);
     console.log("Generated IBAN:", generatedIban);
     if (generatedIban) {
       document.getElementById("generated-iban-label").innerText = generatedIban;

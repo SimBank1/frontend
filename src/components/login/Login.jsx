@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useCookies } from "react-cookie"
 import "./login.css"
 import { getServerLink } from "@/server_link"
 export default function Login({ onLogin }) {
@@ -21,7 +20,6 @@ export default function Login({ onLogin }) {
   const [serverErr, setServerErr] = useState(false)
 
   const navigate = useNavigate()
-  const [cookies, setCookie] = useCookies(["sessionCokie"])
 
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
@@ -317,18 +315,6 @@ export default function Login({ onLogin }) {
     if (e.key === "Enter") {
       handleLogin()
     }
-  }
-
-  const handleMouseDown = () => {
-    setShowPassword(true)
-  }
-
-  const handleMouseUp = () => {
-    setShowPassword(false)
-  }
-
-  const handleMouseLeave = () => {
-    setShowPassword(false)
   }
 
   const handleSuccessPopupDismiss = () => {
