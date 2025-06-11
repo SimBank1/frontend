@@ -1298,7 +1298,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <div className="form-group">
                   <label className="form-label">Username (Auto-generated)</label>
                   <div className="username-container">
-                    <input className="form-input" value={employeeFormData.username} disabled />
+                    <input className="form-input auto-generated" value={employeeFormData.username} disabled />
                   </div>
                 </div>
 
@@ -1307,7 +1307,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="password-container">
                     <input
                       type="text"
-                      className="form-input"
+                      className="form-input auto-generated"
                       value={employeeFormData.password}
                       onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
                       disabled
