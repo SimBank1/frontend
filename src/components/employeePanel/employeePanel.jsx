@@ -219,7 +219,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const fetchGeneratedIBAN = async (personalCode) => {
-    console.log("Generating IBAN for personalCode:", selectedPerson.personalCode);
   
     try {
       const response = await fetch(`${getServerLink()}/generateIBAN`, {
@@ -268,13 +267,21 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return `${fullYear}-${month}-${day}`
   }
 
-  const handleGenerateIBAN = () => {
-    const newIBAN = fetchGeneratedIBAN()
-    setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
-    if (errors.iban) {
-      setErrors((prev) => ({ ...prev, iban: null }))
-    }
-  }
+  const handleGenerateIBAN = async () => {
+       // 2) Wait for the text response
+       const newIBAN = await fetchGeneratedIBAN()
+    
+       if (newIBAN) {
+         // 3) Only now update your state with the real string
+         setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
+         // clear any prior validation error
+         if (errors.iban) {
+           setErrors((prev) => ({ ...prev, iban: null }))
+         }
+       } else {
+         showSuccess("Failed to generate IBAN. Please try again.")
+       }
+     }
 
   const highlightText = (text, searchTerm) => {
     if (!searchTerm || !text) return text
@@ -1158,9 +1165,7 @@ const handleUpdateCrm = async (e) => {
   }, [searchTerm, data])
 
   const handlePersonClick = (person) => {
-    console.log("Selected personal code:", person.personalCode);
     setSelectedPerson(person)
-    console.log("Selected personal code:", person.personalCode);
   }
 
   // RENDER LIST OF CLIENTS
