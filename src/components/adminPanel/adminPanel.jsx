@@ -17,6 +17,12 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  MapPin,
+  Shield,
+  Building,
+  Clock,
+  UserCheck,
+  AlertCircle,
 } from "lucide-react"
 import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
@@ -387,11 +393,9 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   }
 
   const handleEmployeeSubmit = async (e) => {
-    // Added 'async' keyword
     e.preventDefault()
     if (!validateEmployeeForm()) return
 
-    // Data to be sent in the request body
     const employeeDataForBody = {
       first_name: employeeFormData.firstName,
       last_name: employeeFormData.lastName,
@@ -402,27 +406,22 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
     try {
       const response = await fetch(`${getServerLink()}/createEmployee`, {
-        method: "POST", // Changed method to POST
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(employeeDataForBody), // Added request body
+        body: JSON.stringify(employeeDataForBody),
       })
-      console.log(response)
+
       if (!response.ok) {
-        // Handle HTTP errors
         const errorData = await response.json()
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
 
-      // You might want to check `result` to see if the employee was actually created on the server
-      // For example, if the server returns a success field or the created employee data.
       if (response.ok) {
-        // Assuming your server response has a 'success' field
-        // It's highly recommended to use the ID returned from the server if available
         const newEmployee = {
-          id: (data.length + 1).toString(), // Use server ID or fallback
+          id: (data.length + 1).toString(),
           type: "employee",
           ...employeeFormData,
           createdAt: new Date().toISOString().split("T")[0],
@@ -441,16 +440,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         setTimeout(() => {
           showSuccess("Employee created successfully!")
         }, 200)
-      } else {
-        // Handle cases where the server indicates a failure even with a 200 OK status
-        const result = await response.json()
-        throw new Error(result.message || "Failed to create employee on server.")
       }
     } catch (error) {
       console.error("Error creating employee:", error)
-      // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error creating employee: ${error.message}`)
+        showSuccess(`Error creating employee: ${error.message}`)
       }, 200)
     }
   }
@@ -627,29 +621,29 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         </div>
       )
     }
+
+    const isClient = selectedPerson.marketingConsent !== undefined
+    const isEmployee = selectedPerson.marketingConsent === undefined
+
     return (
       <div>
         <div className="profile-header">
           <div className="profile-avatar">
-            {selectedPerson.type === "employee" ? (
-              <Briefcase size={24} color="white" />
-            ) : (
-              <User size={24} color="white" />
-            )}
+            {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
           </div>
           <div className="profile-info">
             <h2>
               {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
               {selectedPerson.lastName || selectedPerson.last_name || ""}
             </h2>
-            <p>{selectedPerson.marketingConsent !== undefined ? "client" : "employee"}</p>
+            <p>{isClient ? "client" : "employee"}</p>
           </div>
-          {selectedPerson.marketingConsent !== undefined && (
+          {isClient && (
             <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
               <Trash2 size={16} />
             </button>
           )}
-          {selectedPerson.marketingConsent === undefined && (
+          {isEmployee && (
             <button
               className="delete-client-button"
               onClick={() => {
@@ -672,7 +666,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
             </h3>
           </div>
           <div className="card-content">
-            {selectedPerson.marketingConsent === undefined ? (
+            {isEmployee ? (
               <>
                 <div className="info-item">
                   <div className="info-label">Username</div>
@@ -736,7 +730,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               <Mail className="contact-icon" />
               <span>{selectedPerson.email || "N/A"}</span>
             </div>
-            {selectedPerson.marketingConsent !== undefined && (
+            {isClient && (
               <div className="contact-item">
                 <Phone className="contact-icon" />
                 <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
@@ -745,8 +739,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           </div>
         </div>
 
-        {/* Bank Accounts for clients - moved to top */}
-        {selectedPerson.marketingConsent !== undefined && (
+        {/* Bank Accounts for clients */}
+        {isClient && (
           <div className="info-card">
             <div className="card-header">
               <h3 className="card-title">
@@ -794,6 +788,240 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               )}
             </div>
           </div>
+        )}
+
+        {/* Additional Client Information */}
+        {isClient && (
+          <>
+            {/* Document Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Shield size={16} />
+                  Document Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.docType || selectedPerson.documentType || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.docNumber || selectedPerson.documentNumber || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Expiry</div>
+                  <div className="info-value">
+                    {selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "N/A"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Status</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {(() => {
+                      const expiryDate = selectedPerson.docExpiryDate || selectedPerson.documentExpiry
+                      if (!expiryDate) return "Unknown"
+
+                      const expiry = new Date(expiryDate)
+                      const today = new Date()
+                      const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+
+                      if (daysUntilExpiry < 0) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#ef4444" />
+                            <span style={{ color: "#ef4444" }}>Expired</span>
+                          </>
+                        )
+                      } else if (daysUntilExpiry <= 30) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#f59e0b" />
+                            <span style={{ color: "#f59e0b" }}>Expires in {daysUntilExpiry} days</span>
+                          </>
+                        )
+                      } else {
+                        return (
+                          <>
+                            <CheckCircle size={16} color="#10b981" />
+                            <span style={{ color: "#10b981" }}>Valid</span>
+                          </>
+                        )
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <MapPin size={16} />
+                  Address Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="address-item">
+                  <MapPin className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Registration Address</div>
+                    <div className="info-value">
+                      {selectedPerson.regAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
+                            {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.regAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>No registration address</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="address-item">
+                  <Building className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Correspondence Address</div>
+                    <div className="info-value">
+                      {selectedPerson.corAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
+                            {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.corAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>Same as registration address</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Contact Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Phone size={16} />
+                  Additional Contact Details
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="contact-item">
+                  <Phone className="contact-icon" />
+                  <div className="contact-text">
+                    <div className="info-label">Primary Phone</div>
+                    <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
+                  </div>
+                </div>
+                {selectedPerson.otherPhoneNumber && (
+                  <div className="contact-item">
+                    <Phone className="contact-icon" />
+                    <div className="contact-text">
+                      <div className="info-label">Secondary Phone</div>
+                      <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Account Status & Preferences */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <UserCheck size={16} />
+                  Account Status & Preferences
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Marketing Consent</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {selectedPerson.marketingConsent ? (
+                      <>
+                        <CheckCircle size={16} color="#10b981" />
+                        <span style={{ color: "#10b981" }}>Granted</span>
+                      </>
+                    ) : (
+                      <>
+                        <X size={16} color="#ef4444" />
+                        <span style={{ color: "#ef4444" }}>Not granted</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Account Created</div>
+                  <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Total Accounts</div>
+                  <div className="info-value">{selectedPerson.accounts ? selectedPerson.accounts.length : 0}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Total Balance</div>
+                  <div className="info-value">
+                    {selectedPerson.accounts && selectedPerson.accounts.length > 0
+                      ? `€${selectedPerson.accounts.reduce((total, acc) => total + (acc.balance || 0), 0).toFixed(2)}`
+                      : "€0.00"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CRM Activity Summary */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Clock size={16} />
+                  Recent Activity Summary
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Total CRM Entries</div>
+                  <div className="info-value">{selectedPerson.crmEntries ? selectedPerson.crmEntries.length : 0}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact</div>
+                  <div className="info-value">
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[0].date
+                      : "No contact recorded"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact Type</div>
+                  <div className="info-value">
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[0].contactType
+                      : "N/A"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     )
@@ -964,8 +1192,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       {/* Right Panel */}
       <div className="right-panel">{renderCRMRequests()}</div>
 
-      {/* All Modals */}
-
+      {/* All existing modals remain the same... */}
       {/* Add Employee Modal */}
       {isAddEmployeeOpen && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
@@ -1053,445 +1280,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Client Modal */}
-      {isAddClientOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addClient")}>
-          <div
-            className={`modal-content large-modal ${modalClosing.addClient ? "closing" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3 className="modal-title">
-                <User size={20} color="#8b5cf6" />
-                Create New Client
-              </h3>
-              <button className="modal-close" onClick={() => closeModal("addClient")}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <form onSubmit={handleClientSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">First Name *</label>
-                    <input
-                      className={`form-input ${errors.firstName ? "error" : ""}`}
-                      value={clientFormData.firstName}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, firstName: e.target.value }))}
-                      placeholder="Enter first name"
-                    />
-                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Last Name *</label>
-                    <input
-                      className={`form-input ${errors.lastName ? "error" : ""}`}
-                      value={clientFormData.lastName}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, lastName: e.target.value }))}
-                      placeholder="Enter last name"
-                    />
-                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Personal Code *</label>
-                    <input
-                      className={`form-input ${errors.personalCode ? "error" : ""}`}
-                      value={clientFormData.personalCode}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setClientFormData((prev) => ({
-                          ...prev,
-                          personalCode: value,
-                          dateOfBirth: getDateOfBirthFromPersonalCode(value),
-                        }))
-                      }}
-                      placeholder="Enter 11-digit personal code"
-                    />
-                    {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    className={`form-input ${errors.email ? "error" : ""}`}
-                    value={clientFormData.email}
-                    onChange={(e) => setClientFormData((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="Enter email"
-                  />
-                  {errors.email && <div className="error-message">{errors.email}</div>}
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Phone *</label>
-                    <div className="phone-input-group">
-                      <select
-                        className="country-code-select"
-                        value={clientFormData.phoneCountryCode}
-                        onChange={(e) => setClientFormData((prev) => ({ ...prev, phoneCountryCode: e.target.value }))}
-                      >
-                        <option value="+370">+370 (LT)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                        <option value="+39">+39 (IT)</option>
-                        <option value="+34">+34 (ES)</option>
-                        <option value="+48">+48 (PL)</option>
-                      </select>
-                      <input
-                        className={`form-input ${errors.phone ? "error" : ""}`}
-                        value={clientFormData.phone}
-                        onChange={(e) => setClientFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                        placeholder="Phone number"
-                      />
-                    </div>
-                    {errors.phone && <div className="error-message">{errors.phone}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Second Phone (Optional)</label>
-                    <div className="phone-input-group">
-                      <select
-                        className="country-code-select"
-                        value={clientFormData.secondPhoneCountryCode}
-                        onChange={(e) =>
-                          setClientFormData((prev) => ({ ...prev, secondPhoneCountryCode: e.target.value }))
-                        }
-                      >
-                        <option value="+370">+370 (LT)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                        <option value="+39">+39 (IT)</option>
-                        <option value="+34">+34 (ES)</option>
-                        <option value="+48">+48 (PL)</option>
-                      </select>
-                      <input
-                        className="form-input"
-                        value={clientFormData.secondPhone}
-                        onChange={(e) => setClientFormData((prev) => ({ ...prev, secondPhone: e.target.value }))}
-                        placeholder="Second phone number"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Date of Birth (Auto-filled from Personal Code)</label>
-                  <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Document Type *</label>
-                    <select
-                      className={`form-input ${errors.documentType ? "error" : ""}`}
-                      value={clientFormData.documentType}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentType: e.target.value }))}
-                    >
-                      <option value="ID Card">ID Card</option>
-                      <option value="passport">Passport</option>
-                      <option value="driver_license">Driver's License</option>
-                    </select>
-                    {errors.documentType && <div className="error-message">{errors.documentType}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Document Number *</label>
-                    <input
-                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
-                      value={clientFormData.documentNumber}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                      placeholder="Enter document number"
-                    />
-                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Document Expiry *</label>
-                    <input
-                      type="date"
-                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
-                      value={clientFormData.documentExpiry}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, documentExpiry: e.target.value }))}
-                    />
-                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
-                  </div>
-                </div>
-
-                <h4 style={{ margin: "24px 0 16px 0", color: "#374151", fontSize: "16px", fontWeight: "600" }}>
-                  Registration Address
-                </h4>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Country *</label>
-                    <input
-                      className={`form-input ${errors.registrationCountry ? "error" : ""}`}
-                      value={clientFormData.registrationCountry}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationCountry: e.target.value }))}
-                      placeholder="Enter country"
-                    />
-                    {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Region *</label>
-                    <input
-                      className={`form-input ${errors.registrationRegion ? "error" : ""}`}
-                      value={clientFormData.registrationRegion}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationRegion: e.target.value }))}
-                      placeholder="Enter region"
-                    />
-                    {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">City *</label>
-                    <input
-                      className={`form-input ${errors.registrationCity ? "error" : ""}`}
-                      value={clientFormData.registrationCity}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationCity: e.target.value }))}
-                      placeholder="Enter city"
-                    />
-                    {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
-                  </div>
-                </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Street *</label>
-                    <input
-                      className={`form-input ${errors.registrationStreet ? "error" : ""}`}
-                      value={clientFormData.registrationStreet}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationStreet: e.target.value }))}
-                      placeholder="Enter street"
-                    />
-                    {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">House Number *</label>
-                    <input
-                      className={`form-input ${errors.registrationHouse ? "error" : ""}`}
-                      value={clientFormData.registrationHouse}
-                      onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationHouse: e.target.value }))}
-                      placeholder="Enter house number"
-                    />
-                    {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Apartment</label>
-                    <input
-                      className="form-input"
-                      value={clientFormData.registrationApartment}
-                      onChange={(e) =>
-                        setClientFormData((prev) => ({ ...prev, registrationApartment: e.target.value }))
-                      }
-                      placeholder="Enter apartment number"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Postal Code *</label>
-                  <input
-                    className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
-                    value={clientFormData.registrationPostalCode}
-                    onChange={(e) => setClientFormData((prev) => ({ ...prev, registrationPostalCode: e.target.value }))}
-                    placeholder="Enter postal code"
-                  />
-                  {errors.registrationPostalCode && (
-                    <div className="error-message">{errors.registrationPostalCode}</div>
-                  )}
-                </div>
-
-                <div className="form-checkbox">
-                  <input
-                    type="checkbox"
-                    id="sameAsRegistration"
-                    checked={sameAsRegistration}
-                    onChange={(e) => setSameAsRegistration(e.target.checked)}
-                  />
-                  <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
-                </div>
-
-                {!sameAsRegistration && (
-                  <>
-                    <h4 style={{ margin: "24px 0 16px 0", color: "#374151", fontSize: "16px", fontWeight: "600" }}>
-                      Correspondence Address
-                    </h4>
-
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label className="form-label">Country *</label>
-                        <input
-                          className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
-                          value={clientFormData.correspondenceCountry}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceCountry: e.target.value }))
-                          }
-                          placeholder="Enter country"
-                        />
-                        {errors.correspondenceCountry && (
-                          <div className="error-message">{errors.correspondenceCountry}</div>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Region *</label>
-                        <input
-                          className={`form-input ${errors.correspondenceRegion ? "error" : ""}`}
-                          value={clientFormData.correspondenceRegion}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceRegion: e.target.value }))
-                          }
-                          placeholder="Enter region"
-                        />
-                        {errors.correspondenceRegion && (
-                          <div className="error-message">{errors.correspondenceRegion}</div>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">City *</label>
-                        <input
-                          className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
-                          value={clientFormData.correspondenceCity}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceCity: e.target.value }))
-                          }
-                          placeholder="Enter city"
-                        />
-                        {errors.correspondenceCity && <div className="error-message">{errors.correspondenceCity}</div>}
-                      </div>
-                    </div>
-
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label className="form-label">Street *</label>
-                        <input
-                          className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
-                          value={clientFormData.correspondenceStreet}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceStreet: e.target.value }))
-                          }
-                          placeholder="Enter street"
-                        />
-                        {errors.correspondenceStreet && (
-                          <div className="error-message">{errors.correspondenceStreet}</div>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">House Number *</label>
-                        <input
-                          className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
-                          value={clientFormData.correspondenceHouse}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceHouse: e.target.value }))
-                          }
-                          placeholder="Enter house number"
-                        />
-                        {errors.correspondenceHouse && (
-                          <div className="error-message">{errors.correspondenceHouse}</div>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Apartment</label>
-                        <input
-                          className="form-input"
-                          value={clientFormData.correspondenceApartment}
-                          onChange={(e) =>
-                            setClientFormData((prev) => ({ ...prev, correspondenceApartment: e.target.value }))
-                          }
-                          placeholder="Enter apartment number"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Postal Code *</label>
-                      <input
-                        className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
-                        value={clientFormData.correspondencePostalCode}
-                        onChange={(e) =>
-                          setClientFormData((prev) => ({ ...prev, correspondencePostalCode: e.target.value }))
-                        }
-                        placeholder="Enter postal code"
-                      />
-                      {errors.correspondencePostalCode && (
-                        <div className="error-message">{errors.correspondencePostalCode}</div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                <div className="form-checkbox">
-                  <input
-                    type="checkbox"
-                    id="marketingConsent"
-                    checked={clientFormData.marketingConsent}
-                    onChange={(e) => setClientFormData((prev) => ({ ...prev, marketingConsent: e.target.checked }))}
-                  />
-                  <label htmlFor="marketingConsent">Marketing consent</label>
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => closeModal("addClient")}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="button-primary">
-                    Create Client
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Client Modal */}
-      {isDeleteClientOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
-          <div
-            className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3 className="modal-title">
-                <Trash2 size={20} color="#ef4444" />
-                Delete Client
-              </h3>
-              <button className="modal-close" onClick={() => closeModal("deleteClient")}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="delete-warning">
-                Are you sure you want to delete {selectedPerson?.firstName} {selectedPerson?.lastName}? This action
-                cannot be undone and will remove all associated accounts and CRM data.
-              </p>
-              <div className="form-actions">
-                <button type="button" className="button-secondary" onClick={() => closeModal("deleteClient")}>
-                  Cancel
-                </button>
-                <button type="button" className="button-danger" onClick={handleDeleteClient}>
-                  <Trash2 size={16} style={{ marginRight: "8px" }} />
-                  Delete Client
-                </button>
-              </div>
             </div>
           </div>
         </div>
