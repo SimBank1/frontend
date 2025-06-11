@@ -45,6 +45,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [employeeUsername, setEmployeeUsername] = useState(username);
+  const [crmTickets, setCrmTickets] = useState([]);
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
@@ -790,7 +791,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }
 
-  console.log(employeeUsername)
   const handleAddCrm = async (e) => {
     e.preventDefault();
     if (!selectedPerson) return;
@@ -877,14 +877,47 @@ const handleEditCrm = (entry) => {
   });
   setIsEditCrmOpen(true);
 };
+
+
+
+/* [
+  {
+      "username": "test",
+      "title": null,
+      "contact_type": "email",
+      "content": "Customer1 reported an issue with the mobile app login.",
+      "personal_code": 0,
+      "date_of_contact": "2025-06-06",
+      "id": 0
+  },
+  {
+      "username": "test",
+      "title": null,
+      "contact_type": "email",
+      "content": "Customer1 reported an issue with the mobile app login.",
+      "personal_code": 0,
+      "date_of_contact": "2025-06-06",
+      "id": 0
+  },
+  {
+      "username": "test",
+      "title": "hej",
+      "contact_type": "phone",
+      "content": "hello",
+      "personal_code": 0,
+      "date_of_contact": "2025-06-11",
+      "id": 0
+  }
+] */
+  console.log(selectedPerson.crm)
 const handleUpdateCrm = async (e) => {
   e.preventDefault();
   if (!validateCrmForm()) return;
   if (!editingCrmEntry || !selectedPerson) return;
+console.log("neki special", editingCrmEntry)
 
-  // Construct the payload for the API with the 1-based ID
   const updatedCrmData = {
-      id: editingCrmEntry.id, // Pass the existing 1-based ID from the selected entry
+      id: editingCrmEntry.id,
       personal_code: selectedPerson.personalCode,
       title: crmFormData.title,
       contact_type: crmFormData.contactType,
@@ -949,6 +982,9 @@ const handleUpdateCrm = async (e) => {
       showSuccess("Error updating CRM entry. Please try again.");
   }
 };
+
+
+
   const handleDeleteCrm = (entry) => {
     setDeletingCrmEntry(entry)
     setIsDeleteCrmOpen(true)
