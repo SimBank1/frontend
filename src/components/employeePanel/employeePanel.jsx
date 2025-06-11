@@ -44,38 +44,33 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [editingCrmEntry, setEditingCrmEntry] = useState(null)
   const [deletingCrmEntry, setDeletingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
+  const [employeeUsername, setEmployeeUsername] = useState(username);
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
-  const [employeeUsername, setEmployeeUsername] = useState(username);
-  const [crmTickets, setCrmTickets] = useState([]);
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
-
-
-  const formatPhoneNumber = (number) => {
-    if (!number) return "N/A";
-    try {
-      // Attempt to parse the number. We can optionally provide a default country
-      // if numbers without a '+' prefix are common in your data, e.g., 'US' or 'GB'.
-      // For this example, we'll let it try to infer or format internationally.
-      const phoneNumber = parsePhoneNumberFromString(number);
-      if (phoneNumber) {
-        // You can choose different formats:
-        // formatInternational() -> +1 212 555 1234
-        // formatNational()    -> (212) 555-1234 (if country context is known)
-        // formatE164()        -> +12125551234
-        return phoneNumber.formatInternational();
-      }
-    } catch (error) {
-      console.error("Error parsing phone number:", number, error);
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
     }
-    // Fallback if parsing fails
-    return number;
-  };
+  }, [closingCrmEntry])
 
 
-  
+
+  function formatPhoneNumber(input, defaultCountry = 'LT') {
+    if (!input) return '';
+
+  const phoneNumber = parsePhoneNumberFromString(input, defaultCountry);
+
+  if (!phoneNumber || !phoneNumber.isValid()) return input; // fallback to raw input
+
+  return phoneNumber.formatInternational(); // always returns in +XXX format
+}
+
+
   // Apple-style success animation states
   const [showSuccess, setShowSuccess] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -242,9 +237,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
-      // Close all other entries and toggle the clicked one
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
       const newState = {}
-      newState[entryId] = !prev[entryId]
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
       return newState
     })
   }
@@ -274,8 +277,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }, 200)
   }
 
-  const fetchGeneratedIBAN = async (personalCode) => {
-
+  const fetchGeneratedIBAN = async () => {
+  
     try {
       const response = await fetch(`${getServerLink()}/generateIBAN`, {
         method: "POST",
@@ -438,7 +441,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       if (parsed && parsed.isValid()) {
         return parsed.formatInternational(); // returns formatted string
       }
-    } catch (err) {
+    } catch {
       // If parsing fails, return false
       return false;
     }
@@ -468,7 +471,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return null
   }
 
-  const validateDateIsToday = (date) => {
+  const validateDateIsToday = () => {
     //my function is to exist
     return null
   }
@@ -563,49 +566,39 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         credentials: "include",
       });
 
-      if (response.ok) {
-        // As discussed, if backend returns empty string, read as text.
-        // If backend starts returning JSON, change this back to `await response.json()`.
-
-        const responseText = await response.text();
-
-        // Add to local state (assuming client creation was successful based on response.ok)
-        // Note: Since backend returns empty string, you don't get the actual ID back.
-        // You might need to generate a temporary ID or refetch data if real ID is crucial.
-        const newClient = {
-          id: (data.length + 1).toString(), // Temporary ID
-          // Map from original clientFormData to the frontend's expected display format
-          firstName: clientFormData.firstName,
-          lastName: clientFormData.lastName,
-          personalCode: clientFormData.personalCode,
-          email: clientFormData.email,
-          phoneNumber: clientFormData.phone,
-          otherPhoneNumber: clientFormData.secondPhone,
-          docType: clientFormData.documentType,
-          docNumber: clientFormData.documentNumber,
-          docExpiryDate: clientFormData.documentExpiry,
-          dateOfBirth: clientFormData.dateOfBirth,
-          marketingConsent: clientFormData.marketingConsent,
-
-          // Address objects are now constructed to match the payload's structure
-          regAddress: {
-            country: clientFormData.registrationCountry,
-            region: clientFormData.registrationRegion || null,
-            cityOrVillage: clientFormData.registrationCity || null,
-            street: clientFormData.registrationStreet,
-            house: clientFormData.registrationHouse || null,
-            apartment: clientFormData.registrationApartment || null,
-            postalCode: clientFormData.registrationPostalCode || null
-          },
-          corAddress: {
-            country: clientFormData.correspondenceCountry,
-            region: clientFormData.correspondenceRegion || null,
-            cityOrVillage: clientFormData.correspondenceCity || null,
-            street: clientFormData.correspondenceStreet,
-            house: clientFormData.correspondenceHouse || null,
-            apartment: clientFormData.correspondenceApartment || null,
-            postalCode: clientFormData.correspondencePostalCode || null
-          },
+        if (response.ok) {
+            const newClient = {
+                id: (data.length + 1).toString(), // Temporary ID
+                firstName: clientFormData.firstName,
+                lastName: clientFormData.lastName,
+                personalCode: clientFormData.personalCode,
+                email: clientFormData.email,
+                phoneNumber: clientFormData.phone,
+                otherPhoneNumber: clientFormData.secondPhone,
+                docType: clientFormData.documentType,
+                docNumber: clientFormData.documentNumber,
+                docExpiryDate: clientFormData.documentExpiry,
+                dateOfBirth: clientFormData.dateOfBirth,
+                marketingConsent: clientFormData.marketingConsent,
+                
+                regAddress: {
+                    country: clientFormData.registrationCountry,
+                    region: clientFormData.registrationRegion || null,
+                    cityOrVillage: clientFormData.registrationCity || null,
+                    street: clientFormData.registrationStreet,
+                    house: clientFormData.registrationHouse || null,
+                    apartment: clientFormData.registrationApartment || null,
+                    postalCode: clientFormData.registrationPostalCode || null
+                },
+                corAddress: {
+                    country: clientFormData.correspondenceCountry,
+                    region: clientFormData.correspondenceRegion || null,
+                    cityOrVillage: clientFormData.correspondenceCity || null,
+                    street: clientFormData.correspondenceStreet,
+                    house: clientFormData.correspondenceHouse || null,
+                    apartment: clientFormData.correspondenceApartment || null,
+                    postalCode: clientFormData.correspondencePostalCode || null
+                },
 
           // These are the frontend's internal names, mapping from the snake_case payload
           accounts: [], // Assuming this maps to bank_accs
@@ -738,7 +731,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return;
     }
     // Fetch IBAN and update label
-    const generatedIban = await fetchGeneratedIBAN(person.personalCode);
+    const generatedIban = await fetchGeneratedIBAN(personalCode);
     console.log("Generated IBAN:", generatedIban);
     if (generatedIban) {
       document.getElementById("generated-iban-label").innerText = generatedIban;
@@ -1362,25 +1355,35 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
         {/* Contact Information */}
         <div className="info-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <Mail size={16} />
-              Contact
-            </h3>
-          </div>
-          <div className="card-content">
-            <div className="contact-item">
-              <Mail className="contact-icon" />
-              <span>{selectedPerson.email || "N/A"}</span>
-            </div>
-            {isClient && (
-              <div className="contact-item">
-                <Phone className="contact-icon" />
-                <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
-              </div>
-            )}
+      <div className="card-header">
+        <h3 className="card-title">
+          <Mail size={16} />
+          Contact
+        </h3>
+      </div>
+      <div className="card-content">
+        <div className="contact-item">
+          <Mail className="contact-icon" />
+          <span>{selectedPerson.email || "N/A"}</span>
+        </div>
+        {/* Primary Phone - shown for both clients and others, as it's a core contact detail */}
+        <div className="contact-item">
+          <Phone className="contact-icon" />
+          <div className="contact-text">
+            <div className="info-label">Primary Phone</div> {/* Simplified label */}
+            <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
           </div>
         </div>
+        {selectedPerson.otherPhoneNumber && (
+          <div className="contact-item">
+            <Phone className="contact-icon" />
+            <div className="contact-text">
+              <div className="info-label">Secondary Phone</div>
+              <div className="info-value"> {formatPhoneNumber(selectedPerson.otherPhoneNumber)}</div>
+            </div>
+          </div>
+        )}
+      </div></div>
 
         {/* Bank Accounts for clients */}
         {isClient && (
@@ -1566,33 +1569,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               </div>
             </div>
 
-            {/* Additional Contact Information */}
-            <div className="info-card">
-              <div className="card-header">
-                <h3 className="card-title">
-                  <Phone size={16} />
-                  Additional Contact Details
-                </h3>
-              </div>
-              <div className="card-content">
-                <div className="contact-item">
-                  <Phone className="contact-icon" />
-                  <div className="contact-text">
-                    <div className="info-label">Primary Phone</div>
-                    <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
-                  </div>
-                </div>
-                {selectedPerson.otherPhoneNumber && (
-                  <div className="contact-item">
-                    <Phone className="contact-icon" />
-                    <div className="contact-text">
-                      <div className="info-label">Secondary Phone</div>
-                      <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Account Status & Preferences */}
             <div className="info-card">
@@ -1623,18 +1599,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div className="info-label">Account Created</div>
                   <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
                 </div>
-                <div className="info-item">
-                  <div className="info-label">Total Accounts</div>
-                  <div className="info-value">{selectedPerson.accounts ? selectedPerson.accounts.length : 0}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Total Balance</div>
-                  <div className="info-value">
-                    {selectedPerson.accounts && selectedPerson.accounts.length > 0
-                      ? `€${selectedPerson.accounts.reduce((total, acc) => total + (acc.balance || 0), 0).toFixed(2)}`
-                      : "€0.00"}
-                  </div>
-                </div>
+
               </div>
             </div>
 
@@ -1749,18 +1714,25 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     </div>
                   </div>
                 </div>
-                {expandedCrmEntries[entry.id || `crm-${i}`] && <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }} className="crm-entry-content">{entry.content}</div>}
-              </div>
-            ))
-          ) : (
-            <div className="no-data">
-              <FileText className="no-data-icon" />
-              <p className="no-data-text">No recent activities</p>
-              <p className="no-data-subtext">Create a new entry to start tracking client interactions</p>
+                {(expandedCrmEntries[entry.id || `crm-${i}`] || closingCrmEntry === (entry.id || `crm-${i}`)) && (
+                  <div
+                    style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}
+                    className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? 'closing' : 'opening'}`}
+                  >
+                    {entry.content}
+                  </div>
+                )}
             </div>
-          )}
+        ))
+    ) : (
+        <div className="no-data">
+            <FileText className="no-data-icon" />
+            <p className="no-data-text">No recent activities</p>
+            <p className="no-data-subtext">Create a new entry to start tracking client interactions</p>
         </div>
-
+    )}
+</div>
+      
       </div>
     )
   }

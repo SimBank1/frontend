@@ -33,7 +33,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
-  const [showPassword, setShowPassword] = useState({})
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
 
@@ -79,9 +78,16 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closingCrmEntry])
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -102,49 +108,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     password: "",
   })
 
-  // Client form state
-  const [clientFormData, setClientFormData] = useState({
-    firstName: "",
-    lastName: "",
-    personalCode: "",
-    email: "",
-    phone: "",
-    phoneCountryCode: "+370",
-    secondPhone: "",
-    secondPhoneCountryCode: "+370",
-    documentType: "ID Card",
-    documentNumber: "",
-    documentExpiry: "",
-    dateOfBirth: "",
-    registrationCountry: "",
-    registrationRegion: "",
-    registrationCity: "",
-    registrationStreet: "",
-    registrationHouse: "",
-    registrationApartment: "",
-    registrationPostalCode: "",
-    correspondenceCountry: "",
-    correspondenceRegion: "",
-    correspondenceCity: "",
-    correspondenceStreet: "",
-    correspondenceHouse: "",
-    correspondenceApartment: "",
-    correspondencePostalCode: "",
-    marketingConsent: false,
-  })
-
-  // Account form state
-  const [accountFormData, setAccountFormData] = useState({
-    iban: "",
-    currency: "EUR",
-    balance: "",
-    cardType: "none",
-    servicePlan: "Standard",
-    openingDate: new Date().toISOString().split("T")[0],
-  })
 
   const [errors, setErrors] = useState({})
-  const [sameAsRegistration, setSameAsRegistration] = useState(true)
 
   // Auto-generate username and password when name changes
   useEffect(() => {
@@ -269,30 +234,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     }, 3000)
   }
 
-  // Generate IBAN starting with LT817044
-  const generateIBAN = () => {
-    const prefix = "LT817044"
-    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
-    return prefix + randomDigits
-  }
-
-  // Get date of birth from personal code
-  const getDateOfBirthFromPersonalCode = (personalCode) => {
-    if (personalCode.length !== 11) return ""
-    const century = personalCode[0]
-    const year = personalCode.substring(1, 3)
-    const month = personalCode.substring(3, 5)
-    const day = personalCode.substring(5, 7)
-    let fullYear
-
-    if (century === "1" || century === "2") fullYear = "18" + year
-    else if (century === "3" || century === "4") fullYear = "19" + year
-    else if (century === "5" || century === "6") fullYear = "20" + year
-    else return ""
-
-    return `${fullYear}-${month}-${day}`
-  }
-
   // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
@@ -344,18 +285,21 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     setSelectedPerson(person)
   }
 
-  const togglePasswordVisibility = (id, visible) => {
-    setShowPassword((prev) => ({
-      ...prev,
-      [id]: visible,
-    }))
-  }
-
   const toggleCrmExpansion = (entryId) => {
-    setExpandedCrmEntries((prev) => ({
-      ...prev,
-      [entryId]: !prev[entryId],
-    }))
+    setExpandedCrmEntries((prev) => {
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
+      const newState = {}
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
+      return newState
+    })
   }
 
   const handleLogout = async () => {
@@ -392,38 +336,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     if (!employeeFormData.email.trim()) newErrors.email = "Email is required"
     if (!employeeFormData.username.trim()) newErrors.username = "Username is required"
     if (!employeeFormData.password.trim()) newErrors.password = "Password is required"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateClientForm = () => {
-    const newErrors = {}
-
-    if (!clientFormData.firstName.trim()) newErrors.firstName = "First name is required"
-    if (!clientFormData.lastName.trim()) newErrors.lastName = "Last name is required"
-    if (!clientFormData.personalCode.trim()) newErrors.personalCode = "Personal code is required"
-    if (!clientFormData.email.trim()) newErrors.email = "Email is required"
-    if (!clientFormData.phone.trim()) newErrors.phone = "Phone is required"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateAccountForm = () => {
-    const newErrors = {}
-
-    if (!accountFormData.iban.trim()) newErrors.iban = "IBAN is required"
-    if (!accountFormData.balance.trim()) newErrors.balance = "Balance is required"
-
-    // Check currency limits
-    if (selectedPerson && accountFormData.currency !== "EUR") {
-      const existingCurrencyAccounts =
-        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
-      if (existingCurrencyAccounts.length >= 1) {
-        newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
-      }
-    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -486,90 +398,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     }
   }
 
-  const handleClientSubmit = (e) => {
-    e.preventDefault()
-    if (!validateClientForm()) return
-
-    const newClient = {
-      id: (data.length + 1).toString(),
-      type: "client",
-      ...clientFormData,
-      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
-      accounts: [],
-      crmEntries: [],
-      marketingConsent: clientFormData.marketingConsent,
-    }
-
-    setData((prev) => [...prev, newClient])
-    setClientFormData({
-      firstName: "",
-      lastName: "",
-      personalCode: "",
-      email: "",
-      phone: "",
-      phoneCountryCode: "+370",
-      secondPhone: "",
-      secondPhoneCountryCode: "+370",
-      documentType: "ID Card",
-      documentNumber: "",
-      documentExpiry: "",
-      dateOfBirth: "",
-      registrationCountry: "",
-      registrationRegion: "",
-      registrationCity: "",
-      registrationStreet: "",
-      registrationHouse: "",
-      registrationApartment: "",
-      registrationPostalCode: "",
-      correspondenceCountry: "",
-      correspondenceRegion: "",
-      correspondenceCity: "",
-      correspondenceStreet: "",
-      correspondenceHouse: "",
-      correspondenceApartment: "",
-      correspondencePostalCode: "",
-      marketingConsent: false,
-    })
-    setErrors({})
-    closeModal("addClient")
-    setTimeout(() => {
-      setSelectedPerson(newClient)
-      showSuccess("Client created successfully!")
-    }, 200)
-  }
-
-  const handleAccountSubmit = (e) => {
-    e.preventDefault()
-    if (!validateAccountForm()) return
-
-    const newAccount = {
-      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
-      ...accountFormData,
-      balance: Number.parseFloat(accountFormData.balance),
-    }
-
-    const updatedPerson = {
-      ...selectedPerson,
-      accounts: [...(selectedPerson.accounts || []), newAccount],
-    }
-
-    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-    setSelectedPerson(updatedPerson)
-    setAccountFormData({
-      iban: "",
-      currency: "EUR",
-      balance: "",
-      cardType: "none",
-      servicePlan: "Standard",
-      openingDate: new Date().toISOString().split("T")[0],
-    })
-    setErrors({})
-    closeModal("addAccount")
-    setTimeout(() => {
-      showSuccess("Account created successfully!")
-    }, 200)
-  }
-
   const handleDeleteClient = async () => {
     if (!selectedPerson) return
 
@@ -605,7 +433,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting client:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting client: ${error.message}`)
+        console.error(`Error deleting client: ${error.message}`)
       }, 200)
     }
 
@@ -652,7 +480,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting employee:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting employee: ${error.message}`)
+        console.error(`Error deleting employee: ${error.message}`)
       }, 200)
     }
 
@@ -1185,7 +1013,13 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                     </button>
                   )}
                 </div>
-                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
+                {(expandedCrmEntries[entry.id] || closingCrmEntry === entry.id) && (
+                  <p
+                    className={`crm-entry-content ${closingCrmEntry === entry.id ? "closing" : "opening"}`}
+                  >
+                    {entry.content}
+                  </p>
+                )}
               </div>
             ))
           ) : (
