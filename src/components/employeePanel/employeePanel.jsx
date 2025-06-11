@@ -149,6 +149,26 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     searchTerm,
   ])
 
+
+  useEffect(() => {
+    if (selectedPerson) {
+      localStorage.setItem("lastSelectedPersonId", selectedPerson.id);
+    } 
+  }, [selectedPerson]);
+
+  useEffect(() => {
+    const lastSelectedPersonId = localStorage.getItem("lastSelectedPersonId");
+    if (lastSelectedPersonId && data.length > 0) {
+      const foundPerson = data.find(
+        (person) => String(person.id) === String(lastSelectedPersonId)
+      );
+      if (foundPerson) {
+        setSelectedPerson(foundPerson);
+      }
+    }
+  }, [data]);
+
+
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
     setTimeout(() => {
@@ -1471,7 +1491,7 @@ const handleUpdateCrm = async (e) => {
   
 
 
-  
+
           {/* Additional Client Information */}
           {isClient && (
             <>
