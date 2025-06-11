@@ -15,12 +15,14 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'https://backend.majmohar.eu',
-        changeOrigin: true,
-        secure: true,
-      },
+  allowedHosts: ['frontend.majmohar.eu', 'localhost'],
+  proxy: {
+    '/api': {
+      target: 'https://backend.majmohar.eu',
+      changeOrigin: true,
+      secure: true,
     },
   },
+},
+
 })
