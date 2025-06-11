@@ -689,7 +689,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           <Mail className="contact-icon" />
           <span>{selectedPerson.email || "N/A"}</span>
         </div>
-        {selectedPerson.phoneNumber || selectedPerson.phone && (
+        {(selectedPerson.phoneNumber || selectedPerson.phone) && (
         <div className="contact-item">
           <Phone className="contact-icon" />
           <div className="contact-text">

@@ -52,6 +52,29 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
+
+
+  useEffect(() => {
+    if (selectedPerson) {
+      localStorage.setItem("lastSelectedPersonId", selectedPerson.id);
+    
+    }
+  }, [selectedPerson]);
+
+
+
+  useEffect(() => {
+    const lastSelectedPersonId = localStorage.getItem("lastSelectedPersonId");
+    if (lastSelectedPersonId && data.length > 0) {
+      const foundPerson = data.find(
+        (person) => String(person.id) === String(lastSelectedPersonId)
+      );
+      if (foundPerson) {
+        setSelectedPerson(foundPerson);
+      }
+    }
+  }, [data]);
+
   useEffect(() => {
     if (closingCrmEntry) {
       const timer = setTimeout(() => setClosingCrmEntry(null), 400)
