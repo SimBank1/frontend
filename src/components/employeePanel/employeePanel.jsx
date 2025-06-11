@@ -222,22 +222,31 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }, 200)
   }
 
-  // Generate IBAN starting with LT817044
-  const generateRandomIBAN = () => {
-    const prefix = "LT817044"
-    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
-    let iban = prefix + randomDigits
-
-    // Check if IBAN already exists
-    let attempts = 0
-    while (data.some((person) => person.accounts?.some((account) => account.iban === iban)) && attempts < 100) {
-      const newRandomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
-      iban = prefix + newRandomDigits
-      attempts++
+  const fetchGeneratedIBAN = async (personalCode) => {
+  
+    try {
+      const response = await fetch(`${getServerLink()}/generateIBAN`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ personal_code: String(selectedPerson.personalCode) }),
+      });
+  
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`IBAN request failed: ${errText}`);
+      }
+  
+      const iban = await response.text();
+      return iban;
+    } catch (error) {
+      console.error("Failed to generate IBAN:", error);
+      return null;
     }
-
-    return iban
-  }
+  };  
+  
 
   // Get date of birth from personal code
   const getDateOfBirthFromPersonalCode = (personalCode) => {
@@ -262,13 +271,21 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return `${fullYear}-${month}-${day}`
   }
 
-  const handleGenerateIBAN = () => {
-    const newIBAN = generateRandomIBAN()
-    setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
-    if (errors.iban) {
-      setErrors((prev) => ({ ...prev, iban: null }))
-    }
-  }
+  const handleGenerateIBAN = async () => {
+       // 2) Wait for the text response
+       const newIBAN = await fetchGeneratedIBAN()
+    
+       if (newIBAN) {
+         // 3) Only now update your state with the real string
+         setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
+         // clear any prior validation error
+         if (errors.iban) {
+           setErrors((prev) => ({ ...prev, iban: null }))
+         }
+       } else {
+         showSuccess("Failed to generate IBAN. Please try again.")
+       }
+     }
 
   const highlightText = (text, searchTerm) => {
     if (!searchTerm || !text) return text
@@ -378,8 +395,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const validateIBAN = (iban) => {
-    if (!/^LT817044\d{12}$/.test(iban)) {
-      return "IBAN must start with LT817044 followed by exactly 12 digits"
+    if (!/^LT8170440\d{11}$/.test(iban)) {
+      return "IBAN must start with LT8170440 followed by exactly 11 digits"
     }
     const ibanExists = data.some((person) => person.accounts?.some((account) => account.iban === iban))
     if (ibanExists) {
@@ -652,23 +669,35 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return Object.keys(newErrors).length === 0
   }
 
-  const handleClientFormChange = (field, value) => {
+  const handleClientFormChange = async (field, value) => {
     if (field === "personalCode") {
-      const dateOfBirth = getDateOfBirthFromPersonalCode(value)
+      const dateOfBirth = getDateOfBirthFromPersonalCode(value);
+  
       setClientFormData((prev) => ({
         ...prev,
         [field]: value,
         dateOfBirth,
-      }))
-      return
+      }));
+  
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: null }));
+      }
+  
+      return;
     }
-
+    // Fetch IBAN and update label
+    const generatedIban = await fetchGeneratedIBAN(person.personalCode);
+    console.log("Generated IBAN:", generatedIban);
+    if (generatedIban) {
+      document.getElementById("generated-iban-label").innerText = generatedIban;
+    }
+  
     setClientFormData((prev) => ({ ...prev, [field]: value }));
-    setClientFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }))
+      setErrors((prev) => ({ ...prev, [field]: null }));
     }
-  }
+  };
+  
 
   const copyRegistrationToCorrespondence = () => {
     if (sameAsRegistration) {
