@@ -19,9 +19,9 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
-  SquareUser, 
+  SquareUser,
   PlugZap,
-  UserCheck ,
+  UserCheck,
   Clock,
   AlertCircle,
   Shield,
@@ -31,7 +31,7 @@ import "./employeePanel.css";
 import { getServerLink } from "@/server_link";
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
 
-export default function EmployeePanel({ data: initialData, currentUser, username}) {
+export default function EmployeePanel({ data: initialData, currentUser, username }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [data, setData] = useState(initialData?.clients || [])
@@ -60,6 +60,18 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }, [closingCrmEntry])
 
 
+
+  function formatPhoneNumber(input, defaultCountry = 'LT') {
+    if (!input) return '';
+
+  const phoneNumber = parsePhoneNumberFromString(input, defaultCountry);
+
+  if (!phoneNumber || !phoneNumber.isValid()) return input; // fallback to raw input
+
+  return phoneNumber.formatInternational(); // always returns in +XXX format
+}
+
+
   // Apple-style success animation states
   const [showSuccess, setShowSuccess] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -68,8 +80,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   // Search input ref for focus management
   const searchInputRef = useRef(null)
 
-   // Apple-style success animation implementation
-   const triggerSuccess = (message) => {
+  // Apple-style success animation implementation
+  const triggerSuccess = (message) => {
     setSuccessMessage(message)
     setShowSuccess(true)
     setClosing(false)
@@ -222,7 +234,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
     }, 200)
   }
-  
+
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
@@ -277,20 +289,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         credentials: "include",
         body: JSON.stringify({ personal_code: String(selectedPerson.personalCode) }),
       });
-  
+
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`IBAN request failed: ${errText}`);
       }
-  
+
       const iban = await response.text();
       return iban;
     } catch (error) {
       console.error("Failed to generate IBAN:", error);
       return null;
     }
-  };  
-  
+  };
+
 
   // Get date of birth from personal code
   const getDateOfBirthFromPersonalCode = (personalCode) => {
@@ -316,20 +328,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const handleGenerateIBAN = async () => {
-       // 2) Wait for the text response
-       const newIBAN = await fetchGeneratedIBAN()
-    
-       if (newIBAN) {
-         // 3) Only now update your state with the real string
-         setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
-         // clear any prior validation error
-         if (errors.iban) {
-           setErrors((prev) => ({ ...prev, iban: null }))
-         }
-       } else {
-        triggerSuccess("Failed to generate IBAN. Please try again.")
-       }
-     }
+    // 2) Wait for the text response
+    const newIBAN = await fetchGeneratedIBAN()
+
+    if (newIBAN) {
+      // 3) Only now update your state with the real string
+      setAccountFormData((prev) => ({ ...prev, iban: newIBAN }))
+      // clear any prior validation error
+      if (errors.iban) {
+        setErrors((prev) => ({ ...prev, iban: null }))
+      }
+    } else {
+      triggerSuccess("Failed to generate IBAN. Please try again.")
+    }
+  }
 
   const highlightText = (text, searchTerm) => {
     if (!searchTerm || !text) return text
@@ -370,21 +382,21 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (!/^\d{11}$/.test(code)) {
       return "Personal code must be exactly 11 digits"
     }
-  
+
     const inputCode = Number(code.trim());
-  
+
     const codeExists = data.some(
       (person) => Number(person.personalCode) === inputCode
     );
-  
+
     if (codeExists) {
       return "Personal code already in use";
     }
-  
+
     return null;
   };
-  
-  
+
+
 
   const validateName = (name, fieldName) => {
     if (!/^[A-Za-zĄąČčĘęĖėĮįŠšŲųŪūŽž\s]{3,50}$/.test(name)) {
@@ -421,7 +433,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
 
     try {
-      const parsed = parsePhoneNumberFromString(cleanedPhone, 'LT')
+      // Try parsing as international number
+      const parsed = parsePhoneNumber(cleanedPhone, 'LT'); // fallback region
+
       if (parsed && parsed.isValid()) {
         return parsed.formatInternational()
       }
@@ -497,60 +511,60 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     // Construct the payload with keys matching the exact snake_case JSON structure your backend expects
     const payload = {
-        // Top-level fields (snake_case)
-        first_name: clientFormData.firstName,
-        last_name: clientFormData.lastName,
-        email: clientFormData.email,
-        personal_code: clientFormData.personalCode,
-        doc_type: clientFormData.documentType,
-        doc_number: clientFormData.documentNumber,
-        doc_expiry_date: clientFormData.documentExpiry,
-        date_of_birth: clientFormData.dateOfBirth,
-        phone_number: clientFormData.phone,
-        other_phone_number: clientFormData.secondPhone, // Ensure this maps correctly from your form data
-        marketing_consent: clientFormData.marketingConsent,
+      // Top-level fields (snake_case)
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
+      email: clientFormData.email,
+      personal_code: clientFormData.personalCode,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      date_of_birth: clientFormData.dateOfBirth,
+      phone_number: clientFormData.phone,
+      other_phone_number: clientFormData.secondPhone, // Ensure this maps correctly from your form data
+      marketing_consent: clientFormData.marketingConsent,
 
-        // Nested Address objects (snake_case for the object names, but cityOrVillage/postalCode are still camelCase within them as per your provided perfect input)
-        reg_address: { // Matches 'reg_address' in your perfect JSON
-            country: clientFormData.registrationCountry,
-            region: clientFormData.registrationRegion || null,
-            cityOrVillage: clientFormData.registrationCity || null, // Still camelCase here as per your input
-            street: clientFormData.registrationStreet,
-            house: clientFormData.registrationHouse || null,
-            apartment: clientFormData.registrationApartment || null,
-            postalCode: clientFormData.registrationPostalCode || null // Still camelCase here as per your input
-        },
+      // Nested Address objects (snake_case for the object names, but cityOrVillage/postalCode are still camelCase within them as per your provided perfect input)
+      reg_address: { // Matches 'reg_address' in your perfect JSON
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion || null,
+        cityOrVillage: clientFormData.registrationCity || null, // Still camelCase here as per your input
+        street: clientFormData.registrationStreet,
+        house: clientFormData.registrationHouse || null,
+        apartment: clientFormData.registrationApartment || null,
+        postalCode: clientFormData.registrationPostalCode || null // Still camelCase here as per your input
+      },
 
-        cor_address: { // Matches 'cor_address' in your perfect JSON
-            country: clientFormData.correspondenceCountry,
-            region: clientFormData.correspondenceRegion || null,
-            cityOrVillage: clientFormData.correspondenceCity || null,
-            street: clientFormData.correspondenceStreet,
-            house: clientFormData.correspondenceHouse || null,
-            apartment: clientFormData.correspondenceApartment || null,
-            postalCode: clientFormData.correspondencePostalCode || null
-        },
+      cor_address: { // Matches 'cor_address' in your perfect JSON
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion || null,
+        cityOrVillage: clientFormData.correspondenceCity || null,
+        street: clientFormData.correspondenceStreet,
+        house: clientFormData.correspondenceHouse || null,
+        apartment: clientFormData.correspondenceApartment || null,
+        postalCode: clientFormData.correspondencePostalCode || null
+      },
 
-        // Array fields (snake_case as per your perfect JSON)
-        bank_accs: [],
-        crm: [],
+      // Array fields (snake_case as per your perfect JSON)
+      bank_accs: [],
+      crm: [],
 
-        // Stringified JSON object (snake_case as per your perfect JSON)
-        other_bank_accounts: JSON.stringify({
-            bank: "",
-            iban: "",
-        }),
+      // Stringified JSON object (snake_case as per your perfect JSON)
+      other_bank_accounts: JSON.stringify({
+        bank: "",
+        iban: "",
+      }),
     };
 
     try {
-        const response = await fetch(getServerLink() + "/createClient", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-            credentials: "include",
-        });
+      const response = await fetch(getServerLink() + "/createClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
 
         if (response.ok) {
             // As discussed, if backend returns empty string, read as text.
@@ -595,61 +609,61 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     postalCode: clientFormData.correspondencePostalCode || null
                 },
 
-                // These are the frontend's internal names, mapping from the snake_case payload
-                accounts: [], // Assuming this maps to bank_accs
-                crmEntries: [], // Assuming this maps to crm
-                otherBankAccounts: JSON.parse(payload.other_bank_accounts) // Parse string back to object for frontend state
-            };
+          // These are the frontend's internal names, mapping from the snake_case payload
+          accounts: [], // Assuming this maps to bank_accs
+          crmEntries: [], // Assuming this maps to crm
+          otherBankAccounts: JSON.parse(payload.other_bank_accounts) // Parse string back to object for frontend state
+        };
 
 
-            setData((prev) => [...prev, newClient]);
+        setData((prev) => [...prev, newClient]);
 
-            // Reset form
-            setClientFormData({
-                firstName: "",
-                lastName: "",
-                personalCode: "",
-                email: "",
-                phone: "",
-                secondPhone: "",
-                documentType: "ID Card",
-                documentNumber: "",
-                documentExpiry: "",
-                dateOfBirth: "",
-                registrationCountry: "",
-                registrationRegion: "",
-                registrationCity: "",
-                registrationStreet: "",
-                registrationHouse: "",
-                registrationApartment: "",
-                registrationPostalCode: "",
-                correspondenceCountry: "",
-                correspondenceRegion: "",
-                correspondenceCity: "",
-                correspondenceStreet: "",
-                correspondenceHouse: "",
-                correspondenceApartment: "",
-                correspondencePostalCode: "",
-                marketingConsent: false,
-            });
+        // Reset form
+        setClientFormData({
+          firstName: "",
+          lastName: "",
+          personalCode: "",
+          email: "",
+          phone: "",
+          secondPhone: "",
+          documentType: "ID Card",
+          documentNumber: "",
+          documentExpiry: "",
+          dateOfBirth: "",
+          registrationCountry: "",
+          registrationRegion: "",
+          registrationCity: "",
+          registrationStreet: "",
+          registrationHouse: "",
+          registrationApartment: "",
+          registrationPostalCode: "",
+          correspondenceCountry: "",
+          correspondenceRegion: "",
+          correspondenceCity: "",
+          correspondenceStreet: "",
+          correspondenceHouse: "",
+          correspondenceApartment: "",
+          correspondencePostalCode: "",
+          marketingConsent: false,
+        });
 
-            setErrors({});
-            closeModal("addClient");
+        setErrors({});
+        closeModal("addClient");
 
-            setTimeout(() => {
-                setSelectedPerson(newClient);
-                triggerSuccess("Client profile created successfully!");
-            }, 200);
-        } else {
-            const errorText = await response.text();
-            throw new Error(`Failed to create client: ${errorText}`);
-        }
+        setTimeout(() => {
+          setSelectedPerson(newClient);
+          triggerSuccess("Client profile created successfully!");
+        }, 200);
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Failed to create client: ${errorText}`);
+      }
 
     } catch (error) {
-        console.error("Error creating client:", error);
-        triggerSuccess(`Failed to create client. Error: ${error.message}`);
+      console.error("Error creating client:", error);
+      triggerSuccess(`Failed to create client. Error: ${error.message}`);
     }
-};
+  };
   const validateClientForm = () => {
     const newErrors = {}
 
@@ -712,17 +726,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const handleClientFormChange = async (field, value) => {
     if (field === "personalCode") {
       const dateOfBirth = getDateOfBirthFromPersonalCode(value);
-  
+
       setClientFormData((prev) => ({
         ...prev,
         [field]: value,
         dateOfBirth,
       }));
-  
+
       if (errors[field]) {
         setErrors((prev) => ({ ...prev, [field]: null }));
       }
-  
+
       return;
     }
     // Fetch IBAN and update label
@@ -731,13 +745,13 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (generatedIban) {
       document.getElementById("generated-iban-label").innerText = generatedIban;
     }
-  
+
     setClientFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
-  
+
 
   const copyRegistrationToCorrespondence = () => {
     if (sameAsRegistration) {
@@ -836,7 +850,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     setErrors({})
     closeModal("addAccount")
     setTimeout(() => {
-        triggerSuccess("Bank account created successfully!")
+      triggerSuccess("Bank account created successfully!")
     }, 200)
   }
 
@@ -872,152 +886,152 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     // Generate a 1-based numeric ID for the new CRM entry
     // This ID will be used for both local state and sent to the backend.
     const newId = (selectedPerson.crm && selectedPerson.crm.length > 0)
-        ? Math.max(...selectedPerson.crm.map(entry => entry.id || 0)) + 1 // Find max existing ID and add 1
-        : 1; // Start with 1 if no existing CRM entries
+      ? Math.max(...selectedPerson.crm.map(entry => entry.id || 0)) + 1 // Find max existing ID and add 1
+      : 1; // Start with 1 if no existing CRM entries
 
     const crmData = {
-        id: newId, // Assign the new 1-based ID
-        personal_code: selectedPerson.personalCode,
-        date_of_contact: crmFormData.date,
-        contact_type: crmFormData.contactType,
-        title: crmFormData.title,
-        content: crmFormData.content.replace(/\n/g, '\\n').replace(/\r/g, '\\r'),
-        username: employeeUsername|| "unknown",
+      id: newId, // Assign the new 1-based ID
+      personal_code: selectedPerson.personalCode,
+      date_of_contact: crmFormData.date,
+      contact_type: crmFormData.contactType,
+      title: crmFormData.title,
+      content: crmFormData.content.replace(/\n/g, '\\n').replace(/\r/g, '\\r'),
+      username: employeeUsername || "unknown",
     };
 
-    
+
 
     try {
-        const response = await fetch(getServerLink() + "/createCRM", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify(crmData),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || "Failed to create CRM entry");
-        }
-
-        // The newCrmEntry for local state should match the structure you display
-        const newCrmEntry = {
-            id: newId, // Use the generated 1-based ID
-            title: crmFormData.title,
-            username: employeeUsername || "unknown",
-            canEdit: true, // Assuming this is derived logic, not from DB
-            contactType: crmFormData.contactType,
-            content: crmFormData.content,
-            date: crmFormData.date, // Use the frontend date format
-        };
-        
-        const updatedPerson = {
-            ...selectedPerson,
-            crm: [...(selectedPerson.crm || []), newCrmEntry],
-        };
-
-        setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
-        setSelectedPerson(updatedPerson);
-        setCrmFormData({
-            title: "",
-            contactType: "phone",
-            content: "",
-            date: new Date().toISOString().split("T")[0],
-        });
-        setErrors({});
-        closeModal("addCrm");
-        setTimeout(() => {
-            triggerSuccess("CRM entry added successfully!");
-        }, 200);
-    } catch (error) {
-        console.error("Error creating CRM entry:", error);
-        triggerSuccess("Error creating CRM entry. Please try again.");
-    }
-};
-
-
-const handleEditCrm = (entry) => {
-  // When editing, load existing data, using snake_case properties from DB
-  setEditingCrmEntry(entry);
-  setCrmFormData({
-      title: entry.title || "",
-      contactType: entry.contact_type, // Use contact_type from DB
-      content: entry.content,
-      date: entry.date_of_contact,    // Use date_of_contact from DB
-  });
-  setIsEditCrmOpen(true);
-};
-
-
-
-
-const handleUpdateCrm = async (e) => {
-  e.preventDefault();
-  if (!validateCrmForm()) return;
-  if (!editingCrmEntry || !selectedPerson) return;
-
-  const entryIndex = selectedPerson.crm.findIndex(
-    (entry) =>
-      entry.id === editingCrmEntry.id &&
-      entry.username === editingCrmEntry.username &&
-      entry.title === editingCrmEntry.title &&
-      entry.contact_type === editingCrmEntry.contact_type &&
-      entry.content === editingCrmEntry.content &&
-      entry.date_of_contact === editingCrmEntry.date_of_contact
-  );
-
-
-  const updatedCrmData = {
-      id: entryIndex+1,
-      personal_code: selectedPerson.personalCode,
-      title: crmFormData.title,
-      contact_type: crmFormData.contactType,
-      content: crmFormData.content,
-      date_of_contact: crmFormData.date,
-  };
-
-  try {
-      const response = await fetch(getServerLink() + "/editCRM", {
-          method: "POST", // Keep as POST to match your @PostMapping backend
-          headers: {
-              "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(updatedCrmData),
+      const response = await fetch(getServerLink() + "/createCRM", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(crmData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-          throw new Error(data.message || "Failed to update CRM entry");
+        throw new Error(data.message || "Failed to create CRM entry");
+      }
+
+      // The newCrmEntry for local state should match the structure you display
+      const newCrmEntry = {
+        id: newId, // Use the generated 1-based ID
+        title: crmFormData.title,
+        username: employeeUsername || "unknown",
+        canEdit: true, // Assuming this is derived logic, not from DB
+        contactType: crmFormData.contactType,
+        content: crmFormData.content,
+        date: crmFormData.date, // Use the frontend date format
+      };
+
+      const updatedPerson = {
+        ...selectedPerson,
+        crm: [...(selectedPerson.crm || []), newCrmEntry],
+      };
+
+      setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
+      setSelectedPerson(updatedPerson);
+      setCrmFormData({
+        title: "",
+        contactType: "phone",
+        content: "",
+        date: new Date().toISOString().split("T")[0],
+      });
+      setErrors({});
+      closeModal("addCrm");
+      setTimeout(() => {
+        triggerSuccess("CRM entry added successfully!");
+      }, 200);
+    } catch (error) {
+      console.error("Error creating CRM entry:", error);
+      triggerSuccess("Error creating CRM entry. Please try again.");
+    }
+  };
+
+
+  const handleEditCrm = (entry) => {
+    // When editing, load existing data, using snake_case properties from DB
+    setEditingCrmEntry(entry);
+    setCrmFormData({
+      title: entry.title || "",
+      contactType: entry.contact_type, // Use contact_type from DB
+      content: entry.content,
+      date: entry.date_of_contact,    // Use date_of_contact from DB
+    });
+    setIsEditCrmOpen(true);
+  };
+
+
+
+
+  const handleUpdateCrm = async (e) => {
+    e.preventDefault();
+    if (!validateCrmForm()) return;
+    if (!editingCrmEntry || !selectedPerson) return;
+
+    const entryIndex = selectedPerson.crm.findIndex(
+      (entry) =>
+        entry.id === editingCrmEntry.id &&
+        entry.username === editingCrmEntry.username &&
+        entry.title === editingCrmEntry.title &&
+        entry.contact_type === editingCrmEntry.contact_type &&
+        entry.content === editingCrmEntry.content &&
+        entry.date_of_contact === editingCrmEntry.date_of_contact
+    );
+
+
+    const updatedCrmData = {
+      id: entryIndex + 1,
+      personal_code: selectedPerson.personalCode,
+      title: crmFormData.title,
+      contact_type: crmFormData.contactType,
+      content: crmFormData.content,
+      date_of_contact: crmFormData.date,
+    };
+
+    try {
+      const response = await fetch(getServerLink() + "/editCRM", {
+        method: "POST", // Keep as POST to match your @PostMapping backend
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(updatedCrmData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update CRM entry");
       }
 
       // Update the local state's `crm` array
       const updatedCrmEntries = selectedPerson.crm.map((entry) =>
-          entry.id === editingCrmEntry.id &&
+        entry.id === editingCrmEntry.id &&
           entry.title === editingCrmEntry.title &&
           entry.contact_type === editingCrmEntry.contact_type &&
           entry.content === editingCrmEntry.content &&
           entry.date_of_contact === editingCrmEntry.date_of_contact
 
-              ? {
-                    ...entry,
-                    // Update specific fields. Ensure snake_case from form matches DB fields.
-                    title: crmFormData.title,
-                    contact_type: crmFormData.contactType,
-                    content: crmFormData.content,
-                    date_of_contact: crmFormData.date,
-                    // employeeName: currentUser?.username || "Current Employee", // Update if necessary
-                }
-              : entry
+          ? {
+            ...entry,
+            // Update specific fields. Ensure snake_case from form matches DB fields.
+            title: crmFormData.title,
+            contact_type: crmFormData.contactType,
+            content: crmFormData.content,
+            date_of_contact: crmFormData.date,
+            // employeeName: currentUser?.username || "Current Employee", // Update if necessary
+          }
+          : entry
       );
 
       const updatedPerson = {
-          ...selectedPerson,
-          crm: updatedCrmEntries,
+        ...selectedPerson,
+        crm: updatedCrmEntries,
       };
 
       setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)));
@@ -1025,21 +1039,21 @@ const handleUpdateCrm = async (e) => {
 
       setEditingCrmEntry(null);
       setCrmFormData({
-          title: "",
-          contactType: "phone",
-          content: "",
-          date: new Date().toISOString().split("T")[0],
+        title: "",
+        contactType: "phone",
+        content: "",
+        date: new Date().toISOString().split("T")[0],
       });
       setErrors({});
       closeModal("editCrm");
       setTimeout(() => {
-          triggerSuccess("CRM entry updated successfully!");
+        triggerSuccess("CRM entry updated successfully!");
       }, 200);
-  } catch (error) {
+    } catch (error) {
       console.error("Error updating CRM entry:", error);
       triggerSuccess("Error updating CRM entry. Please try again.");
-  }
-};
+    }
+  };
 
 
 
@@ -1055,28 +1069,28 @@ const handleUpdateCrm = async (e) => {
     const entryIndex = selectedPerson.crm.findIndex(
       (entry) =>
         entry &&
-        entry.username === deletingCrmEntry.username && 
+        entry.username === deletingCrmEntry.username &&
         entry.title === deletingCrmEntry.title &&
         entry.contact_type === deletingCrmEntry.contact_type &&
         entry.content === deletingCrmEntry.content &&
         entry.date_of_contact === deletingCrmEntry.date_of_contact
     );
-  
-  
+
+
     if (entryIndex === -1) {
       triggerSuccess("CRM entry not found.");
       return;
     }
-  
+
     // Prepare the data to send for deletion
     const deleteCrmData = {
-      id: entryIndex+1,
+      id: entryIndex + 1,
       personal_code: selectedPerson.personalCode,
-      username:deletingCrmEntry.username
+      username: deletingCrmEntry.username
     };
 
     console.log(deleteCrmData)
- 
+
     try {
       const response = await fetch(getServerLink() + "/deleteCRM", {
         method: "POST", // Assuming backend expects POST for delete
@@ -1086,22 +1100,22 @@ const handleUpdateCrm = async (e) => {
         credentials: "include",
         body: JSON.stringify(deleteCrmData),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(data.message || "Failed to delete CRM entry");
       }
-      if(data.error){
+      if (data.error) {
 
         setTimeout(() => {
           triggerSuccess("You must be the creator of this CRM to delete it!");
-        }, 200);  
+        }, 200);
         return
 
-      
+
       }
-  
+
       const updatedCrmEntries = selectedPerson.crm.filter(
         (entry) =>
           !(
@@ -1112,17 +1126,17 @@ const handleUpdateCrm = async (e) => {
             entry.date_of_contact === deletingCrmEntry.date_of_contact
           )
       );
-  
+
       const updatedPerson = {
         ...selectedPerson,
         crm: updatedCrmEntries,
       };
-  
+
       setData((prev) =>
         prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person))
       );
       setSelectedPerson(updatedPerson); // Update selected person to reflect changes
-  
+
       setDeletingCrmEntry(null);
       closeModal("deleteCrm");
       setTimeout(() => {
@@ -1133,9 +1147,9 @@ const handleUpdateCrm = async (e) => {
       triggerSuccess("Error deleting CRM entry. Please try again.");
     }
   };
-  
-    
-  
+
+
+
   const canDeleteCrmEntry = (entry) => {
     return entry.employeeName === currentUser?.username
   }
@@ -1162,8 +1176,8 @@ const handleUpdateCrm = async (e) => {
       .toLowerCase()
       .replace(/\s+/g, " ")
       .trim();
-  
-  
+
+
   // Normalize phone for comparison: remove spaces, +, 00 prefixes
   const normalizePhoneForCompare = (phone) => {
     if (!phone) return ""
@@ -1230,8 +1244,8 @@ const handleUpdateCrm = async (e) => {
             </div>
             {person.crm && person.crm.length > 0 ? (
               <p className="client-preview">
-              Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact : "No interactions"}
-            </p>
+                Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact : "No interactions"}
+              </p>
             ) : (
               <p className="client-preview no-recent-activities">No recent activities</p>
             )}
@@ -1240,418 +1254,402 @@ const handleUpdateCrm = async (e) => {
       </div>
     ))
 
-    const renderPersonalInfo = () => {
-      if (!selectedPerson) {
-        return (
-          <div className="empty-state">
-            <div className="empty-content">
-              <User className="empty-icon" />
-              <h3 className="empty-title">Personal Information</h3>
-              <p className="empty-description">Select a person to view their details</p>
-            </div>
-          </div>
-        )
-      }
-  
-      const isClient = selectedPerson.marketingConsent !== undefined
-      const isEmployee = selectedPerson.marketingConsent === undefined
-  
+  const renderPersonalInfo = () => {
+    if (!selectedPerson) {
       return (
-        <div>
-          <div className="profile-header">
-            <div className="profile-avatar">
-              {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
-            </div>
-            <div className="profile-info">
-              <h2>
-                {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
-                {selectedPerson.lastName || selectedPerson.last_name || ""}
-              </h2>
-              <p>{isClient ? "client" : "employee"}</p>
-            </div>
-            {isClient && (
-              <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
-                <Trash2 size={16} />
-              </button>
-            )}
+        <div className="empty-state">
+          <div className="empty-content">
+            <User className="empty-icon" />
+            <h3 className="empty-title">Personal Information</h3>
+            <p className="empty-description">Select a person to view their details</p>
           </div>
-  
-          {/* Basic Information */}
-          <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <User size={16} />
-                Basic Information
-              </h3>
-            </div>
-            <div className="card-content">
-              {isEmployee ? (
-                <>
-                  <div className="info-item">
-                    <div className="info-label">Username</div>
-                    <div className="info-value">{selectedPerson.username || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Email</div>
-                    <div className="info-value">{selectedPerson.email || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Password</div>
-                    <div className="password-container">
-                      <span className="password-value">{selectedPerson.password || "N/A"}</span>
-                      <button
-                        className="copy-button"
-                        onClick={() => {
-                          const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
-                          navigator.clipboard.writeText(credentials)
-                          triggerSuccess("Credentials copied!")
-                        }}
-                        title="Copy credentials"
-                      >
-                        <Copy size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="info-item">
-                    <div className="info-label">Personal Code</div>
-                    <div className="info-value">{selectedPerson.personalCode}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Date of Birth</div>
-                    <div className="info-value">{selectedPerson.dateOfBirth}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Type</div>
-                    <div className="info-value">{selectedPerson.docType}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Number</div>
-                    <div className="info-value">{selectedPerson.docNumber}</div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-  
-          {/* Contact Information */}
-          <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <Mail size={16} />
-                Contact
-              </h3>
-            </div>
-            <div className="card-content">
-              <div className="contact-item">
-                <Mail className="contact-icon" />
-                <span>{selectedPerson.email || "N/A"}</span>
-              </div>
-              {isClient && (
-                <div className="contact-item">
-                  <Phone className="contact-icon" />
-                  <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
-                </div>
-              )}
-            </div>
-          </div>
-  
-          {/* Bank Accounts for clients */}
-          {isClient && (
-          <div className="info-card">
-          <div className="card-header bank-accounts-header">
-            <h3 className="card-title">
-              <CreditCard size={16} style={{ marginRight: "6px" }} />
-              Bank Accounts
-            </h3>
-            <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
-              <Plus size={14} style={{ marginRight: "4px" }} />
-              Add Account
-            </button>
-          </div>
-          <div className="card-content">
-          {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
-  selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
-    <div key={`${account.id}-${index}`} className="account-item"> 
-      <div className="account-header">
-        <span className="account-iban">{account.iban}</span>
-        <span className="account-badge">{account.currency}</span>
-      </div>
-      <div className="account-details">
-        <div className="account-detail">
-          <div className="info-label">Balance</div>
-          <div className="info-value">
-            {Number(account.balance).toFixed(2)} {account.currency}
-          </div>
-        </div>
-        <div className="account-detail">
-          <div className="info-label">Plan</div>
-          <div className="info-value">{account.plan}</div>
-        </div>
-        <div className="account-detail">
-          <div className="info-label">Card Type</div>
-          <div className="info-value">
-            {account.type === "none"
-              ? "No Card"
-              : account.type === "Debeto"
-              ? "Debit Card"
-              : "Credit Card"}
-          </div>
-        </div>
-      </div>
-    </div>
-  ))
-) : (
-  <div className="no-data">
-    <CreditCard className="no-data-icon" />
-    <p className="no-data-text">No accounts found</p>
-  </div>
-)}
-</div>
-
-            </div>
-          )}
-  
-          {/* Additional Client Information */}
-          {isClient && (
-            <>
-              {/* Document Information */}
-              <div className="info-card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <Shield size={16} />
-                    Document Information
-                  </h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-item">
-                    <div className="info-label">Document Type</div>
-                    <div className="info-value">{selectedPerson.docType || selectedPerson.documentType || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Number</div>
-                    <div className="info-value">{selectedPerson.docNumber || selectedPerson.documentNumber || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Document Expiry</div>
-                    <div className="info-value">
-                      {selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "N/A"}
-                    </div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Status</div>
-                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {(() => {
-                        const expiryDate = selectedPerson.docExpiryDate || selectedPerson.documentExpiry
-                        if (!expiryDate) return "Unknown"
-  
-                        const expiry = new Date(expiryDate)
-                        const today = new Date()
-                        const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
-  
-                        if (daysUntilExpiry < 0) {
-                          return (
-                            <>
-                              <AlertCircle size={16} color="#ef4444" />
-                              <span style={{ color: "#ef4444" }}>Expired</span>
-                            </>
-                          )
-                        } else if (daysUntilExpiry <= 30) {
-                          return (
-                            <>
-                              <AlertCircle size={16} color="#f59e0b" />
-                              <span style={{ color: "#f59e0b" }}>Expires in {daysUntilExpiry} days</span>
-                            </>
-                          )
-                        } else {
-                          return (
-                            <>
-                              <CheckCircle size={16} color="#10b981" />
-                              <span style={{ color: "#10b981" }}>Valid</span>
-                            </>
-                          )
-                        }
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-  
-              {/* Address Information */}
-              <div className="info-card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <MapPin size={16} />
-                    Address Information
-                  </h3>
-                </div>
-                <div className="card-content">
-                  <div className="address-item">
-                    <MapPin className="address-icon" />
-                    <div className="address-content">
-                      <div className="info-label">Registration Address</div>
-                      <div className="info-value">
-                        {selectedPerson.regAddress ? (
-                          <>
-                            <div>
-                              {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
-                              {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
-                            </div>
-                            <div>
-                              {selectedPerson.regAddress.postalCode || "N/A"}{" "}
-                              {selectedPerson.regAddress.cityOrVillage || "N/A"}
-                            </div>
-                            <div>
-                              {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
-                            </div>
-                          </>
-                        ) : (
-                          <div>No registration address</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-  
-                  <div className="address-item">
-                    <Building className="address-icon" />
-                    <div className="address-content">
-                      <div className="info-label">Correspondence Address</div>
-                      <div className="info-value">
-                        {selectedPerson.corAddress ? (
-                          <>
-                            <div>
-                              {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
-                              {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
-                            </div>
-                            <div>
-                              {selectedPerson.corAddress.postalCode || "N/A"}{" "}
-                              {selectedPerson.corAddress.cityOrVillage || "N/A"}
-                            </div>
-                            <div>
-                              {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
-                            </div>
-                          </>
-                        ) : (
-                          <div>Same as registration address</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-  
-              {/* Additional Contact Information */}
-              <div className="info-card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <Phone size={16} />
-                    Additional Contact Details
-                  </h3>
-                </div>
-                <div className="card-content">
-                  <div className="contact-item">
-                    <Phone className="contact-icon" />
-                    <div className="contact-text">
-                      <div className="info-label">Primary Phone</div>
-                      <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
-                    </div>
-                  </div>
-                  {selectedPerson.otherPhoneNumber && (
-                    <div className="contact-item">
-                      <Phone className="contact-icon" />
-                      <div className="contact-text">
-                        <div className="info-label">Secondary Phone</div>
-                        <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-  
-              {/* Account Status & Preferences */}
-              <div className="info-card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <UserCheck size={16} />
-                    Account Status & Preferences
-                  </h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-item">
-                    <div className="info-label">Marketing Consent</div>
-                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {selectedPerson.marketingConsent ? (
-                        <>
-                          <CheckCircle size={16} color="#10b981" />
-                          <span style={{ color: "#10b981" }}>Granted</span>
-                        </>
-                      ) : (
-                        <>
-                          <X size={16} color="#ef4444" />
-                          <span style={{ color: "#ef4444" }}>Not granted</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Account Created</div>
-                    <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Total Accounts</div>
-                    <div className="info-value">{selectedPerson.accounts ? selectedPerson.accounts.length : 0}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-label">Total Balance</div>
-                    <div className="info-value">
-                      {selectedPerson.accounts && selectedPerson.accounts.length > 0
-                        ? `€${selectedPerson.accounts.reduce((total, acc) => total + (acc.balance || 0), 0).toFixed(2)}`
-                        : "€0.00"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-  
-              {/* CRM Activity Summary */}
-              <div className="info-card">
-                <div className="card-header">
-                  <h3 className="card-title">
-                    <Clock size={16} />
-                    Recent Activity Summary
-                  </h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-item">
-                    <div className="info-label">Total CRM Entries</div>
-                    <div className="info-value">{selectedPerson.crm ? selectedPerson.crm.length : 0}</div>
-                  </div>
-                  <div className="info-item">
-  <div className="info-label">Last Contact Date</div>
-  <div className="info-value">
-    {selectedPerson.crm && selectedPerson.crm.length > 0
-      ? selectedPerson.crm[selectedPerson.crm.length - 1].date_of_contact
-      : "No contact recorded"}
-  </div>
-</div>
-<div className="info-item">
-  <div className="info-label">Last Contact Type</div>
-  <div className="info-value">
-    {selectedPerson.crm && selectedPerson.crm.length > 0
-      ? selectedPerson.crm[selectedPerson.crm.length - 1].contact_type
-      : "N/A"}
-  </div>
-</div>
-
-                </div>
-              </div>
-            </>
-          )}
         </div>
       )
     }
-  
+
+    const isClient = selectedPerson.marketingConsent !== undefined
+    const isEmployee = selectedPerson.marketingConsent === undefined
+
+    return (
+      <div>
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
+          </div>
+          <div className="profile-info">
+            <h2>
+              {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
+              {selectedPerson.lastName || selectedPerson.last_name || ""}
+            </h2>
+            <p>{isClient ? "client" : "employee"}</p>
+          </div>
+          {isClient && (
+            <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+              <Trash2 size={16} />
+            </button>
+          )}
+          {isEmployee && (
+            <button
+              className="delete-client-button"
+              onClick={() => {
+                setDeletingEmployee(selectedPerson)
+                setIsDeleteEmployeeOpen(true)
+              }}
+              title="Delete Employee"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Basic Information */}
+        <div className="info-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <User size={16} />
+              Basic Information
+            </h3>
+          </div>
+          <div className="card-content">
+            {isEmployee ? (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{selectedPerson.username || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Email</div>
+                  <div className="info-value">{selectedPerson.email || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Password</div>
+                  <div className="password-container">
+                    <span className="password-value">{selectedPerson.password || "N/A"}</span>
+                    <button
+                      className="copy-button"
+                      onClick={() => {
+                        const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
+                        navigator.clipboard.writeText(credentials)
+                        triggerSuccess("Credentials copied!")
+                      }}
+                      title="Copy credentials"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Personal Code</div>
+                  <div className="info-value">{selectedPerson.personalCode}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Date of Birth</div>
+                  <div className="info-value">{selectedPerson.dateOfBirth}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.docType}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.docNumber}</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className="info-card">
+      <div className="card-header">
+        <h3 className="card-title">
+          <Mail size={16} />
+          Contact
+        </h3>
+      </div>
+      <div className="card-content">
+        <div className="contact-item">
+          <Mail className="contact-icon" />
+          <span>{selectedPerson.email || "N/A"}</span>
+        </div>
+        {/* Primary Phone - shown for both clients and others, as it's a core contact detail */}
+        <div className="contact-item">
+          <Phone className="contact-icon" />
+          <div className="contact-text">
+            <div className="info-label">Primary Phone</div> {/* Simplified label */}
+            <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
+          </div>
+        </div>
+        {selectedPerson.otherPhoneNumber && (
+          <div className="contact-item">
+            <Phone className="contact-icon" />
+            <div className="contact-text">
+              <div className="info-label">Secondary Phone</div>
+              <div className="info-value"> {formatPhoneNumber(selectedPerson.otherPhoneNumber)}</div>
+            </div>
+          </div>
+        )}
+      </div></div>
+
+        {/* Bank Accounts for clients */}
+        {isClient && (
+          <div className="info-card">
+            <div className="card-header bank-accounts-header">
+              <h3 className="card-title">
+                <CreditCard size={16} style={{ marginRight: "6px" }} />
+                Bank Accounts
+              </h3>
+              <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
+                <Plus size={14} style={{ marginRight: "4px" }} />
+                Add Account
+              </button>
+            </div>
+            <div className="card-content">
+              {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
+                selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
+                  <div key={`${account.id}-${index}`} className="account-item">
+                    <div className="account-header">
+                      <span className="account-iban">{account.iban}</span>
+                      <span className="account-badge">{account.currency}</span>
+                    </div>
+                    <div className="account-details">
+                      <div className="account-detail">
+                        <div className="info-label">Balance</div>
+                        <div className="info-value">
+                          {Number(account.balance).toFixed(2)} {account.currency}
+                        </div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Plan</div>
+                        <div className="info-value">{account.plan}</div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Card Type</div>
+                        <div className="info-value">
+                          {account.type === "none"
+                            ? "No Card"
+                            : account.type === "Debeto"
+                              ? "Debit Card"
+                              : "Credit Card"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-data">
+                  <CreditCard className="no-data-icon" />
+                  <p className="no-data-text">No accounts found</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* Additional Client Information */}
+        {isClient && (
+          <>
+            {/* Document Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Shield size={16} />
+                  Document Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.docType || selectedPerson.documentType || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.docNumber || selectedPerson.documentNumber || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Expiry</div>
+                  <div className="info-value">
+                    {selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "N/A"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Status</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {(() => {
+                      const expiryDate = selectedPerson.docExpiryDate || selectedPerson.documentExpiry
+                      if (!expiryDate) return "Unknown"
+
+                      const expiry = new Date(expiryDate)
+                      const today = new Date()
+                      const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+
+                      if (daysUntilExpiry < 0) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#ef4444" />
+                            <span style={{ color: "#ef4444" }}>Expired</span>
+                          </>
+                        )
+                      } else if (daysUntilExpiry <= 30) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#f59e0b" />
+                            <span style={{ color: "#f59e0b" }}>Expires in {daysUntilExpiry} days</span>
+                          </>
+                        )
+                      } else {
+                        return (
+                          <>
+                            <CheckCircle size={16} color="#10b981" />
+                            <span style={{ color: "#10b981" }}>Valid</span>
+                          </>
+                        )
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <MapPin size={16} />
+                  Address Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="address-item">
+                  <MapPin className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Registration Address</div>
+                    <div className="info-value">
+                      {selectedPerson.regAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
+                            {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.regAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>No registration address</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="address-item">
+                  <Building className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Correspondence Address</div>
+                    <div className="info-value">
+                      {selectedPerson.corAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
+                            {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.corAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>Same as registration address</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            {/* Account Status & Preferences */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <UserCheck size={16} />
+                  Account Status & Preferences
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Marketing Consent</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {selectedPerson.marketingConsent ? (
+                      <>
+                        <CheckCircle size={16} color="#10b981" />
+                        <span style={{ color: "#10b981" }}>Granted</span>
+                      </>
+                    ) : (
+                      <>
+                        <X size={16} color="#ef4444" />
+                        <span style={{ color: "#ef4444" }}>Not granted</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Account Created</div>
+                  <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* CRM Activity Summary */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Clock size={16} />
+                  Recent Activity Summary
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Total CRM Entries</div>
+                  <div className="info-value">{selectedPerson.crm ? selectedPerson.crm.length : 0}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact Date</div>
+                  <div className="info-value">
+                    {selectedPerson.crm && selectedPerson.crm.length > 0
+                      ? selectedPerson.crm[selectedPerson.crm.length - 1].date_of_contact
+                      : "No contact recorded"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact Type</div>
+                  <div className="info-value">
+                    {selectedPerson.crm && selectedPerson.crm.length > 0
+                      ? selectedPerson.crm[selectedPerson.crm.length - 1].contact_type
+                      : "N/A"}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
   // RENDER CRM PANEL
   const renderCRMRequests = () => {
     if (!selectedPerson) {
@@ -1690,40 +1688,40 @@ const handleUpdateCrm = async (e) => {
           </button>
         </div>
         <div className="crm-entries">
-    {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
-        selectedPerson.crm.map((entry, i) => ( // Changed from selectedPerson.crmEntries to selectedPerson.crm
-            <div key={entry.id || `crm-${i}`} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
+          {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
+            selectedPerson.crm.map((entry, i) => ( // Changed from selectedPerson.crmEntries to selectedPerson.crm
+              <div key={entry.id || `crm-${i}`} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="crm-entry-header">
-                    <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
-                        {expandedCrmEntries[entry.id || `crm-${i}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  <span style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: 'break-word' }}>
-                    {entry.title
-                      ? (entry.title.length > 75 ? entry.title.substring(0, 50): entry.title)
-                      : "Untitled Entry"
-                    }
-                  </span>
+                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
+                    {expandedCrmEntries[entry.id || `crm-${i}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <span style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: 'break-word' }}>
+                      {entry.title
+                        ? (entry.title.length > 75 ? entry.title.substring(0, 50) : entry.title)
+                        : "Untitled Entry"
+                      }
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span> {/* Uses contact_type from DB */}
+                    <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span> {/* Uses date_of_contact from DB */}
+                    <span className="crm-entry-employee">by {entry.username}</span> {/* Uses username from DB */}
+                    <div className="crm-entry-actions">
+                      {canEditCrmEntry(entry) && (
+                        <button className="edit-button" onClick={() => handleEditCrm(entry)}>
+                          <Edit size={16} />
+                        </button>
+                      )}
+                      {canDeleteCrmEntry(entry) && (
+                        <button
+                          className="delete-crm-button"
+                          onClick={() => handleDeleteCrm(entry)}
+                          title="Delete CRM entry"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span> {/* Uses contact_type from DB */}
-                        <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span> {/* Uses date_of_contact from DB */}
-                        <span className="crm-entry-employee">by {entry.username}</span> {/* Uses username from DB */}
-                        <div className="crm-entry-actions">
-                            {canEditCrmEntry(entry) && (
-                                <button className="edit-button" onClick={() => handleEditCrm(entry)}>
-                                    <Edit size={16} />
-                                </button>
-                            )}
-                            {canDeleteCrmEntry(entry) && (
-                                <button
-                                    className="delete-crm-button"
-                                    onClick={() => handleDeleteCrm(entry)}
-                                    title="Delete CRM entry"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                  </div>
                 </div>
                 {(expandedCrmEntries[entry.id || `crm-${i}`] || closingCrmEntry === (entry.id || `crm-${i}`)) && (
                   <div
@@ -2287,9 +2285,8 @@ const handleUpdateCrm = async (e) => {
                     required
                   />
                   <div
-                    className={`character-count ${
-                      crmFormData.title.length > 60 ? "warning" : ""
-                    } ${crmFormData.title.length > 70 ? "error" : ""}`}
+                    className={`character-count ${crmFormData.title.length > 60 ? "warning" : ""
+                      } ${crmFormData.title.length > 70 ? "error" : ""}`}
                   >
                     {crmFormData.title.length}/75 characters
                   </div>
@@ -2303,7 +2300,7 @@ const handleUpdateCrm = async (e) => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Contact Type *</label>
+                  <label className="form-label">Contact Type</label>
                   <select
                     className={`form-select ${errors.contactType ? "error" : ""}`}
                     value={crmFormData.contactType}
@@ -2329,9 +2326,8 @@ const handleUpdateCrm = async (e) => {
                     required
                   />
                   <div
-                    className={`character-count ${
-                      crmFormData.content.length > 600 ? "warning" : ""
-                    } ${crmFormData.content.length > 700 ? "error" : ""}`}
+                    className={`character-count ${crmFormData.content.length > 600 ? "warning" : ""
+                      } ${crmFormData.content.length > 700 ? "error" : ""}`}
                   >
                     {crmFormData.content.length}/750 characters
                   </div>
@@ -2393,9 +2389,8 @@ const handleUpdateCrm = async (e) => {
                     required
                   />
                   <div
-                    className={`character-count ${
-                      crmFormData.title.length > 60 ? "warning" : ""
-                    } ${crmFormData.title.length > 70 ? "error" : ""}`}
+                    className={`character-count ${crmFormData.title.length > 60 ? "warning" : ""
+                      } ${crmFormData.title.length > 70 ? "error" : ""}`}
                   >
                     {crmFormData.title.length}/75 characters
                   </div>
@@ -2408,19 +2403,19 @@ const handleUpdateCrm = async (e) => {
                   {errors.date && <div className="error-message">{errors.date}</div>}
                 </div>
 
+
                 <div className="form-group">
-                  <label className="form-label">Contact Type *</label>
-                  <select
-                    className={`form-select ${errors.contactType ? "error" : ""}`}
-                    value={crmFormData.contactType}
-                    onChange={(e) => handleCrmFormChange("contactType", e.target.value)}
-                    required
-                  >
-                    <option value="phone">Phone</option>
-                    <option value="visit">Visit</option>
-                    <option value="website">Website</option>
-                  </select>
-                  {errors.contactType && <div className="error-message">{errors.contactType}</div>}
+                  <label className="form-label">Contact Type (Read-only)</label>
+                  <input
+                    type="text"
+                    className="form-input readonly"
+                    value={crmFormData.contactType
+                      ? crmFormData.contactType.charAt(0).toUpperCase() + crmFormData.contactType.slice(1)
+                      : ''
+                    }
+                    readOnly
+                  />
+                  {errors.date && <div className="error-message">{errors.date}</div>}
                 </div>
 
                 <div className="form-group">
@@ -2435,9 +2430,8 @@ const handleUpdateCrm = async (e) => {
                     required
                   />
                   <div
-                    className={`character-count ${
-                      crmFormData.content.length > 600 ? "warning" : ""
-                    } ${crmFormData.content.length > 700 ? "error" : ""}`}
+                    className={`character-count ${crmFormData.content.length > 600 ? "warning" : ""
+                      } ${crmFormData.content.length > 700 ? "error" : ""}`}
                   >
                     {crmFormData.content.length}/750 characters
                   </div>

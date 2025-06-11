@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -46,6 +47,18 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       setMouseDownTarget(null)
     }
   }
+
+
+   function formatPhoneNumber(input, defaultCountry = 'LT') {
+    if (!input) return '';
+
+  const phoneNumber = parsePhoneNumberFromString(input, defaultCountry);
+
+  if (!phoneNumber || !phoneNumber.isValid()) return input; // fallback to raw input
+
+  return phoneNumber.formatInternational(); // always returns in +XXX format
+}
+
 
   // Handle mouse up on modal overlay - only close if it's the same target as mouse down
   const handleModalMouseUp = (e, modalType) => {
@@ -436,7 +449,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         setTimeout(() => {
           triggerSuccess("Client deleted successfully!")
         }, 200)
-       
+
       } else {
         // Handle cases where the server indicates a failure even with a 200 OK status
         const result = await response.json()
@@ -450,14 +463,14 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       }, 200)
     }
 
-      setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+    setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
 
-      // Clear the selected person
-      setSelectedPerson(null)
+    // Clear the selected person
+    setSelectedPerson(null)
 
-      // Close the modal
-      closeModal("deleteClient")
-    
+    // Close the modal
+    closeModal("deleteClient")
+
   }
 
   const handleDeleteEmployee = async () => {
@@ -483,7 +496,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         setTimeout(() => {
           triggerSuccess("Employee deleted successfully!")
         }, 200)
-       
+
       } else {
         // Handle cases where the server indicates a failure even with a 200 OK status
         const result = await response.json()
@@ -664,97 +677,54 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           </div>
         </div>
 
-        {/* Contact Information */}
         <div className="info-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <Mail size={16} />
-              Contact
-            </h3>
-          </div>
-          <div className="card-content">
-            <div className="contact-item">
-              <Mail className="contact-icon" />
-              <span>{selectedPerson.email || "N/A"}</span>
-            </div>
-            {isClient && (
-              <div className="contact-item">
-                <Phone className="contact-icon" />
-                <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bank Accounts for clients */}
-        {isClient && (
-          <div className="info-card">
-          <div className="card-header bank-accounts-header">
-            <h3 className="card-title">
-              <CreditCard size={16} style={{ marginRight: "6px" }} />
-              Bank Accounts
-            </h3>
-            <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
-              <Plus size={14} style={{ marginRight: "4px" }} />
-              Add Account
-            </button>
-          </div>
-          <div className="card-content">
-          {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
-  selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
-    <div key={`${account.id}-${index}`} className="account-item"> 
-      <div className="account-header">
-        <span className="account-iban">{account.iban}</span>
-        <span className="account-badge">{account.currency}</span>
+      <div className="card-header">
+        <h3 className="card-title">
+          <Mail size={16} />
+          Contact
+        </h3>
       </div>
-      <div className="account-details">
-        <div className="account-detail">
-          <div className="info-label">Balance</div>
-          <div className="info-value">
-            {Number(account.balance).toFixed(2)} {account.currency}
+      <div className="card-content">
+        <div className="contact-item">
+          <Mail className="contact-icon" />
+          <span>{selectedPerson.email || "N/A"}</span>
+        </div>
+        {/* Primary Phone - shown for both clients and others, as it's a core contact detail */}
+        <div className="contact-item">
+          <Phone className="contact-icon" />
+          <div className="contact-text">
+            <div className="info-label">Primary Phone</div> {/* Simplified label */}
+            <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
           </div>
         </div>
-        <div className="account-detail">
-          <div className="info-label">Plan</div>
-          <div className="info-value">{account.plan}</div>
-        </div>
-        <div className="account-detail">
-          <div className="info-label">Card Type</div>
-          <div className="info-value">
-            {account.type === "none"
-              ? "No Card"
-              : account.type === "Debeto"
-              ? "Debit Card"
-              : "Credit Card"}
+        {selectedPerson.otherPhoneNumber && (
+          <div className="contact-item">
+            <Phone className="contact-icon" />
+            <div className="contact-text">
+              <div className="info-label">Secondary Phone</div>
+              <div className="info-value"> {formatPhoneNumber(selectedPerson.otherPhoneNumber)}</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
-  ))
-) : (
-  <div className="no-data">
-    <CreditCard className="no-data-icon" />
-    <p className="no-data-text">No accounts found</p>
-  </div>
-)}
-</div>
-
-            </div>
-          )}
-
         {/* Bank Accounts for clients */}
         {isClient && (
           <div className="info-card">
-            <div className="card-header">
+            <div className="card-header bank-accounts-header">
               <h3 className="card-title">
-                <CreditCard size={16} />
+                <CreditCard size={16} style={{ marginRight: "6px" }} />
                 Bank Accounts
               </h3>
+              <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
+                <Plus size={14} style={{ marginRight: "4px" }} />
+                Add Account
+              </button>
             </div>
             <div className="card-content">
-              {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
-                selectedPerson.accounts.map((account) => (
-                  <div key={account.id} className="account-item">
+              {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
+                selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
+                  <div key={`${account.id}-${index}`} className="account-item">
                     <div className="account-header">
                       <span className="account-iban">{account.iban}</span>
                       <span className="account-badge">{account.currency}</span>
@@ -763,19 +733,19 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                       <div className="account-detail">
                         <div className="info-label">Balance</div>
                         <div className="info-value">
-                          {account.balance.toFixed(2)} {account.currency}
+                          {Number(account.balance).toFixed(2)} {account.currency}
                         </div>
                       </div>
                       <div className="account-detail">
                         <div className="info-label">Plan</div>
-                        <div className="info-value">{account.servicePlan}</div>
+                        <div className="info-value">{account.plan}</div>
                       </div>
                       <div className="account-detail">
                         <div className="info-label">Card Type</div>
                         <div className="info-value">
-                          {account.cardType === "none"
+                          {account.type === "none"
                             ? "No Card"
-                            : account.cardType === "Debeto"
+                            : account.type === "Debeto"
                               ? "Debit Card"
                               : "Credit Card"}
                         </div>
@@ -790,8 +760,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 </div>
               )}
             </div>
+
           </div>
         )}
+
+
 
         {/* Additional Client Information */}
         {isClient && (
@@ -921,33 +894,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
               </div>
             </div>
 
-            {/* Additional Contact Information */}
-            <div className="info-card">
-              <div className="card-header">
-                <h3 className="card-title">
-                  <Phone size={16} />
-                  Additional Contact Details
-                </h3>
-              </div>
-              <div className="card-content">
-                <div className="contact-item">
-                  <Phone className="contact-icon" />
-                  <div className="contact-text">
-                    <div className="info-label">Primary Phone</div>
-                    <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
-                  </div>
-                </div>
-                {selectedPerson.otherPhoneNumber && (
-                  <div className="contact-item">
-                    <Phone className="contact-icon" />
-                    <div className="contact-text">
-                      <div className="info-label">Secondary Phone</div>
-                      <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+
 
             {/* Account Status & Preferences */}
             <div className="info-card">
