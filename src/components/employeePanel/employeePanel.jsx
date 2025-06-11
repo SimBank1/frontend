@@ -395,13 +395,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
   const validateDateIsToday = (date) => {
-    const selectedDate = new Date(date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    selectedDate.setHours(0, 0, 0, 0)
-    if (selectedDate.getTime() !== today.getTime()) {
-      return "Date must be today's date"
-    }
+    //my function is to exist
     return null
   }
 
