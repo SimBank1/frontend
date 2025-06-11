@@ -757,12 +757,14 @@
   transform-origin: top center;
 }
 
+
 .crm-entry-content.opening {
-  animation: crmExpand 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  animation: crmExpand 0.3s linear forwards;
 }
 
+
 .crm-entry-content.closing {
-  animation: crmCollapse 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: crmCollapse 0.2s linear forwards;
 }
 
 .delete-crm-button {
@@ -904,32 +906,23 @@
 }
 
 @keyframes crmExpand {
-  0% {
-    transform: scaleY(0.85) rotateX(8deg);
+  from {
+    transform: scaleY(0);
     opacity: 0;
   }
-  50% {
-    transform: scaleY(1.1) rotateX(-5deg);
-  }
-  75% {
-    transform: scaleY(0.95) rotateX(3deg);
-  }
-  100% {
-    transform: scaleY(1) rotateX(0);
+  to {
+    transform: scaleY(1);
     opacity: 1;
   }
 }
 
 @keyframes crmCollapse {
-  0% {
-    transform: scaleY(1) rotateX(0);
+  from {
+    transform: scaleY(1);
     opacity: 1;
   }
-  40% {
-    transform: scaleY(1.2) rotateX(-12deg);
-  }
-  100% {
-    transform: scaleY(0) rotateX(0);
+  to {
+    transform: scaleY(0);
     opacity: 0;
   }
 }

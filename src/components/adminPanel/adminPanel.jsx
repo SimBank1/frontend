@@ -36,6 +36,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
 
+
+
   // Track mouse down position to distinguish clicks from drags
   const [mouseDownTarget, setMouseDownTarget] = useState(null)
 
@@ -83,6 +85,42 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [successClosing, setSuccessClosing] = useState(false)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+
+// In AdminPanel.jsx
+useEffect(() => {
+  if (selectedPerson) {
+    const type = selectedPerson.marketingConsent !== undefined ? "client" : "employee";
+    localStorage.setItem(
+      "lastSelectedPerson",
+      JSON.stringify({ id: selectedPerson.id, type: type })
+    );
+  } 
+}, [selectedPerson]);
+
+useEffect(() => {
+  const storedPerson = localStorage.getItem("lastSelectedPerson");
+  if (storedPerson && data.length > 0) {
+    try {
+      const { id, type } = JSON.parse(storedPerson);
+      const foundPerson = data.find(
+        (person) =>
+          String(person.id) === String(id) &&
+          ((person.marketingConsent !== undefined) ||
+            (person.marketingConsent === undefined))
+      );
+      if (foundPerson) {
+        setSelectedPerson(foundPerson);
+      }
+    } catch (error) {
+      console.error("Failed to parse lastSelectedPerson from localStorage", error);
+      localStorage.removeItem("lastSelectedPerson"); // Clear invalid data
+    }
+  }
+}, [data]);
+
+
+
 
   useEffect(() => {
     if (closingCrmEntry) {
@@ -537,7 +575,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const renderPersonList = () => {
     return filteredData.map((person) => (
       <div
-        key={person.id}
+        key={`${person.username}-${person.id}`}
         className={`user-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
         onClick={() => handlePersonClick(person)}
       >
