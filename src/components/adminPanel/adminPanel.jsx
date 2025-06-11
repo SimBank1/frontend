@@ -69,6 +69,14 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closingCrmEntry])
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -339,10 +347,20 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   }
 
   const toggleCrmExpansion = (entryId) => {
-    setExpandedCrmEntries((prev) => ({
-      ...prev,
-      [entryId]: !prev[entryId],
-    }))
+    setExpandedCrmEntries((prev) => {
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
+      const newState = {}
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
+      return newState
+    })
   }
 
   const handleLogout = async () => {
@@ -1238,7 +1256,13 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                     </button>
                   )}
                 </div>
-                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
+                {(expandedCrmEntries[entry.id] || closingCrmEntry === entry.id) && (
+                  <p
+                    className={`crm-entry-content ${closingCrmEntry === entry.id ? "closing" : "opening"}`}
+                  >
+                    {entry.content}
+                  </p>
+                )}
               </div>
             ))
           ) : (
