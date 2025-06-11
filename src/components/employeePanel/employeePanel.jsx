@@ -48,6 +48,14 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closingCrmEntry])
   const [employeeUsername, setEmployeeUsername] = useState(username);
   const [crmTickets, setCrmTickets] = useState([]);
 
@@ -218,9 +226,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
-      // Close all other entries and toggle the clicked one
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
       const newState = {}
-      newState[entryId] = !prev[entryId]
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
       return newState
     })
   }
@@ -1725,7 +1741,14 @@ const handleUpdateCrm = async (e) => {
                         </div>
                     </div>
                 </div>
-                {expandedCrmEntries[entry.id || `crm-${i}`] && <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}} className="crm-entry-content">{entry.content}</div>}
+                {(expandedCrmEntries[entry.id || `crm-${i}`] || closingCrmEntry === (entry.id || `crm-${i}`)) && (
+                  <div
+                    style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}
+                    className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? 'closing' : 'opening'}`}
+                  >
+                    {entry.content}
+                  </div>
+                )}
             </div>
         ))
     ) : (
