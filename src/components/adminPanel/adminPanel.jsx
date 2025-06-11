@@ -254,10 +254,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       filtered = filtered.filter((person) => {
         const nameMatch =
-          ((person.firstName || person.first_name)?.toLowerCase() ?? "").includes(lowerSearch) ||
-          ((person.lastName || person.last_name)?.toLowerCase() ?? "").includes(lowerSearch)
-        const codeMatch = (person.personalCode?.toLowerCase() ?? "").includes(lowerSearch)
-        const docMatch = (person.docNumber?.toLowerCase() ?? "").includes(lowerSearch)
+          ((person.firstName || person.first_name)?.toString().toLowerCase() ?? "").includes(lowerSearch) ||
+          ((person.lastName || person.last_name)?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const codeMatch = (person.personalCode?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const docMatch = (person.docNumber?.toString().toLowerCase() ?? "").includes(lowerSearch)
         const phoneMatch = (person.phoneNumber?.replace(/\s+/g, "") ?? "").includes(searchTerm.replace(/\s+/g, ""))
 
         return nameMatch || codeMatch || docMatch || phoneMatch
