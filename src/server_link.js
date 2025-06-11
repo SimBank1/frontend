@@ -1,3 +1,3 @@
 export function getServerLink() {
-    return "http://backend.majmohar.eu";
+    return "https://backend.majmohar.eu";
   }

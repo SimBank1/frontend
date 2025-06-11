@@ -597,7 +597,7 @@ export default function Login({ onLogin }) {
                     </div>
                   )}
 
-                  <button onClick={handleLogin} disabled={isLoading} className="login-button">
+                  <button type="button" onClick={handleLogin} disabled={isLoading} className="login-button">
                     {isLoading ? (
                       <>
                         <div className="loading-spinner" />
