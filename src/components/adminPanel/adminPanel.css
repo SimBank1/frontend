@@ -68,6 +68,7 @@
 .header {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
+  user-select: none;
 }
 
 .logo-section {
@@ -953,6 +954,14 @@
   background-color: #f9fafb;
   cursor: not-allowed;
 }
+
+.form-input.auto-generated {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+  font-style: italic;
+}
+
 
 .form-textarea {
   width: 100%;
