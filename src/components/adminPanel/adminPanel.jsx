@@ -32,7 +32,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
-  const [showPassword, setShowPassword] = useState({})
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
 
@@ -66,7 +65,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [showSuccess, setShowSuccess] = useState(false)
   const [successClosing, setSuccessClosing] = useState(false)
@@ -79,25 +77,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       return () => clearTimeout(timer)
     }
   }, [closingCrmEntry])
-
-  // Success toast timing
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => setSuccessClosing(true), 3500)
-      return () => clearTimeout(timer)
-    }
-  }, [showSuccess])
-
-  useEffect(() => {
-    if (successClosing) {
-      const timer = setTimeout(() => {
-        setShowSuccess(false)
-        setSuccessMessage("")
-        setSuccessClosing(false)
-      }, 300)
-      return () => clearTimeout(timer)
-    }
-  }, [successClosing])
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -118,49 +97,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     password: "",
   })
 
-  // Client form state
-  const [clientFormData, setClientFormData] = useState({
-    firstName: "",
-    lastName: "",
-    personalCode: "",
-    email: "",
-    phone: "",
-    phoneCountryCode: "+370",
-    secondPhone: "",
-    secondPhoneCountryCode: "+370",
-    documentType: "ID Card",
-    documentNumber: "",
-    documentExpiry: "",
-    dateOfBirth: "",
-    registrationCountry: "",
-    registrationRegion: "",
-    registrationCity: "",
-    registrationStreet: "",
-    registrationHouse: "",
-    registrationApartment: "",
-    registrationPostalCode: "",
-    correspondenceCountry: "",
-    correspondenceRegion: "",
-    correspondenceCity: "",
-    correspondenceStreet: "",
-    correspondenceHouse: "",
-    correspondenceApartment: "",
-    correspondencePostalCode: "",
-    marketingConsent: false,
-  })
-
-  // Account form state
-  const [accountFormData, setAccountFormData] = useState({
-    iban: "",
-    currency: "EUR",
-    balance: "",
-    cardType: "none",
-    servicePlan: "Standard",
-    openingDate: new Date().toISOString().split("T")[0],
-  })
 
   const [errors, setErrors] = useState({})
-  const [sameAsRegistration, setSameAsRegistration] = useState(true)
 
   // Auto-generate username and password when name changes
   useEffect(() => {
@@ -174,7 +112,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         password,
       }))
     }
-  }, [employeeFormData.firstName, employeeFormData.lastName, generateUsername])
+  }, [employeeFormData.firstName, employeeFormData.lastName])
 
   // Generate username from first and last name
   const generateUsername = (firstName, lastName) => {
@@ -280,8 +218,9 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   // Show success message with auto-dismiss
   const triggerSuccess = (message) => {
     setSuccessMessage(message)
-    setShowSuccess(true)
-    setSuccessClosing(false)
+    setTimeout(() => {
+      setSuccessMessage("")
+    }, 3000)
   }
 
   // Generate IBAN starting with LT817044
@@ -359,13 +298,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     setSelectedPerson(person)
   }
 
-  const togglePasswordVisibility = (id, visible) => {
-    setShowPassword((prev) => ({
-      ...prev,
-      [id]: visible,
-    }))
-  }
-
   const toggleCrmExpansion = (entryId) => {
     setExpandedCrmEntries((prev) => {
       const isOpen = prev[entryId]
@@ -417,38 +349,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     if (!employeeFormData.email.trim()) newErrors.email = "Email is required"
     if (!employeeFormData.username.trim()) newErrors.username = "Username is required"
     if (!employeeFormData.password.trim()) newErrors.password = "Password is required"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateClientForm = () => {
-    const newErrors = {}
-
-    if (!clientFormData.firstName.trim()) newErrors.firstName = "First name is required"
-    if (!clientFormData.lastName.trim()) newErrors.lastName = "Last name is required"
-    if (!clientFormData.personalCode.trim()) newErrors.personalCode = "Personal code is required"
-    if (!clientFormData.email.trim()) newErrors.email = "Email is required"
-    if (!clientFormData.phone.trim()) newErrors.phone = "Phone is required"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const validateAccountForm = () => {
-    const newErrors = {}
-
-    if (!accountFormData.iban.trim()) newErrors.iban = "IBAN is required"
-    if (!accountFormData.balance.trim()) newErrors.balance = "Balance is required"
-
-    // Check currency limits
-    if (selectedPerson && accountFormData.currency !== "EUR") {
-      const existingCurrencyAccounts =
-        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
-      if (existingCurrencyAccounts.length >= 1) {
-        newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
-      }
-    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -511,90 +411,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     }
   }
 
-  const handleClientSubmit = (e) => {
-    e.preventDefault()
-    if (!validateClientForm()) return
-
-    const newClient = {
-      id: (data.length + 1).toString(),
-      type: "client",
-      ...clientFormData,
-      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
-      accounts: [],
-      crmEntries: [],
-      marketingConsent: clientFormData.marketingConsent,
-    }
-
-    setData((prev) => [...prev, newClient])
-    setClientFormData({
-      firstName: "",
-      lastName: "",
-      personalCode: "",
-      email: "",
-      phone: "",
-      phoneCountryCode: "+370",
-      secondPhone: "",
-      secondPhoneCountryCode: "+370",
-      documentType: "ID Card",
-      documentNumber: "",
-      documentExpiry: "",
-      dateOfBirth: "",
-      registrationCountry: "",
-      registrationRegion: "",
-      registrationCity: "",
-      registrationStreet: "",
-      registrationHouse: "",
-      registrationApartment: "",
-      registrationPostalCode: "",
-      correspondenceCountry: "",
-      correspondenceRegion: "",
-      correspondenceCity: "",
-      correspondenceStreet: "",
-      correspondenceHouse: "",
-      correspondenceApartment: "",
-      correspondencePostalCode: "",
-      marketingConsent: false,
-    })
-    setErrors({})
-    closeModal("addClient")
-    setTimeout(() => {
-      setSelectedPerson(newClient)
-      triggerSuccess("Client created successfully!")
-    }, 200)
-  }
-
-  const handleAccountSubmit = (e) => {
-    e.preventDefault()
-    if (!validateAccountForm()) return
-
-    const newAccount = {
-      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
-      ...accountFormData,
-      balance: Number.parseFloat(accountFormData.balance),
-    }
-
-    const updatedPerson = {
-      ...selectedPerson,
-      accounts: [...(selectedPerson.accounts || []), newAccount],
-    }
-
-    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-    setSelectedPerson(updatedPerson)
-    setAccountFormData({
-      iban: "",
-      currency: "EUR",
-      balance: "",
-      cardType: "none",
-      servicePlan: "Standard",
-      openingDate: new Date().toISOString().split("T")[0],
-    })
-    setErrors({})
-    closeModal("addAccount")
-    setTimeout(() => {
-      triggerSuccess("Account created successfully!")
-    }, 200)
-  }
-
   const handleDeleteClient = async () => {
     if (!selectedPerson) return
 
@@ -630,7 +446,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting client:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting client: ${error.message}`)
+        console.error(`Error deleting client: ${error.message}`)
       }, 200)
     }
 
@@ -677,7 +493,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting employee:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting employee: ${error.message}`)
+        console.error(`Error deleting employee: ${error.message}`)
       }, 200)
     }
 

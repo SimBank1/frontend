@@ -45,6 +45,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [deletingCrmEntry, setDeletingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
 
+  const [employeeUsername, setEmployeeUsername] = useState(username);
+
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const sameAsRegistration = true
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
@@ -56,7 +58,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return () => clearTimeout(timer)
     }
   }, [closingCrmEntry])
-  const employeeUsername = username
 
 
   // Apple-style success animation states
@@ -425,7 +426,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         return parsed.formatInternational()
       }
     } catch {
-      return false
+      // If parsing fails, return false
+      return false;
     }
 
     return false
@@ -562,7 +564,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             // You might need to generate a temporary ID or refetch data if real ID is crucial.
             const newClient = {
                 id: (data.length + 1).toString(), // Temporary ID
-                // Map from original clientFormData to the frontend's expected display format
                 firstName: clientFormData.firstName,
                 lastName: clientFormData.lastName,
                 personalCode: clientFormData.personalCode,
@@ -575,7 +576,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 dateOfBirth: clientFormData.dateOfBirth,
                 marketingConsent: clientFormData.marketingConsent,
                 
-                // Address objects are now constructed to match the payload's structure
                 regAddress: {
                     country: clientFormData.registrationCountry,
                     region: clientFormData.registrationRegion || null,
@@ -725,7 +725,12 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   
       return;
     }
-
+    // Fetch IBAN and update label
+    const generatedIban = await fetchGeneratedIBAN(personalCode);
+    console.log("Generated IBAN:", generatedIban);
+    if (generatedIban) {
+      document.getElementById("generated-iban-label").innerText = generatedIban;
+    }
   
     setClientFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
