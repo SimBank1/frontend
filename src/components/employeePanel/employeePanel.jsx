@@ -21,6 +21,10 @@ import {
   ChevronRight,
   SquareUser, 
   PlugZap,
+  UserCheck ,
+  Clock,
+  AlertCircle,
+  Shield,
   Pyramid,
 } from "lucide-react";
 import "./employeePanel.css";
@@ -1155,8 +1159,10 @@ const handleUpdateCrm = async (e) => {
               <h3 className="client-name">{highlightText(`${person.firstName} ${person.lastName}`, searchTerm)}</h3>
               <span className="client-badge">client</span>
             </div>
-            {person.crmEntries && person.crmEntries.length > 0 ? (
-              <p className="client-preview">Last interaction: {person.crmEntries[0].date}</p>
+            {person.crm && person.crm.length > 0 ? (
+              <p className="client-preview">
+              Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact : "No interactions"}
+            </p>
             ) : (
               <p className="client-preview no-recent-activities">No recent activities</p>
             )}
@@ -1165,129 +1171,139 @@ const handleUpdateCrm = async (e) => {
       </div>
     ))
 
-  // RENDER CLIENT PROFILE PANEL
-  const renderPersonalInfo = () => {
-    if (!selectedPerson) {
+    const renderPersonalInfo = () => {
+      if (!selectedPerson) {
+        return (
+          <div className="empty-state">
+            <div className="empty-content">
+              <User className="empty-icon" />
+              <h3 className="empty-title">Personal Information</h3>
+              <p className="empty-description">Select a person to view their details</p>
+            </div>
+          </div>
+        )
+      }
+  
+      const isClient = selectedPerson.marketingConsent !== undefined
+      const isEmployee = selectedPerson.marketingConsent === undefined
+  
       return (
-        <div className="empty-state">
-          <div className="empty-content">
-            <User className="empty-icon" />
-            <h3 className="empty-title">Client Information</h3>
-            <p className="empty-description">Select a client to view their details</p>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="profile-container">
-        <div className="profile-header">
-          <div className="profile-avatar">
-            <User size={24} color="white" />
-          </div>
-          <div className="profile-info">
-            <h2>
-              {selectedPerson?.firstName ?? ""} {selectedPerson?.lastName ?? ""}
-            </h2>
-            <p>Client Profile</p>
-          </div>
-          <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
-            <Trash2 size={16} />
-          </button>
-        </div>
-
-        {/* Contact Information */}
-        <div className="info-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <Phone size={16} />
-              Contact Information
-            </h3>
-          </div>
-          <div className="card-content">
-            <div className="contact-item">
-              <Mail className="contact-icon" />
-              <span>{selectedPerson.email}</span>
+        <div>
+          <div className="profile-header">
+            <div className="profile-avatar">
+              {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
             </div>
-
-            <div className="contact-item">
-              <Phone className="contact-icon"/>
-                <span>
-                {(() => {
-                  const raw = selectedPerson?.phoneNumber;
-                  if (!raw) return raw;
-
-                  const formatted = validatePhone(raw);
-                  return formatted || raw.replace(/\s+/g, "");
-                })()}
-            </span>
-
+            <div className="profile-info">
+              <h2>
+                {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
+                {selectedPerson.lastName || selectedPerson.last_name || ""}
+              </h2>
+              <p>{isClient ? "client" : "employee"}</p>
             </div>
-            <div className="address-item">
-              <SquareUser className="address-icon" />
-              <div className="address-content">
-                <div className="info-label">Personal code</div>
-                <div className="info-value">
-                  <div>{selectedPerson?.personalCode ?? ""}</div>
-                </div>
+            {isClient && (
+              <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+                <Trash2 size={16} />
+              </button>
+            )}
+            {isEmployee && (
+              <button
+                className="delete-client-button"
+                onClick={() => {
+                  setDeletingEmployee(selectedPerson)
+                  setIsDeleteEmployeeOpen(true)
+                }}
+                title="Delete Employee"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+  
+          {/* Basic Information */}
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <User size={16} />
+                Basic Information
+              </h3>
+            </div>
+            <div className="card-content">
+              {isEmployee ? (
+                <>
+                  <div className="info-item">
+                    <div className="info-label">Username</div>
+                    <div className="info-value">{selectedPerson.username || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Email</div>
+                    <div className="info-value">{selectedPerson.email || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Password</div>
+                    <div className="password-container">
+                      <span className="password-value">{selectedPerson.password || "N/A"}</span>
+                      <button
+                        className="copy-button"
+                        onClick={() => {
+                          const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
+                          navigator.clipboard.writeText(credentials)
+                          showSuccess("Credentials copied!")
+                        }}
+                        title="Copy credentials"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="info-item">
+                    <div className="info-label">Personal Code</div>
+                    <div className="info-value">{selectedPerson.personalCode}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Date of Birth</div>
+                    <div className="info-value">{selectedPerson.dateOfBirth}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Type</div>
+                    <div className="info-value">{selectedPerson.docType}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Number</div>
+                    <div className="info-value">{selectedPerson.docNumber}</div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+  
+          {/* Contact Information */}
+          <div className="info-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <Mail size={16} />
+                Contact
+              </h3>
+            </div>
+            <div className="card-content">
+              <div className="contact-item">
+                <Mail className="contact-icon" />
+                <span>{selectedPerson.email || "N/A"}</span>
               </div>
-            </div>
-
-            <div className="address-item">
-              <MapPin className="address-icon" />
-              <div className="address-content">
-                <div className="info-label">Registration Address</div>
-                <div className="info-value">
-                  {selectedPerson?.regAddress ? (
-                    <>
-                      <div>
-                        <div>Apartment: {selectedPerson.regAddress.apartment || "N/A"}</div>
-                        {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.regAddress.postalCode || "N/A"}{" "}
-                        {selectedPerson.regAddress.cityOrVillage || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
-                      </div>
-                    </>
-                  ) : (
-                    <div>No address info</div>
-                  )}
+              {isClient && (
+                <div className="contact-item">
+                  <Phone className="contact-icon" />
+                  <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
                 </div>
-              </div>
-            </div>
-            <div className="address-item">
-              <MapPin className="address-icon" />
-              <div className="address-content">
-                <div className="info-label">Correspondence Address</div>
-                <div className="info-value">
-                  {selectedPerson?.corAddress ? (
-                    <>
-                      <div>
-                        <div>Apartment: {selectedPerson.corAddress.apartment || "N/A"}</div>
-                        {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.corAddress.postalCode || "N/A"}{" "}
-                        {selectedPerson.corAddress.cityOrVillage || "N/A"}
-                      </div>
-                      <div>
-                        {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
-                      </div>
-                    </>
-                  ) : (
-                    <div>No address info</div>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Bank Accounts */}
-        <div className="info-card">
+  
+          {/* Bank Accounts for clients */}
+          {isClient && (
+          <div className="info-card">
           <div className="card-header bank-accounts-header">
             <h3 className="card-title">
               <CreditCard size={16} style={{ marginRight: "6px" }} />
@@ -1298,53 +1314,286 @@ const handleUpdateCrm = async (e) => {
               Add Account
             </button>
           </div>
-
-          <div className="card-content">
-            {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
-              <div className="accounts-list">
-                {selectedPerson.accounts.map((account, i) => (
-                  <div key={account.id} className="account-item" style={{ animationDelay: `${i * 0.1}s` }}>
-                    <div className="account-header">
-                      <span className="account-iban">{account.iban}</span>
-                      <span className="account-badge">{account.currency}</span>
+              <div className="card-content">
+                {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
+                  selectedPerson.accounts.map((account) => (
+                    <div key={account.id} className="account-item">
+                      <div className="account-header">
+                        <span className="account-iban">{account.iban}</span>
+                        <span className="account-badge">{account.currency}</span>
+                      </div>
+                      <div className="account-details">
+                        <div className="account-detail">
+                          <div className="info-label">Balance</div>
+                          <div className="info-value">
+                            {account.balance.toFixed(2)} {account.currency}
+                          </div>
+                        </div>
+                        <div className="account-detail">
+                          <div className="info-label">Plan</div>
+                          <div className="info-value">{account.servicePlan}</div>
+                        </div>
+                        <div className="account-detail">
+                          <div className="info-label">Card Type</div>
+                          <div className="info-value">
+                            {account.cardType === "none"
+                              ? "No Card"
+                              : account.cardType === "Debeto"
+                                ? "Debit Card"
+                                : "Credit Card"}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="account-details">
-                      <div className="account-detail">
-                        <div className="info-label">Balance</div>
-                        <div className="info-value">
-                          {account.balance.toFixed(2)} {account.currency}
-                        </div>
-                      </div>
-                      <div className="account-detail">
-                        <div className="info-label">Plan</div>
-                        <div className="info-value">{account.servicePlan}</div>
-                      </div>
-                      <div className="account-detail">
-                        <div className="info-label">Card Type</div>
-                        <div className="info-value">
-                          {account.cardType === "none"
-                            ? "/"
-                            : account.cardType === "Debeto"
-                              ? "Debit Card"
-                              : "Credit Card"}
-                        </div>
+                  ))
+                ) : (
+                  <div className="no-data">
+                    <CreditCard className="no-data-icon" />
+                    <p className="no-data-text">No accounts found</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+  
+          {/* Additional Client Information */}
+          {isClient && (
+            <>
+              {/* Document Information */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <Shield size={16} />
+                    Document Information
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="info-item">
+                    <div className="info-label">Document Type</div>
+                    <div className="info-value">{selectedPerson.docType || selectedPerson.documentType || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Number</div>
+                    <div className="info-value">{selectedPerson.docNumber || selectedPerson.documentNumber || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Document Expiry</div>
+                    <div className="info-value">
+                      {selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "N/A"}
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Status</div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {(() => {
+                        const expiryDate = selectedPerson.docExpiryDate || selectedPerson.documentExpiry
+                        if (!expiryDate) return "Unknown"
+  
+                        const expiry = new Date(expiryDate)
+                        const today = new Date()
+                        const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+  
+                        if (daysUntilExpiry < 0) {
+                          return (
+                            <>
+                              <AlertCircle size={16} color="#ef4444" />
+                              <span style={{ color: "#ef4444" }}>Expired</span>
+                            </>
+                          )
+                        } else if (daysUntilExpiry <= 30) {
+                          return (
+                            <>
+                              <AlertCircle size={16} color="#f59e0b" />
+                              <span style={{ color: "#f59e0b" }}>Expires in {daysUntilExpiry} days</span>
+                            </>
+                          )
+                        } else {
+                          return (
+                            <>
+                              <CheckCircle size={16} color="#10b981" />
+                              <span style={{ color: "#10b981" }}>Valid</span>
+                            </>
+                          )
+                        }
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              {/* Address Information */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <MapPin size={16} />
+                    Address Information
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="address-item">
+                    <MapPin className="address-icon" />
+                    <div className="address-content">
+                      <div className="info-label">Registration Address</div>
+                      <div className="info-value">
+                        {selectedPerson.regAddress ? (
+                          <>
+                            <div>
+                              {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
+                              {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
+                            </div>
+                            <div>
+                              {selectedPerson.regAddress.postalCode || "N/A"}{" "}
+                              {selectedPerson.regAddress.cityOrVillage || "N/A"}
+                            </div>
+                            <div>
+                              {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
+                            </div>
+                          </>
+                        ) : (
+                          <div>No registration address</div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+  
+                  <div className="address-item">
+                    <Building className="address-icon" />
+                    <div className="address-content">
+                      <div className="info-label">Correspondence Address</div>
+                      <div className="info-value">
+                        {selectedPerson.corAddress ? (
+                          <>
+                            <div>
+                              {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
+                              {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
+                            </div>
+                            <div>
+                              {selectedPerson.corAddress.postalCode || "N/A"}{" "}
+                              {selectedPerson.corAddress.cityOrVillage || "N/A"}
+                            </div>
+                            <div>
+                              {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
+                            </div>
+                          </>
+                        ) : (
+                          <div>Same as registration address</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="no-data">
-                <CreditCard className="no-data-icon" />
-                <p className="no-data-text">No accounts found for this client</p>
+  
+              {/* Additional Contact Information */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <Phone size={16} />
+                    Additional Contact Details
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="contact-item">
+                    <Phone className="contact-icon" />
+                    <div className="contact-text">
+                      <div className="info-label">Primary Phone</div>
+                      <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
+                    </div>
+                  </div>
+                  {selectedPerson.otherPhoneNumber && (
+                    <div className="contact-item">
+                      <Phone className="contact-icon" />
+                      <div className="contact-text">
+                        <div className="info-label">Secondary Phone</div>
+                        <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  
+              {/* Account Status & Preferences */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <UserCheck size={16} />
+                    Account Status & Preferences
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="info-item">
+                    <div className="info-label">Marketing Consent</div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {selectedPerson.marketingConsent ? (
+                        <>
+                          <CheckCircle size={16} color="#10b981" />
+                          <span style={{ color: "#10b981" }}>Granted</span>
+                        </>
+                      ) : (
+                        <>
+                          <X size={16} color="#ef4444" />
+                          <span style={{ color: "#ef4444" }}>Not granted</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Account Created</div>
+                    <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Total Accounts</div>
+                    <div className="info-value">{selectedPerson.accounts ? selectedPerson.accounts.length : 0}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Total Balance</div>
+                    <div className="info-value">
+                      {selectedPerson.accounts && selectedPerson.accounts.length > 0
+                        ? `€${selectedPerson.accounts.reduce((total, acc) => total + (acc.balance || 0), 0).toFixed(2)}`
+                        : "€0.00"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              {/* CRM Activity Summary */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <Clock size={16} />
+                    Recent Activity Summary
+                  </h3>
+                </div>
+                <div className="card-content">
+                  <div className="info-item">
+                    <div className="info-label">Total CRM Entries</div>
+                    <div className="info-value">{selectedPerson.crm ? selectedPerson.crm.length : 0}</div>
+                  </div>
+                  <div className="info-item">
+  <div className="info-label">Last Contact Date</div>
+  <div className="info-value">
+    {selectedPerson.crm && selectedPerson.crm.length > 0
+      ? selectedPerson.crm[selectedPerson.crm.length - 1].date_of_contact
+      : "No contact recorded"}
+  </div>
+</div>
+<div className="info-item">
+  <div className="info-label">Last Contact Type</div>
+  <div className="info-value">
+    {selectedPerson.crm && selectedPerson.crm.length > 0
+      ? selectedPerson.crm[selectedPerson.crm.length - 1].contact_type
+      : "N/A"}
+  </div>
+</div>
 
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+  
   // RENDER CRM PANEL
   const renderCRMRequests = () => {
     if (!selectedPerson) {
