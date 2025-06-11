@@ -35,6 +35,26 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
 
+  // Track mouse down position to distinguish clicks from drags
+  const [mouseDownTarget, setMouseDownTarget] = useState(null)
+
+  // Handle mouse down on modal overlay
+  const handleModalMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      setMouseDownTarget(e.target)
+    } else {
+      setMouseDownTarget(null)
+    }
+  }
+
+  // Handle mouse up on modal overlay - only close if it's the same target as mouse down
+  const handleModalMouseUp = (e, modalType) => {
+    if (e.target === e.currentTarget && e.target === mouseDownTarget) {
+      closeModal(modalType)
+    }
+    setMouseDownTarget(null)
+  }
+
   // Search input ref for focus management
   const searchInputRef = useRef(null)
 
@@ -164,12 +184,15 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
+        // Always clear search text first if it exists, regardless of focus
+        if (searchTerm) {
+          setSearchTerm("")
+          return
+        }
+
+        // If search is empty and search input is focused, blur it
         if (document.activeElement === searchInputRef.current) {
-          if (searchTerm) {
-            setSearchTerm("")
-          } else {
-            searchInputRef.current.blur()
-          }
+          searchInputRef.current.blur()
           return
         }
 
@@ -395,7 +418,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const handleEmployeeSubmit = async (e) => {
     e.preventDefault()
     if (!validateEmployeeForm()) return
-  
+
     const employeeDataForBody = {
       first_name: employeeFormData.firstName,
       last_name: employeeFormData.lastName,
@@ -403,7 +426,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       password: employeeFormData.password,
       email: employeeFormData.email,
     }
-  
+
     try {
       const response = await fetch(`${getServerLink()}/createEmployee`, {
         method: "POST",
@@ -413,44 +436,41 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         },
         body: JSON.stringify(employeeDataForBody),
       })
-  
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        const errorData = await response.json()
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
-  
-      const newEmployee = {
-        id: (data.length + 1).toString(),
-        type: "employee",
-        ...employeeFormData,
-        createdAt: new Date().toISOString().split("T")[0],
+
+      if (response.ok) {
+        const newEmployee = {
+          id: (data.length + 1).toString(),
+          type: "employee",
+          ...employeeFormData,
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+
+        setData((prev) => [...prev, newEmployee])
+        setEmployeeFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          username: "",
+          password: "",
+        })
+        setErrors({})
+        closeModal("addEmployee")
+        setTimeout(() => {
+          showSuccess("Employee created successfully!")
+        }, 200)
       }
-  
-      setData((prev) => [...prev, newEmployee])
-      setEmployeeFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        username: "",
-        password: "",
-      })
-      setErrors({})
-      closeModal("addEmployee")
-      setTimeout(() => {
-        showSuccess("Employee created successfully!")
-      }, 200)
     } catch (error) {
       console.error("Error creating employee:", error)
-  
-      const errorMessage = error.message === "Failed to fetch"
-        ? "Server is not reachable"
-        : `Error creating employee: ${error.message}`
-  
       setTimeout(() => {
-        showSuccess(errorMessage)
+        showSuccess(`Error creating employee: ${error.message}`)
       }, 200)
     }
-  }  
+  }
 
   const handleClientSubmit = (e) => {
     e.preventDefault()
@@ -540,41 +560,17 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     if (!selectedPerson) return
 
     try {
-      const response = await fetch(`${getServerLink()}/deleteClient`, {
-        method: "POST", // Changed method to POST
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ personal_code: selectedPerson.personalCode }), // Added request body
-      })
+      // If you have a backend API for deletion, uncomment and modify this:
+      // const response = await fetch(`${getServerLink()}/deleteClient/${selectedPerson.id}`, {
+      //   method: "DELETE",
+      //   credentials: "include",
+      // })
+      //
+      // if (!response.ok) {
+      //   throw new Error("Failed to delete client from server")
+      // }
 
-      if (!response.ok) {
-        // Handle HTTP errors
-        const errorData = await response.json()
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-      }
-
-      // You might want to check `result` to see if the employee was actually created on the server
-      // For example, if the server returns a success field or the created employee data.
-      if (response.ok) {
-        setTimeout(() => {
-          showSuccess("Client deleted successfully!")
-        }, 200)
-       
-      } else {
-        // Handle cases where the server indicates a failure even with a 200 OK status
-        const result = await response.json()
-        throw new Error(result.message || "Failed to create employee on server.")
-      }
-    } catch (error) {
-      console.error("Error deleting client:", error)
-      // You might want to show an error message to the user
-      setTimeout(() => {
-        showError(`Error deleting client: ${error.message}`)
-      }, 200)
-    }
-
+      // Remove client from local state
       setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
 
       // Clear the selected person
@@ -582,51 +578,30 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       // Close the modal
       closeModal("deleteClient")
-    
-  }
 
-  const handleDeleteEmployee = async () => {
-    if (!deletingEmployee) return
-    try {
-      const response = await fetch(`${getServerLink()}/deleteEmployee`, {
-        method: "POST", // Changed method to POST
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username: deletingEmployee.username }), // Added request body
-      })
-      if (!response.ok) {
-        // Handle HTTP errors
-        const errorData = await response.json()
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-      }
-
-      // You might want to check `result` to see if the employee was actually created on the server
-      // For example, if the server returns a success field or the created employee data.
-      if (response.ok) {
-        setTimeout(() => {
-          showSuccess("Employee deleted successfully!")
-        }, 200)
-       
-      } else {
-        // Handle cases where the server indicates a failure even with a 200 OK status
-        const result = await response.json()
-        throw new Error(result.message || "Failed to create employee on server.")
-      }
-    } catch (error) {
-      console.error("Error deleting employee:", error)
-      // You might want to show an error message to the user
+      // Show success message
       setTimeout(() => {
-        showError(`Error deleting employee: ${error.message}`)
+        showSuccess("Client deleted successfully!")
+      }, 200)
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      setTimeout(() => {
+        showSuccess("Error deleting client. Please try again.")
       }, 200)
     }
+  }
+
+  const handleDeleteEmployee = () => {
+    if (!deletingEmployee) return
 
     setData((prev) => prev.filter((person) => person.id !== deletingEmployee.id))
     if (selectedPerson && selectedPerson.id === deletingEmployee.id) {
       setSelectedPerson(null)
     }
     closeModal("deleteEmployee")
+    setTimeout(() => {
+      showSuccess("Employee deleted successfully!")
+    }, 200)
   }
 
   const deleteCrmEntry = (entryId) => {
@@ -1088,7 +1063,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="info-value">
                     {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
                       ? selectedPerson.crmEntries[0].contactType
-                      : "No records"}
+                      : "N/A"}
                   </div>
                 </div>
               </div>
@@ -1267,7 +1242,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       {/* All existing modals remain the same... */}
       {/* Add Employee Modal */}
       {isAddEmployeeOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "addEmployee")}
+        >
           <div
             className={`modal-content ${modalClosing.addEmployee ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -1319,7 +1298,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <div className="form-group">
                   <label className="form-label">Username (Auto-generated)</label>
                   <div className="username-container">
-                  <input className="form-input auto-generated" value={employeeFormData.username} disabled />
+                    <input className="form-input" value={employeeFormData.username} disabled />
                   </div>
                 </div>
 
@@ -1328,7 +1307,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                   <div className="password-container">
                     <input
                       type="text"
-                      className="form-input auto-generated"
+                      className="form-input"
                       value={employeeFormData.password}
                       onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
                       disabled
@@ -1359,7 +1338,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       {/* Logout Modal */}
       {isLogoutOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("logout")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "logout")}
+        >
           <div
             className={`modal-content logout-modal ${modalClosing.logout ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -1393,7 +1376,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
       {/* Delete Employee Modal */}
       {isDeleteEmployeeOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteEmployee")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteEmployee")}
+        >
           <div
             className={`modal-content ${modalClosing.deleteEmployee ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -1427,7 +1414,11 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       )}
       {/* Delete Client Modal */}
       {isDeleteClientOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteClient")}
+        >
           <div
             className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
