@@ -420,7 +420,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting client:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting client: ${error.message}`)
+        console.error(`Error deleting client: ${error.message}`)
       }, 200)
     }
 
@@ -467,7 +467,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       console.error("Error deleting employee:", error)
       // You might want to show an error message to the user
       setTimeout(() => {
-        showError(`Error deleting employee: ${error.message}`)
+        console.error(`Error deleting employee: ${error.message}`)
       }, 200)
     }
 
