@@ -52,6 +52,30 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [crmTickets, setCrmTickets] = useState([]);
 
 
+
+  const formatPhoneNumber = (number) => {
+    if (!number) return "N/A";
+    try {
+      // Attempt to parse the number. We can optionally provide a default country
+      // if numbers without a '+' prefix are common in your data, e.g., 'US' or 'GB'.
+      // For this example, we'll let it try to infer or format internationally.
+      const phoneNumber = parsePhoneNumberFromString(number);
+      if (phoneNumber) {
+        // You can choose different formats:
+        // formatInternational() -> +1 212 555 1234
+        // formatNational()    -> (212) 555-1234 (if country context is known)
+        // formatE164()        -> +12125551234
+        return phoneNumber.formatInternational();
+      }
+    } catch (error) {
+      console.error("Error parsing phone number:", number, error);
+    }
+    // Fallback if parsing fails
+    return number;
+  };
+
+
+  
   // Apple-style success animation states
   const [showSuccess, setShowSuccess] = useState(false)
   const [closing, setClosing] = useState(false)
