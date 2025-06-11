@@ -689,7 +689,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
           <Mail className="contact-icon" />
           <span>{selectedPerson.email || "N/A"}</span>
         </div>
-        {/* Primary Phone - shown for both clients and others, as it's a core contact detail */}
+        {selectedPerson.phoneNumber || selectedPerson.phone && (
         <div className="contact-item">
           <Phone className="contact-icon" />
           <div className="contact-text">
@@ -697,6 +697,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
             <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
           </div>
         </div>
+        )}
         {selectedPerson.otherPhoneNumber && (
           <div className="contact-item">
             <Phone className="contact-icon" />
@@ -716,10 +717,6 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                 <CreditCard size={16} style={{ marginRight: "6px" }} />
                 Bank Accounts
               </h3>
-              <button className="button-add-account" onClick={() => setIsAddAccountOpen(true)}>
-                <Plus size={14} style={{ marginRight: "4px" }} />
-                Add Account
-              </button>
             </div>
             <div className="card-content">
               {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (

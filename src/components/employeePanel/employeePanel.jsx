@@ -1375,7 +1375,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           <Mail className="contact-icon" />
           <span>{selectedPerson.email || "N/A"}</span>
         </div>
-        {/* Primary Phone - shown for both clients and others, as it's a core contact detail */}
+        {selectedPerson.phoneNumber && (
         <div className="contact-item">
           <Phone className="contact-icon" />
           <div className="contact-text">
@@ -1383,6 +1383,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
           </div>
         </div>
+        )}
         {selectedPerson.otherPhoneNumber && (
           <div className="contact-item">
             <Phone className="contact-icon" />
