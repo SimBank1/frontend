@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import AdminPanel from "../adminPanel/AdminPanel";
-import EmployeePanel from "../employeePanel/EmployeePanel";
+import AdminPanel from "../adminPanel/adminPanel";
+import EmployeePanel from "../employeePanel/employeePanel";
 import Terminal from "../terminal/terminal";
 import { getServerLink } from "@/server_link";
 import { data } from "react-router-dom";

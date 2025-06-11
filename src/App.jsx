@@ -4,7 +4,7 @@ import { CookiesProvider } from 'react-cookie';
 
 import Login from './components/login/Login';
 import Dashboard from './components/dashboard/Dashboard';
-import Terminal from './components/terminal/Terminal';
+import Terminal from './components/terminal/terminal';
 
 function App() {
   return (
