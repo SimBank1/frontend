@@ -808,7 +808,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         date_of_contact: crmFormData.date,
         contact_type: crmFormData.contactType,
         title: crmFormData.title,
-        content: crmFormData.content,
+        content: crmFormData.content.replace(/\n/g, '\\n').replace(/\r/g, '\\r'),
         username: employeeUsername|| "unknown",
     };
 
@@ -880,50 +880,30 @@ const handleEditCrm = (entry) => {
 
 
 
-/* [
-  {
-      "username": "test",
-      "title": null,
-      "contact_type": "email",
-      "content": "Customer1 reported an issue with the mobile app login.",
-      "personal_code": 0,
-      "date_of_contact": "2025-06-06",
-      "id": 0
-  },
-  {
-      "username": "test",
-      "title": null,
-      "contact_type": "email",
-      "content": "Customer1 reported an issue with the mobile app login.",
-      "personal_code": 0,
-      "date_of_contact": "2025-06-06",
-      "id": 0
-  },
-  {
-      "username": "test",
-      "title": "hej",
-      "contact_type": "phone",
-      "content": "hello",
-      "personal_code": 0,
-      "date_of_contact": "2025-06-11",
-      "id": 0
-  }
-] */
-  console.log(selectedPerson.crm)
+
 const handleUpdateCrm = async (e) => {
   e.preventDefault();
   if (!validateCrmForm()) return;
   if (!editingCrmEntry || !selectedPerson) return;
-console.log("neki special", editingCrmEntry)
+
+  const entryIndex = selectedPerson.crm.findIndex(
+    (entry) =>
+      entry.id === editingCrmEntry.id &&
+      entry.username === editingCrmEntry.username &&
+      entry.title === editingCrmEntry.title &&
+      entry.contact_type === editingCrmEntry.contact_type &&
+      entry.content === editingCrmEntry.content &&
+      entry.date_of_contact === editingCrmEntry.date_of_contact
+  );
+
 
   const updatedCrmData = {
-      id: editingCrmEntry.id,
+      id: entryIndex+1,
       personal_code: selectedPerson.personalCode,
       title: crmFormData.title,
       contact_type: crmFormData.contactType,
       content: crmFormData.content,
       date_of_contact: crmFormData.date,
-      // employee_username: currentUser?.username || "unknown", // Include if this field can also be updated
   };
 
   try {
@@ -944,7 +924,12 @@ console.log("neki special", editingCrmEntry)
 
       // Update the local state's `crm` array
       const updatedCrmEntries = selectedPerson.crm.map((entry) =>
-          entry.id === editingCrmEntry.id
+          entry.id === editingCrmEntry.id &&
+          entry.title === editingCrmEntry.title &&
+          entry.contact_type === editingCrmEntry.contact_type &&
+          entry.content === editingCrmEntry.content &&
+          entry.date_of_contact === editingCrmEntry.date_of_contact
+
               ? {
                     ...entry,
                     // Update specific fields. Ensure snake_case from form matches DB fields.
@@ -991,37 +976,93 @@ console.log("neki special", editingCrmEntry)
   }
 
   const confirmDeleteCrm = async () => {
-    if (!deletingCrmEntry) return
+    if (!deletingCrmEntry || !selectedPerson) return;
 
+
+    const entryIndex = selectedPerson.crm.findIndex(
+      (entry) =>
+        entry &&
+        entry.username === deletingCrmEntry.username && 
+        entry.title === deletingCrmEntry.title &&
+        entry.contact_type === deletingCrmEntry.contact_type &&
+        entry.content === deletingCrmEntry.content &&
+        entry.date_of_contact === deletingCrmEntry.date_of_contact
+    );
+  
+  
+    if (entryIndex === -1) {
+      showSuccess("CRM entry not found.");
+      return;
+    }
+  
+    // Prepare the data to send for deletion
+    const deleteCrmData = {
+      id: entryIndex+1,
+      personal_code: selectedPerson.personalCode,
+      username:deletingCrmEntry.username
+    };
+
+    console.log(deleteCrmData)
+ 
     try {
-      // Send delete request to server
-      const response = await fetch(getServerLink() + "/crm/" + deletingCrmEntry.id, {
-        method: "DELETE",
+      const response = await fetch(getServerLink() + "/deleteCRM", {
+        method: "POST", // Assuming backend expects POST for delete
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-      })
-
+        body: JSON.stringify(deleteCrmData),
+      });
+  
+      const data = await response.json();
+  
       if (!response.ok) {
-        throw new Error("Failed to delete CRM entry")
+        throw new Error(data.message || "Failed to delete CRM entry");
       }
+      if(data.error){
 
-      // Update local state
+        setTimeout(() => {
+          showSuccess("You must be the creator of this CRM to delete it!");
+        }, 200);  
+        return
+
+      
+      }
+  
+      const updatedCrmEntries = selectedPerson.crm.filter(
+        (entry) =>
+          !(
+            entry.username === deletingCrmEntry.username &&
+            entry.title === deletingCrmEntry.title &&
+            entry.contact_type === deletingCrmEntry.contact_type &&
+            entry.content === deletingCrmEntry.content &&
+            entry.date_of_contact === deletingCrmEntry.date_of_contact
+          )
+      );
+  
       const updatedPerson = {
         ...selectedPerson,
-        crmEntries: selectedPerson.crmEntries?.filter((entry) => entry.id !== deletingCrmEntry.id) || [],
-      }
-
-      setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-      setSelectedPerson(updatedPerson)
-      closeModal("deleteCrm")
+        crm: updatedCrmEntries,
+      };
+  
+      setData((prev) =>
+        prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person))
+      );
+      setSelectedPerson(updatedPerson); // Update selected person to reflect changes
+  
+      setDeletingCrmEntry(null);
+      closeModal("deleteCrm");
       setTimeout(() => {
-        showSuccess("CRM entry deleted successfully!")
-      }, 200)
+        showSuccess("CRM entry deleted successfully!");
+      }, 200);
     } catch (error) {
-      console.error("Error deleting CRM entry:", error)
-      showSuccess("Error deleting CRM entry. Please try again.")
+      console.error("Error deleting CRM entry:", error);
+      showSuccess("Error deleting CRM entry. Please try again.");
     }
-  }
-
+  };
+  
+    
+  
   const canDeleteCrmEntry = (entry) => {
     return entry.employeeName === currentUser?.username
   }
