@@ -68,7 +68,36 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [successClosing, setSuccessClosing] = useState(false)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
+  const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+  useEffect(() => {
+    if (closingCrmEntry) {
+      const timer = setTimeout(() => setClosingCrmEntry(null), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closingCrmEntry])
+
+  // Success toast timing
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => setSuccessClosing(true), 3500)
+      return () => clearTimeout(timer)
+    }
+  }, [showSuccess])
+
+  useEffect(() => {
+    if (successClosing) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false)
+        setSuccessMessage("")
+        setSuccessClosing(false)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [successClosing])
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
@@ -145,7 +174,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         password,
       }))
     }
-  }, [employeeFormData.firstName, employeeFormData.lastName])
+  }, [employeeFormData.firstName, employeeFormData.lastName, generateUsername])
 
   // Generate username from first and last name
   const generateUsername = (firstName, lastName) => {
@@ -177,7 +206,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const copyCredentials = () => {
     const credentials = `Username: ${employeeFormData.username}\nPassword: ${employeeFormData.password}`
     navigator.clipboard.writeText(credentials).then(() => {
-      showSuccess("Credentials copied to clipboard!")
+      triggerSuccess("Credentials copied to clipboard!")
     })
   }
 
@@ -249,11 +278,10 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   }
 
   // Show success message with auto-dismiss
-  const showSuccess = (message) => {
+  const triggerSuccess = (message) => {
     setSuccessMessage(message)
-    setTimeout(() => {
-      setSuccessMessage("")
-    }, 3000)
+    setShowSuccess(true)
+    setSuccessClosing(false)
   }
 
   // Generate IBAN starting with LT817044
@@ -339,10 +367,20 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   }
 
   const toggleCrmExpansion = (entryId) => {
-    setExpandedCrmEntries((prev) => ({
-      ...prev,
-      [entryId]: !prev[entryId],
-    }))
+    setExpandedCrmEntries((prev) => {
+      const isOpen = prev[entryId]
+      const openId = Object.keys(prev)[0]
+      const newState = {}
+      if (isOpen) {
+        setClosingCrmEntry(entryId)
+        return newState
+      }
+      if (openId && openId !== entryId) {
+        setClosingCrmEntry(openId)
+      }
+      newState[entryId] = true
+      return newState
+    })
   }
 
   const handleLogout = async () => {
@@ -462,13 +500,13 @@ export default function AdminPanel({ data: initialData, currentUser }) {
         setErrors({})
         closeModal("addEmployee")
         setTimeout(() => {
-          showSuccess("Employee created successfully!")
+          triggerSuccess("Employee created successfully!")
         }, 200)
       }
     } catch (error) {
       console.error("Error creating employee:", error)
       setTimeout(() => {
-        showSuccess(`Error creating employee: ${error.message}`)
+        triggerSuccess(`Error creating employee: ${error.message}`)
       }, 200)
     }
   }
@@ -521,7 +559,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     closeModal("addClient")
     setTimeout(() => {
       setSelectedPerson(newClient)
-      showSuccess("Client created successfully!")
+      triggerSuccess("Client created successfully!")
     }, 200)
   }
 
@@ -553,7 +591,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     setErrors({})
     closeModal("addAccount")
     setTimeout(() => {
-      showSuccess("Account created successfully!")
+      triggerSuccess("Account created successfully!")
     }, 200)
   }
 
@@ -580,7 +618,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       // For example, if the server returns a success field or the created employee data.
       if (response.ok) {
         setTimeout(() => {
-          showSuccess("Client deleted successfully!")
+          triggerSuccess("Client deleted successfully!")
         }, 200)
        
       } else {
@@ -627,7 +665,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
       // For example, if the server returns a success field or the created employee data.
       if (response.ok) {
         setTimeout(() => {
-          showSuccess("Employee deleted successfully!")
+          triggerSuccess("Employee deleted successfully!")
         }, 200)
        
       } else {
@@ -660,7 +698,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
     setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
     setSelectedPerson(updatedPerson)
-    showSuccess("CRM entry deleted successfully!")
+    triggerSuccess("CRM entry deleted successfully!")
   }
 
   const canDeleteCrmEntry = (entry) => {
@@ -778,7 +816,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                       onClick={() => {
                         const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
                         navigator.clipboard.writeText(credentials)
-                        showSuccess("Credentials copied!")
+                        triggerSuccess("Credentials copied!")
                       }}
                       title="Copy credentials"
                     >
@@ -1238,7 +1276,13 @@ export default function AdminPanel({ data: initialData, currentUser }) {
                     </button>
                   )}
                 </div>
-                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
+                {(expandedCrmEntries[entry.id] || closingCrmEntry === entry.id) && (
+                  <p
+                    className={`crm-entry-content ${closingCrmEntry === entry.id ? "closing" : "opening"}`}
+                  >
+                    {entry.content}
+                  </p>
+                )}
               </div>
             ))
           ) : (
@@ -1254,8 +1298,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 
   return (
     <div className="admin-panel dashboard-fade-in">
-      {successMessage && (
-        <div className="success-toast">
+      {showSuccess && (
+        <div className={`success-toast ${successClosing ? "closing" : "showing"}`}>
           <CheckCircle size={20} />
           <span>{successMessage}</span>
         </div>
