@@ -1,171 +1,199 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import {
-  Search,
-  Users,
   User,
-  Mail,
-  MapPin,
-  CreditCard,
-  Calendar,
-  FileText,
-  LogOut,
   Briefcase,
-  Eye,
-  EyeOff,
-  Plus,
-  Building,
-  CheckCircle,
+  Search,
+  LogOut,
+  UserPlus,
   X,
+  Copy,
+  CheckCircle,
+  CreditCard,
+  Mail,
+  Phone,
+  FileText,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  MapPin,
+  Shield,
+  Building,
+  Clock,
+  UserCheck,
+  AlertCircle,
 } from "lucide-react"
-import "./AdminPanel.css"
+import "./adminPanel.css"
+import { getServerLink } from "@/server_link"
 
-// Mock data
-const mockData = [
-  {
-    id: "1",
-    type: "client",
-    firstName: "Jonas",
-    lastName: "Petraitis",
-    personalCode: "38901234567",
-    email: "jonas.petraitis@email.com",
-    phone: "037654321",
-    documentType: "ID Card",
-    documentNumber: "AB123456",
-    documentExpiry: "2028-05-15",
-    dateOfBirth: "1989-01-23",
-    registrationAddress: "Lithuania, Vilnius, Gedimino pr. 1-1, LT-01103",
-    correspondenceAddress: "Lithuania, Vilnius, Gedimino pr. 1-1, LT-01103",
-    marketingConsent: true,
-    accounts: [
-      {
-        id: "acc1",
-        iban: "LT123456789012345678",
-        currency: "EUR",
-        balance: 2500.5,
-        cardType: "Debeto",
-        servicePlan: "Gold",
-        openingDate: "2024-01-15",
-      },
-    ],
-    crmEntries: [
-      {
-        id: "crm1",
-        date: "2024-12-01",
-        contactType: "Phone",
-        content:
-          "Client called regarding account balance inquiry. Provided current balance information and explained recent transactions.",
-        employeeName: "Marija Kazlauskienė",
-      },
-      {
-        id: "crm2",
-        date: "2024-11-28",
-        contactType: "Email",
-        content:
-          "Sent welcome package and account setup instructions. Client confirmed receipt and expressed satisfaction with service.",
-        employeeName: "Marija Kazlauskienė",
-      },
-    ],
-  },
-  {
-    id: "2",
-    type: "employee",
-    firstName: "Marija",
-    lastName: "Kazlauskienė",
-    email: "marija.kazlauskiene@company.com",
-    username: "mkazlauskiene",
-    password: "SecurePass12sdgsfdgs",
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "3",
-    type: "client",
-    firstName: "Petras",
-    lastName: "Jonaitis",
-    personalCode: "37805123456",
-    email: "petras.jonaitis@email.com",
-    phone: "037987654",
-    documentType: "Passport",
-    documentNumber: "AB987654",
-    documentExpiry: "2027-03-20",
-    dateOfBirth: "1978-05-12",
-    registrationAddress: "Lithuania, Kaunas, Laisvės al. 10-5, LT-44240",
-    correspondenceAddress: "Lithuania, Kaunas, Laisvės al. 10-5, LT-44240",
-    marketingConsent: false,
-    accounts: [
-      {
-        id: "acc2",
-        iban: "LT987654321098765432",
-        currency: "EUR",
-        balance: 1200.0,
-        cardType: "Kredito",
-        servicePlan: "Standard",
-        openingDate: "2024-02-01",
-      },
-    ],
-    crmEntries: [
-      {
-        id: "crm3",
-        date: "2024-11-30",
-        contactType: "Visit",
-        content:
-          "Client visited branch to discuss loan options. Provided information about available products and requirements.",
-        employeeName: "Marija Kazlauskienė",
-      },
-    ],
-  },
-  {
-    id: "4",
-    type: "employee",
-    firstName: "Tomas",
-    lastName: "Petrauskas",
-    email: "tomas.petrauskas@company.com",
-    username: "tpetrauskas",
-    password: "MyPassword456",
-    createdAt: "2024-02-15",
-  },
-]
-
-export default function AdminPanel() {
+export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [showPassword, setShowPassword] = useState({})
-  const [data, setData] = useState(mockData)
+  const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
+  const [deletingEmployee, setDeletingEmployee] = useState(null)
+
+  // Search input ref for focus management
+  const searchInputRef = useRef(null)
+
+  const merged = [...(initialData?.clients || []), ...(initialData?.employees || [])]
+  const [data, setData] = useState(merged)
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false)
+  const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
+  const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
 
   // Modal closing states
   const [modalClosing, setModalClosing] = useState({
     addEmployee: false,
+    addClient: false,
+    addAccount: false,
+    deleteClient: false,
     logout: false,
+    deleteEmployee: false,
   })
 
-  // Form state
-  const [formData, setFormData] = useState({
+  // Employee form state with auto-generation
+  const [employeeFormData, setEmployeeFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     username: "",
     password: "",
   })
-  const [errors, setErrors] = useState({})
 
-  // Handle escape key for all modals
+  // Client form state
+  const [clientFormData, setClientFormData] = useState({
+    firstName: "",
+    lastName: "",
+    personalCode: "",
+    email: "",
+    phone: "",
+    phoneCountryCode: "+370",
+    secondPhone: "",
+    secondPhoneCountryCode: "+370",
+    documentType: "ID Card",
+    documentNumber: "",
+    documentExpiry: "",
+    dateOfBirth: "",
+    registrationCountry: "",
+    registrationRegion: "",
+    registrationCity: "",
+    registrationStreet: "",
+    registrationHouse: "",
+    registrationApartment: "",
+    registrationPostalCode: "",
+    correspondenceCountry: "",
+    correspondenceRegion: "",
+    correspondenceCity: "",
+    correspondenceStreet: "",
+    correspondenceHouse: "",
+    correspondenceApartment: "",
+    correspondencePostalCode: "",
+    marketingConsent: false,
+  })
+
+  // Account form state
+  const [accountFormData, setAccountFormData] = useState({
+    iban: "",
+    currency: "EUR",
+    balance: "",
+    cardType: "none",
+    servicePlan: "Standard",
+    openingDate: new Date().toISOString().split("T")[0],
+  })
+
+  const [errors, setErrors] = useState({})
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
+
+  // Auto-generate username and password when name changes
+  useEffect(() => {
+    if (employeeFormData.firstName && employeeFormData.lastName) {
+      const username = generateUsername(employeeFormData.firstName, employeeFormData.lastName)
+      const password = generatePassword()
+
+      setEmployeeFormData((prev) => ({
+        ...prev,
+        username,
+        password,
+      }))
+    }
+  }, [employeeFormData.firstName, employeeFormData.lastName])
+
+  // Generate username from first and last name
+  const generateUsername = (firstName, lastName) => {
+    const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, "")
+    const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, "")
+    const baseUsername = cleanFirst + cleanLast
+
+    // Check if username exists and add number if needed
+    let username = baseUsername
+    let counter = 1
+    while (data.some((person) => person.username === username)) {
+      username = baseUsername + counter
+      counter++
+    }
+
+    return username
+  }
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    let password = ""
+    for (let i = 0; i < 6; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return password
+  }
+
+  // Copy username and password together
+  const copyCredentials = () => {
+    const credentials = `Username: ${employeeFormData.username}\nPassword: ${employeeFormData.password}`
+    navigator.clipboard.writeText(credentials).then(() => {
+      showSuccess("Credentials copied to clipboard!")
+    })
+  }
+
+  // Enhanced escape key handling
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
+        if (document.activeElement === searchInputRef.current) {
+          if (searchTerm) {
+            setSearchTerm("")
+          } else {
+            searchInputRef.current.blur()
+          }
+          return
+        }
+
+        // Handle modal escapes
         if (isAddEmployeeOpen) closeModal("addEmployee")
+        if (isAddClientOpen) closeModal("addClient")
+        if (isAddAccountOpen) closeModal("addAccount")
+        if (isDeleteClientOpen) closeModal("deleteClient")
         if (isLogoutOpen) closeModal("logout")
+        if (isDeleteEmployeeOpen) closeModal("deleteEmployee")
       }
     }
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [isAddEmployeeOpen, isLogoutOpen])
+  }, [
+    isAddEmployeeOpen,
+    isAddClientOpen,
+    isAddAccountOpen,
+    isDeleteClientOpen,
+    isLogoutOpen,
+    searchTerm,
+    isDeleteEmployeeOpen,
+  ])
 
   const closeModal = (modalType) => {
     setModalClosing((prev) => ({ ...prev, [modalType]: true }))
@@ -175,8 +203,21 @@ export default function AdminPanel() {
         case "addEmployee":
           setIsAddEmployeeOpen(false)
           break
+        case "addClient":
+          setIsAddClientOpen(false)
+          break
+        case "addAccount":
+          setIsAddAccountOpen(false)
+          break
+        case "deleteClient":
+          setIsDeleteClientOpen(false)
+          break
         case "logout":
           setIsLogoutOpen(false)
+          break
+        case "deleteEmployee":
+          setIsDeleteEmployeeOpen(false)
+          setDeletingEmployee(null)
           break
       }
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
@@ -191,29 +232,76 @@ export default function AdminPanel() {
     }, 3000)
   }
 
-  // Filter and search logic
+  // Generate IBAN starting with LT817044
+  const generateIBAN = () => {
+    const prefix = "LT817044"
+    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
+    return prefix + randomDigits
+  }
+
+  // Get date of birth from personal code
+  const getDateOfBirthFromPersonalCode = (personalCode) => {
+    if (personalCode.length !== 11) return ""
+    const century = personalCode[0]
+    const year = personalCode.substring(1, 3)
+    const month = personalCode.substring(3, 5)
+    const day = personalCode.substring(5, 7)
+    let fullYear
+
+    if (century === "1" || century === "2") fullYear = "18" + year
+    else if (century === "3" || century === "4") fullYear = "19" + year
+    else if (century === "5" || century === "6") fullYear = "20" + year
+    else return ""
+
+    return `${fullYear}-${month}-${day}`
+  }
+
+  // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
 
-    // Apply type filter
-    if (activeFilter === "employees") {
-      filtered = filtered.filter((person) => person.type === "employee")
-    } else if (activeFilter === "clients") {
-      filtered = filtered.filter((person) => person.type === "client")
+    if (activeFilter === "clients") {
+      filtered = filtered.filter((person) => person?.marketingConsent !== undefined)
+    } else if (activeFilter === "employees") {
+      filtered = filtered.filter((person) => person?.marketingConsent === undefined)
     }
 
-    // Apply search filter
+    // Apply search filter including phone numbers
     if (searchTerm) {
-      filtered = filtered.filter(
-        (person) =>
-          person.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          person.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (person.type === "client" && person.personalCode && person.personalCode.includes(searchTerm)),
-      )
+      const lowerSearch = searchTerm.toLowerCase()
+
+      filtered = filtered.filter((person) => {
+        const nameMatch =
+          ((person.firstName || person.first_name)?.toString().toLowerCase() ?? "").includes(lowerSearch) ||
+          ((person.lastName || person.last_name)?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const codeMatch = (person.personalCode?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const docMatch = (person.docNumber?.toString().toLowerCase() ?? "").includes(lowerSearch)
+        const phoneMatch = (person.phoneNumber?.replace(/\s+/g, "") ?? "").includes(searchTerm.replace(/\s+/g, ""))
+
+        return nameMatch || codeMatch || docMatch || phoneMatch
+      })
     }
 
     return filtered
   }, [searchTerm, activeFilter, data])
+
+  // Highlight search terms in text
+  const highlightText = (text, searchTerm) => {
+    if (!searchTerm || !text) return text
+
+    const regex = new RegExp(`(${searchTerm})`, "gi")
+    const parts = text.split(regex)
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className="highlight-search">
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    )
+  }
 
   const handlePersonClick = (person) => {
     setSelectedPerson(person)
@@ -226,9 +314,29 @@ export default function AdminPanel() {
     }))
   }
 
-  const handleLogout = () => {
-    document.cookie = "sessionCokie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    window.location.href = "/login"
+  const toggleCrmExpansion = (entryId) => {
+    setExpandedCrmEntries((prev) => ({
+      ...prev,
+      [entryId]: !prev[entryId],
+    }))
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(getServerLink() + "/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        window.location.href = "/login"
+      }
+    } catch (error) {
+      console.error(error.message)
+    }
   }
 
   const confirmLogout = () => {
@@ -239,169 +347,286 @@ export default function AdminPanel() {
   }
 
   // Validation functions
-  const validateName = (name, fieldName) => {
-    if (!name.trim()) {
-      return `${fieldName} is required`
-    }
-    if (name.length < 3) {
-      return `${fieldName} must be at least 3 characters`
-    }
-    if (name.length > 50) {
-      return `${fieldName} must not exceed 50 characters`
-    }
-    if (!/^[a-zA-Z\s]+$/.test(name)) {
-      return `${fieldName} must contain only alphabetic characters and spaces`
-    }
-    return ""
-  }
-
-  const validateEmail = (email) => {
-    if (!email.trim()) {
-      return "Email is required"
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return "Please enter a valid email format"
-    }
-    // Check for duplicate email
-    const existingEmail = data.find((person) => person.type === "employee" && person.email === email)
-    if (existingEmail) {
-      return "Email already exists"
-    }
-    return ""
-  }
-
-  const validateUsername = (username) => {
-    if (!username.trim()) {
-      return "Username is required"
-    }
-    if (username.length < 4) {
-      return "Username must be at least 4 characters"
-    }
-    if (username.length > 20) {
-      return "Username must not exceed 20 characters"
-    }
-    // Check for duplicate username
-    const existingUsername = data.find((person) => person.type === "employee" && person.username === username)
-    if (existingUsername) {
-      return "Username already exists"
-    }
-    return ""
-  }
-
-  const validatePassword = (password) => {
-    if (!password.trim()) {
-      return "Password is required"
-    }
-    if (password.length < 8) {
-      return "Password too weak - minimum 8 characters required"
-    }
-    if (/\s/.test(password)) {
-      return "Password cannot contain whitespace"
-    }
-    return ""
-  }
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }))
-    }
-  }
-
-  const validateForm = () => {
+  const validateEmployeeForm = () => {
     const newErrors = {}
 
-    newErrors.firstName = validateName(formData.firstName, "First name")
-    newErrors.lastName = validateName(formData.lastName, "Last name")
-    newErrors.email = validateEmail(formData.email)
-    newErrors.username = validateUsername(formData.username)
-    newErrors.password = validatePassword(formData.password)
+    if (!employeeFormData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!employeeFormData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!employeeFormData.email.trim()) newErrors.email = "Email is required"
+    if (!employeeFormData.username.trim()) newErrors.username = "Username is required"
+    if (!employeeFormData.password.trim()) newErrors.password = "Password is required"
 
     setErrors(newErrors)
-
-    // Return true if no errors
-    return !Object.values(newErrors).some((error) => error !== "")
+    return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const validateClientForm = () => {
+    const newErrors = {}
+
+    if (!clientFormData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!clientFormData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!clientFormData.personalCode.trim()) newErrors.personalCode = "Personal code is required"
+    if (!clientFormData.email.trim()) newErrors.email = "Email is required"
+    if (!clientFormData.phone.trim()) newErrors.phone = "Phone is required"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateAccountForm = () => {
+    const newErrors = {}
+
+    if (!accountFormData.iban.trim()) newErrors.iban = "IBAN is required"
+    if (!accountFormData.balance.trim()) newErrors.balance = "Balance is required"
+
+    // Check currency limits
+    if (selectedPerson && accountFormData.currency !== "EUR") {
+      const existingCurrencyAccounts =
+        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
+      if (existingCurrencyAccounts.length >= 1) {
+        newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleEmployeeSubmit = async (e) => {
     e.preventDefault()
+    if (!validateEmployeeForm()) return
 
-    if (!validateForm()) {
-      return
+    const employeeDataForBody = {
+      first_name: employeeFormData.firstName,
+      last_name: employeeFormData.lastName,
+      username: employeeFormData.username,
+      password: employeeFormData.password,
+      email: employeeFormData.email,
     }
 
-    // Create new employee
-    const newEmployee = {
+    try {
+      const response = await fetch(`${getServerLink()}/createEmployee`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(employeeDataForBody),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      if (response.ok) {
+        const newEmployee = {
+          id: (data.length + 1).toString(),
+          type: "employee",
+          ...employeeFormData,
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+
+        setData((prev) => [...prev, newEmployee])
+        setEmployeeFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          username: "",
+          password: "",
+        })
+        setErrors({})
+        closeModal("addEmployee")
+        setTimeout(() => {
+          showSuccess("Employee created successfully!")
+        }, 200)
+      }
+    } catch (error) {
+      console.error("Error creating employee:", error)
+      setTimeout(() => {
+        showSuccess(`Error creating employee: ${error.message}`)
+      }, 200)
+    }
+  }
+
+  const handleClientSubmit = (e) => {
+    e.preventDefault()
+    if (!validateClientForm()) return
+
+    const newClient = {
       id: (data.length + 1).toString(),
-      type: "employee",
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      email: formData.email.trim(),
-      username: formData.username.trim(),
-      password: formData.password,
-      createdAt: new Date().toISOString().split("T")[0],
+      type: "client",
+      ...clientFormData,
+      dateOfBirth: getDateOfBirthFromPersonalCode(clientFormData.personalCode),
+      accounts: [],
+      crmEntries: [],
+      marketingConsent: clientFormData.marketingConsent,
     }
 
-    // Add to data
-    setData((prev) => [...prev, newEmployee])
-
-    // Reset form
-    setFormData({
+    setData((prev) => [...prev, newClient])
+    setClientFormData({
       firstName: "",
       lastName: "",
+      personalCode: "",
       email: "",
-      username: "",
-      password: "",
+      phone: "",
+      phoneCountryCode: "+370",
+      secondPhone: "",
+      secondPhoneCountryCode: "+370",
+      documentType: "ID Card",
+      documentNumber: "",
+      documentExpiry: "",
+      dateOfBirth: "",
+      registrationCountry: "",
+      registrationRegion: "",
+      registrationCity: "",
+      registrationStreet: "",
+      registrationHouse: "",
+      registrationApartment: "",
+      registrationPostalCode: "",
+      correspondenceCountry: "",
+      correspondenceRegion: "",
+      correspondenceCity: "",
+      correspondenceStreet: "",
+      correspondenceHouse: "",
+      correspondenceApartment: "",
+      correspondencePostalCode: "",
+      marketingConsent: false,
     })
     setErrors({})
-    closeModal("addEmployee")
-    setShowNewPassword(false)
-
-    // Show success message
+    closeModal("addClient")
     setTimeout(() => {
-      showSuccess("Employee created successfully!")
+      setSelectedPerson(newClient)
+      showSuccess("Client created successfully!")
     }, 200)
   }
 
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      username: "",
-      password: "",
+  const handleAccountSubmit = (e) => {
+    e.preventDefault()
+    if (!validateAccountForm()) return
+
+    const newAccount = {
+      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
+      ...accountFormData,
+      balance: Number.parseFloat(accountFormData.balance),
+    }
+
+    const updatedPerson = {
+      ...selectedPerson,
+      accounts: [...(selectedPerson.accounts || []), newAccount],
+    }
+
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    setAccountFormData({
+      iban: "",
+      currency: "EUR",
+      balance: "",
+      cardType: "none",
+      servicePlan: "Standard",
+      openingDate: new Date().toISOString().split("T")[0],
     })
     setErrors({})
-    setShowNewPassword(false)
+    closeModal("addAccount")
+    setTimeout(() => {
+      showSuccess("Account created successfully!")
+    }, 200)
+  }
+
+  const handleDeleteClient = async () => {
+    if (!selectedPerson) return
+
+    try {
+      // If you have a backend API for deletion, uncomment and modify this:
+      // const response = await fetch(`${getServerLink()}/deleteClient/${selectedPerson.id}`, {
+      //   method: "DELETE",
+      //   credentials: "include",
+      // })
+      //
+      // if (!response.ok) {
+      //   throw new Error("Failed to delete client from server")
+      // }
+
+      // Remove client from local state
+      setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+
+      // Clear the selected person
+      setSelectedPerson(null)
+
+      // Close the modal
+      closeModal("deleteClient")
+
+      // Show success message
+      setTimeout(() => {
+        showSuccess("Client deleted successfully!")
+      }, 200)
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      setTimeout(() => {
+        showSuccess("Error deleting client. Please try again.")
+      }, 200)
+    }
+  }
+
+  const handleDeleteEmployee = () => {
+    if (!deletingEmployee) return
+
+    setData((prev) => prev.filter((person) => person.id !== deletingEmployee.id))
+    if (selectedPerson && selectedPerson.id === deletingEmployee.id) {
+      setSelectedPerson(null)
+    }
+    closeModal("deleteEmployee")
+    setTimeout(() => {
+      showSuccess("Employee deleted successfully!")
+    }, 200)
+  }
+
+  const deleteCrmEntry = (entryId) => {
+    if (!selectedPerson) return
+
+    const updatedPerson = {
+      ...selectedPerson,
+      crmEntries: selectedPerson.crmEntries?.filter((entry) => entry.id !== entryId) || [],
+    }
+
+    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
+    setSelectedPerson(updatedPerson)
+    showSuccess("CRM entry deleted successfully!")
+  }
+
+  const canDeleteCrmEntry = (entry) => {
+    return entry.employeeName === currentUser?.username
   }
 
   const renderPersonList = () => {
     return filteredData.map((person) => (
-      <div key={person.id} className="user-card" onClick={() => handlePersonClick(person)}>
+      <div
+        key={person.id}
+        className={`user-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
+        onClick={() => handlePersonClick(person)}
+      >
         <div className="user-card-content">
-          <div className={`user-icon ${person.type}`}>
-            {person.type === "employee" ? <Briefcase size={20} /> : <User size={20} />}
+          <div className={`user-icon ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
+            {person.marketingConsent !== undefined ? <User size={20} /> : <Briefcase size={20} />}
           </div>
           <div className="user-info">
             <div className="user-header">
               <h3 className="user-name">
-                {person.firstName} {person.lastName}
+                {highlightText(
+                  `${person.firstName || person.first_name || ""} ${person.lastName || person.last_name || ""}`,
+                  searchTerm,
+                )}
               </h3>
-              <span className={`user-badge ${person.type}`}>{person.type}</span>
+              <span className={`user-badge ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
+                {person.marketingConsent !== undefined ? "client" : "employee"}
+              </span>
             </div>
-            {person.type === "client" && person.crmEntries && person.crmEntries.length > 0 && (
+            {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 ? (
               <p className="user-preview">Last interaction: {person.crmEntries[0].date}</p>
-            )}
-            {person.type === "employee" && <p className="user-preview">{person.email}</p>}
+            ) : person.marketingConsent !== undefined ? (
+              <p className="user-preview no-recent-activities">No recent activities</p>
+            ) : null}
+            {person.marketingConsent === undefined && <p className="user-preview">{person.email}</p>}
           </div>
         </div>
       </div>
@@ -421,57 +646,40 @@ export default function AdminPanel() {
       )
     }
 
+    const isClient = selectedPerson.marketingConsent !== undefined
+    const isEmployee = selectedPerson.marketingConsent === undefined
+
     return (
       <div>
         <div className="profile-header">
           <div className="profile-avatar">
-            {selectedPerson.type === "employee" ? (
-              <Briefcase size={24} color="white" />
-            ) : (
-              <User size={24} color="white" />
-            )}
+            {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
           </div>
           <div className="profile-info">
             <h2>
-              {selectedPerson.firstName} {selectedPerson.lastName}
+              {selectedPerson.firstName || selectedPerson.first_name || ""}{" "}
+              {selectedPerson.lastName || selectedPerson.last_name || ""}
             </h2>
-            <p>{selectedPerson.type}</p>
+            <p>{isClient ? "client" : "employee"}</p>
           </div>
+          {isClient && (
+            <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
+              <Trash2 size={16} />
+            </button>
+          )}
+          {isEmployee && (
+            <button
+              className="delete-client-button"
+              onClick={() => {
+                setDeletingEmployee(selectedPerson)
+                setIsDeleteEmployeeOpen(true)
+              }}
+              title="Delete Employee"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
-
-        {/* Additional Information for Clients */}
-        {selectedPerson.type === "client" && (
-          <div className="info-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <Calendar size={16} />
-                Additional Information
-              </h3>
-            </div>
-            <div className="card-content">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: "16px",
-                }}
-              >
-                <div className="info-item">
-                  <div className="info-label">Document Expiry</div>
-                  <div className="info-value">{selectedPerson.documentExpiry}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Marketing Consent</div>
-                  <div className="info-value">{selectedPerson.marketingConsent ? "Yes" : "No"}</div>
-                </div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Correspondence Address</div>
-                <div className="info-value">{selectedPerson.correspondenceAddress}</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Basic Information */}
         <div className="info-card">
@@ -482,7 +690,35 @@ export default function AdminPanel() {
             </h3>
           </div>
           <div className="card-content">
-            {selectedPerson.type === "client" ? (
+            {isEmployee ? (
+              <>
+                <div className="info-item">
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{selectedPerson.username || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Email</div>
+                  <div className="info-value">{selectedPerson.email || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Password</div>
+                  <div className="password-container">
+                    <span className="password-value">{selectedPerson.password || "N/A"}</span>
+                    <button
+                      className="copy-button"
+                      onClick={() => {
+                        const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
+                        navigator.clipboard.writeText(credentials)
+                        showSuccess("Credentials copied!")
+                      }}
+                      title="Copy credentials"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
               <>
                 <div className="info-item">
                   <div className="info-label">Personal Code</div>
@@ -494,44 +730,11 @@ export default function AdminPanel() {
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Type</div>
-                  <div className="info-value">{selectedPerson.documentType}</div>
+                  <div className="info-value">{selectedPerson.docType}</div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">Document Number</div>
-                  <div className="info-value">{selectedPerson.documentNumber}</div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="info-item">
-                  <div className="info-label">Username</div>
-                  <div className="info-value">{selectedPerson.username}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Password</div>
-                  <div className="password-container">
-                    <span className="password-value">
-                      {showPassword[selectedPerson.id]
-                        ? selectedPerson.password
-                        : "*".repeat(selectedPerson.password.length)}
-                    </span>
-                    <button
-                      className="password-toggle2"
-                      onMouseDown={() => togglePasswordVisibility(selectedPerson.id, true)}
-                      onMouseUp={() => togglePasswordVisibility(selectedPerson.id, false)}
-                      onMouseLeave={() => togglePasswordVisibility(selectedPerson.id, false)}
-                    >
-                      {showPassword[selectedPerson.id] ? (
-                        <EyeOff size={16} className="password-icon" />
-                      ) : (
-                        <Eye size={16} className="password-icon" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Created</div>
-                  <div className="info-value">{selectedPerson.createdAt}</div>
+                  <div className="info-value">{selectedPerson.docNumber}</div>
                 </div>
               </>
             )}
@@ -549,29 +752,19 @@ export default function AdminPanel() {
           <div className="card-content">
             <div className="contact-item">
               <Mail className="contact-icon" />
-              <span>{selectedPerson.email}</span>
+              <span>{selectedPerson.email || "N/A"}</span>
             </div>
-            {/* Only show phone for clients */}
-            {selectedPerson.type === "client" && (
+            {isClient && (
               <div className="contact-item">
-                <User size={16} className="contact-icon" />
-                <span>{selectedPerson.phone}</span>
-              </div>
-            )}
-            {selectedPerson.type === "client" && (
-              <div className="address-item">
-                <MapPin size={16} className="address-icon" />
-                <div className="address-content">
-                  <div className="info-label">Registration Address</div>
-                  <div className="info-value">{selectedPerson.registrationAddress}</div>
-                </div>
+                <Phone className="contact-icon" />
+                <span>{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Bank Accounts for Clients */}
-        {selectedPerson.type === "client" && selectedPerson.accounts && (
+        {/* Bank Accounts for clients */}
+        {isClient && (
           <div className="info-card">
             <div className="card-header">
               <h3 className="card-title">
@@ -580,28 +773,279 @@ export default function AdminPanel() {
               </h3>
             </div>
             <div className="card-content">
-              {selectedPerson.accounts.map((account) => (
-                <div key={account.id} className="account-item">
-                  <div className="account-header">
-                    <span className="account-iban">{account.iban}</span>
-                    <span className="account-badge">{account.currency}</span>
-                  </div>
-                  <div className="account-details">
-                    <div className="account-detail">
-                      <div className="info-label">Balance</div>
-                      <div className="info-value">
-                        {account.balance.toFixed(2)} {account.currency}
+              {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
+                selectedPerson.accounts.map((account) => (
+                  <div key={account.id} className="account-item">
+                    <div className="account-header">
+                      <span className="account-iban">{account.iban}</span>
+                      <span className="account-badge">{account.currency}</span>
+                    </div>
+                    <div className="account-details">
+                      <div className="account-detail">
+                        <div className="info-label">Balance</div>
+                        <div className="info-value">
+                          {account.balance.toFixed(2)} {account.currency}
+                        </div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Plan</div>
+                        <div className="info-value">{account.servicePlan}</div>
+                      </div>
+                      <div className="account-detail">
+                        <div className="info-label">Card Type</div>
+                        <div className="info-value">
+                          {account.cardType === "none"
+                            ? "No Card"
+                            : account.cardType === "Debeto"
+                              ? "Debit Card"
+                              : "Credit Card"}
+                        </div>
                       </div>
                     </div>
-                    <div className="account-detail">
-                      <div className="info-label">Plan</div>
-                      <div className="info-value">{account.servicePlan}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-data">
+                  <CreditCard className="no-data-icon" />
+                  <p className="no-data-text">No accounts found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Additional Client Information */}
+        {isClient && (
+          <>
+            {/* Document Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Shield size={16} />
+                  Document Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Document Type</div>
+                  <div className="info-value">{selectedPerson.docType || selectedPerson.documentType || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Number</div>
+                  <div className="info-value">{selectedPerson.docNumber || selectedPerson.documentNumber || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Document Expiry</div>
+                  <div className="info-value">
+                    {selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "N/A"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Status</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {(() => {
+                      const expiryDate = selectedPerson.docExpiryDate || selectedPerson.documentExpiry
+                      if (!expiryDate) return "Unknown"
+
+                      const expiry = new Date(expiryDate)
+                      const today = new Date()
+                      const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+
+                      if (daysUntilExpiry < 0) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#ef4444" />
+                            <span style={{ color: "#ef4444" }}>Expired</span>
+                          </>
+                        )
+                      } else if (daysUntilExpiry <= 30) {
+                        return (
+                          <>
+                            <AlertCircle size={16} color="#f59e0b" />
+                            <span style={{ color: "#f59e0b" }}>Expires in {daysUntilExpiry} days</span>
+                          </>
+                        )
+                      } else {
+                        return (
+                          <>
+                            <CheckCircle size={16} color="#10b981" />
+                            <span style={{ color: "#10b981" }}>Valid</span>
+                          </>
+                        )
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <MapPin size={16} />
+                  Address Information
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="address-item">
+                  <MapPin className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Registration Address</div>
+                    <div className="info-value">
+                      {selectedPerson.regAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
+                            {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.regAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>No registration address</div>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+
+                <div className="address-item">
+                  <Building className="address-icon" />
+                  <div className="address-content">
+                    <div className="info-label">Correspondence Address</div>
+                    <div className="info-value">
+                      {selectedPerson.corAddress ? (
+                        <>
+                          <div>
+                            {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
+                            {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.postalCode || "N/A"}{" "}
+                            {selectedPerson.corAddress.cityOrVillage || "N/A"}
+                          </div>
+                          <div>
+                            {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
+                          </div>
+                        </>
+                      ) : (
+                        <div>Same as registration address</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+
+            {/* Additional Contact Information */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Phone size={16} />
+                  Additional Contact Details
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="contact-item">
+                  <Phone className="contact-icon" />
+                  <div className="contact-text">
+                    <div className="info-label">Primary Phone</div>
+                    <div className="info-value">{selectedPerson.phoneNumber || selectedPerson.phone || "N/A"}</div>
+                  </div>
+                </div>
+                {selectedPerson.otherPhoneNumber && (
+                  <div className="contact-item">
+                    <Phone className="contact-icon" />
+                    <div className="contact-text">
+                      <div className="info-label">Secondary Phone</div>
+                      <div className="info-value">{selectedPerson.otherPhoneNumber}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Account Status & Preferences */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <UserCheck size={16} />
+                  Account Status & Preferences
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Marketing Consent</div>
+                  <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {selectedPerson.marketingConsent ? (
+                      <>
+                        <CheckCircle size={16} color="#10b981" />
+                        <span style={{ color: "#10b981" }}>Granted</span>
+                      </>
+                    ) : (
+                      <>
+                        <X size={16} color="#ef4444" />
+                        <span style={{ color: "#ef4444" }}>Not granted</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Account Created</div>
+                  <div className="info-value">{selectedPerson.createdAt || selectedPerson.dateOfBirth || "N/A"}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Total Accounts</div>
+                  <div className="info-value">{selectedPerson.accounts ? selectedPerson.accounts.length : 0}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Total Balance</div>
+                  <div className="info-value">
+                    {selectedPerson.accounts && selectedPerson.accounts.length > 0
+                      ? `€${selectedPerson.accounts.reduce((total, acc) => total + (acc.balance || 0), 0).toFixed(2)}`
+                      : "€0.00"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CRM Activity Summary */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <Clock size={16} />
+                  Recent Activity Summary
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <div className="info-label">Total CRM Entries</div>
+                  <div className="info-value">{selectedPerson.crmEntries ? selectedPerson.crmEntries.length : 0}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact</div>
+                  <div className="info-value">
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[0].date
+                      : "No contact recorded"}
+                  </div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Last Contact Type</div>
+                  <div className="info-value">
+                    {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0
+                      ? selectedPerson.crmEntries[0].contactType
+                      : "N/A"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     )
@@ -627,7 +1071,6 @@ export default function AdminPanel() {
             <Briefcase className="empty-icon" />
             <h2 className="empty-title">Employee Profile</h2>
             <p className="empty-description">Employees do not have CRM data</p>
-            <p className="empty-description">Personal information is shown in the left panel</p>
           </div>
         </div>
       )
@@ -649,17 +1092,28 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* CRM Entries */}
         <div className="crm-entries">
           {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
             selectedPerson.crmEntries.map((entry) => (
               <div key={entry.id} className="crm-entry">
                 <div className="crm-entry-header">
-                  <span className="crm-entry-badge">{entry.contactType}</span>
-                  <span className="crm-entry-meta">{entry.date}</span>
-                  <span className="crm-entry-meta">by {entry.employeeName}</span>
+                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id)}>
+                    {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <span className="crm-entry-badge">{entry.contactType}</span>
+                    <span className="crm-entry-meta">{entry.date}</span>
+                    <span className="crm-entry-meta">by {entry.employeeName}</span>
+                  </div>
+                  {canDeleteCrmEntry(entry) && (
+                    <button
+                      className="delete-crm-button"
+                      onClick={() => deleteCrmEntry(entry.id)}
+                      title="Delete CRM entry"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
-                <p className="crm-entry-content">{entry.content}</p>
+                {expandedCrmEntries[entry.id] && <p className="crm-entry-content">{entry.content}</p>}
               </div>
             ))
           ) : (
@@ -674,8 +1128,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="admin-panel">
-      {/* Success message toast */}
+    <div className="admin-panel dashboard-fade-in">
       {successMessage && (
         <div className="success-toast">
           <CheckCircle size={20} />
@@ -685,15 +1138,14 @@ export default function AdminPanel() {
 
       {/* Left Sidebar */}
       <div className="sidebar">
-        {/* Header */}
         <div className="header">
           <div className="logo-section">
             <div className="logo-icon">
-              <Building size={24} color="white" />
+              <Briefcase size={24} color="white" />
             </div>
             <div className="logo-text">
               <h1>SimBank</h1>
-              <p>Admin Panel</p>
+              <p>Admin Portal</p>
             </div>
             <div className="vegova-logo-sidebar">
               <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
@@ -702,8 +1154,9 @@ export default function AdminPanel() {
           <div className="search-container">
             <Search className="search-icon" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search users..."
+              placeholder="Search users, phone numbers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -711,51 +1164,39 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Filter Section */}
         <div className="filter-section">
           <div className="filter-buttons">
             <button
               className={`filter-button ${activeFilter === "all" ? "active" : ""}`}
               onClick={() => setActiveFilter("all")}
             >
-              <Users size={16} style={{ marginRight: "8px" }} />
-              All
+              All Users
             </button>
             <button
               className={`filter-button ${activeFilter === "employees" ? "active" : ""}`}
               onClick={() => setActiveFilter("employees")}
             >
-              <Briefcase size={16} style={{ marginRight: "8px" }} />
               Employees
             </button>
             <button
               className={`filter-button ${activeFilter === "clients" ? "active" : ""}`}
               onClick={() => setActiveFilter("clients")}
             >
-              <User size={16} style={{ marginRight: "8px" }} />
               Clients
             </button>
           </div>
         </div>
 
-        {/* User List */}
         <div className="user-list">
-          <h3>Users (alphabetical order):</h3>
+          <h3>Users ({filteredData.length})</h3>
           {renderPersonList()}
         </div>
 
-        {/* Bottom Section */}
         <div className="bottom-section">
           <div className="bottom-buttons">
-            <button
-              className="primary-button"
-              onClick={() => {
-                resetForm()
-                setIsAddEmployeeOpen(true)
-              }}
-            >
-              <Plus size={16} style={{ marginRight: "8px" }} />
-              Add Employee
+            <button className="primary-button" onClick={() => setIsAddEmployeeOpen(true)}>
+              <UserPlus size={16} style={{ marginRight: "8px" }} />
+              New Employee
             </button>
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
@@ -767,7 +1208,7 @@ export default function AdminPanel() {
       {/* Middle Panel */}
       <div className="middle-panel">
         <div className="middle-content">
-          <h2 className="panel-title">Personal Data</h2>
+          <h2 className="panel-title">Personal Information</h2>
           {renderPersonalInfo()}
         </div>
       </div>
@@ -775,7 +1216,100 @@ export default function AdminPanel() {
       {/* Right Panel */}
       <div className="right-panel">{renderCRMRequests()}</div>
 
-      {/* Logout Confirmation Modal */}
+      {/* All existing modals remain the same... */}
+      {/* Add Employee Modal */}
+      {isAddEmployeeOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
+          <div
+            className={`modal-content ${modalClosing.addEmployee ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <UserPlus size={20} color="#8b5cf6" />
+                Create New Employee
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("addEmployee")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleEmployeeSubmit}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={employeeFormData.firstName}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="Enter first name"
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={employeeFormData.lastName}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={employeeFormData.email}
+                    onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter email"
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Username (Auto-generated)</label>
+                  <div className="username-container">
+                    <input className="form-input" value={employeeFormData.username} disabled />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Password (Auto-generated)</label>
+                  <div className="password-container">
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={employeeFormData.password}
+                      onChange={(e) => setEmployeeFormData((prev) => ({ ...prev, password: e.target.value }))}
+                      disabled
+                    />
+                    <button
+                      type="button"
+                      className="copy-button"
+                      onClick={copyCredentials}
+                      title="Copy username and password"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("addEmployee")}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="button-primary">
+                    Create Employee
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Modal */}
       {isLogoutOpen && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("logout")}>
           <div
@@ -809,109 +1343,82 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Add Employee Modal */}
-      {isAddEmployeeOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addEmployee")}>
+      {/* Delete Employee Modal */}
+      {isDeleteEmployeeOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteEmployee")}>
           <div
-            className={`modal-content ${modalClosing.addEmployee ? "closing" : ""}`}
+            className={`modal-content ${modalClosing.deleteEmployee ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
               <h3 className="modal-title">
-                <Briefcase size={20} color="#8b5cf6" />
-                Add New Employee
+                <Trash2 size={20} color="#ef4444" />
+                Delete Employee
               </h3>
-              <button className="modal-close" onClick={() => closeModal("addEmployee")}>
+              <button className="modal-close" onClick={() => closeModal("deleteEmployee")}>
                 <X size={18} />
               </button>
             </div>
             <div className="modal-body">
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label className="form-label">First Name *</label>
-                  <input
-                    className={`form-input ${errors.firstName ? "error" : ""}`}
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    placeholder="Enter first name"
-                  />
-                  {errors.firstName && <p className="error-message">{errors.firstName}</p>}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Last Name *</label>
-                  <input
-                    className={`form-input ${errors.lastName ? "error" : ""}`}
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    placeholder="Enter last name"
-                  />
-                  {errors.lastName && <p className="error-message">{errors.lastName}</p>}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    className={`form-input ${errors.email ? "error" : ""}`}
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="user@example.com"
-                  />
-                  {errors.email && <p className="error-message">{errors.email}</p>}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Username *</label>
-                  <input
-                    className={`form-input ${errors.username ? "error" : ""}`}
-                    value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
-                    placeholder="Enter username (4-20 characters)"
-                  />
-                  {errors.username && <p className="error-message">{errors.username}</p>}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Password *</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      className={`form-input ${errors.password ? "error" : ""}`}
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      placeholder="Enter password (min 8 characters)"
-                      style={{ paddingRight: "40px" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      style={{
-                        position: "absolute",
-                        right: "12px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "none",
-                        border: "none",
-                        color: "#6b7280",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="error-message">{errors.password}</p>}
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="button-secondary small" onClick={() => closeModal("addEmployee")}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="button-primary small">
-                    Create Employee
-                  </button>
-                </div>
-              </form>
+              <p className="delete-warning">
+                Are you sure you want to delete employee {deletingEmployee?.firstName} {deletingEmployee?.lastName}?
+                This action cannot be undone.
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteEmployee")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteEmployee}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Client Modal */}
+      {isDeleteClientOpen && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+          <div
+            className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Client
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteClient")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete{" "}
+                <strong>
+                  {selectedPerson?.firstName} {selectedPerson?.lastName}
+                </strong>
+                ?
+              </p>
+              <p className="delete-warning" style={{ marginTop: "12px", fontSize: "14px", color: "#6b7280" }}>
+                This action cannot be undone and will permanently remove:
+              </p>
+              <ul style={{ marginTop: "8px", marginLeft: "20px", color: "#6b7280", fontSize: "14px" }}>
+                <li>All personal information</li>
+                <li>All bank accounts ({selectedPerson?.accounts?.length || 0} accounts)</li>
+                <li>All CRM entries ({selectedPerson?.crmEntries?.length || 0} entries)</li>
+                <li>All associated data</li>
+              </ul>
+              <div className="form-actions" style={{ marginTop: "24px" }}>
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteClient")}>
+                  Cancel
+                </button>
+                <button type="button" className="button-danger" onClick={handleDeleteClient}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Client Permanently
+                </button>
+              </div>
             </div>
           </div>
         </div>
