@@ -24,36 +24,50 @@
 .success-toast {
   position: fixed;
   top: 20px;
-  right: 20px;
+  left: 50%;
+  transform: translate(-50%, -100%);
   background: linear-gradient(to right, #8b5cf6, #3b82f6);
   color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  display: flex;
+  padding: 16px 28px;
+  border-radius: 12px;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  animation: slideInRight 0.15s ease-out forwards, fadeOut 0.15s ease-in forwards 2.7s;
+  visibility: hidden;
+  opacity: 0;
+  transform-origin: top center;
 }
 
-@keyframes slideInRight {
+.success-toast.showing {
+  visibility: visible;
+  animation: toastFadeIn 0.3s ease-out forwards;
+}
+
+.success-toast.closing {
+  animation: toastFadeOut 0.3s ease-in forwards;
+}
+
+@keyframes toastFadeIn {
   from {
-    transform: translateX(100%);
     opacity: 0;
+    transform: translate(-50%, -100%);
   }
   to {
-    transform: translateX(0);
     opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
-@keyframes fadeOut {
+@keyframes toastFadeOut {
   from {
     opacity: 1;
+    transform: translate(-50%, 0);
   }
   to {
     opacity: 0;
+    transform: translate(-50%, -100%);
   }
 }
 
@@ -744,11 +758,11 @@
 }
 
 .crm-entry-content.opening {
-  animation: crmExpand 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  animation: crmExpand 0.25s ease-out forwards;
 }
 
 .crm-entry-content.closing {
-  animation: crmCollapse 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: crmCollapse 0.2s ease-in forwards;
 }
 
 .delete-crm-button {
@@ -890,33 +904,24 @@
 }
 
 @keyframes crmExpand {
-  0% {
-    transform: scaleY(0.85) rotateX(8deg);
+  from {
     opacity: 0;
+    transform: scaleY(0.95);
   }
-  50% {
-    transform: scaleY(1.1) rotateX(-5deg);
-  }
-  75% {
-    transform: scaleY(0.95) rotateX(3deg);
-  }
-  100% {
-    transform: scaleY(1) rotateX(0);
+  to {
     opacity: 1;
+    transform: scaleY(1);
   }
 }
 
 @keyframes crmCollapse {
-  0% {
-    transform: scaleY(1) rotateX(0);
+  from {
     opacity: 1;
+    transform: scaleY(1);
   }
-  40% {
-    transform: scaleY(1.2) rotateX(-12deg);
-  }
-  100% {
-    transform: scaleY(0) rotateX(0);
+  to {
     opacity: 0;
+    transform: scaleY(0.95);
   }
 }
 
