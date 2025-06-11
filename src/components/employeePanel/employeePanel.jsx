@@ -1199,15 +1199,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const normalizePhoneForCompare = (phone) => {
     if (!phone) return ""
     let cleaned = phone.replace(/\s+/g, "")
-
+  
     if (cleaned.startsWith("00")) {
       cleaned = "+" + cleaned.slice(2)
     }
-
+  
     if (cleaned.startsWith("+")) {
       cleaned = cleaned.slice(1)
     }
-
+  
+    // New line to cut "370" if the number starts with it
+    if (cleaned.startsWith("370")) {
+      cleaned = cleaned.slice(3)
+    }
+  
     return cleaned
   }
 
@@ -1217,6 +1222,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     const normSearch = normalize(searchTerm)
     const searchTokens = normSearch.split(" ").filter(Boolean)
     const normSearchPhone = normalizePhoneForCompare(searchTerm)
+    console.log(normSearchPhone)
 
     return data.filter((person) => {
       const fullName = normalize(`${person.firstName} ${person.lastName}`)
