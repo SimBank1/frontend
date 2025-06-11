@@ -1386,43 +1386,43 @@ const handleUpdateCrm = async (e) => {
             </button>
           </div>
           <div className="card-content">
-  {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
-    selectedPerson.bank_accs.map((account) => (
-      <div key={account.id} className="account-item">
-        <div className="account-header">
-          <span className="account-iban">{account.iban}</span>
-          <span className="account-badge">{account.currency}</span>
+          {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
+  selectedPerson.bank_accs.map((account, index) => ( // Add 'index' as a second argument to map
+    <div key={`${account.id}-${index}`} className="account-item"> 
+      <div className="account-header">
+        <span className="account-iban">{account.iban}</span>
+        <span className="account-badge">{account.currency}</span>
+      </div>
+      <div className="account-details">
+        <div className="account-detail">
+          <div className="info-label">Balance</div>
+          <div className="info-value">
+            {Number(account.balance).toFixed(2)} {account.currency}
+          </div>
         </div>
-        <div className="account-details">
-          <div className="account-detail">
-            <div className="info-label">Balance</div>
-            <div className="info-value">
-              {Number(account.balance).toFixed(2)} {account.currency}
-            </div>
-          </div>
-          <div className="account-detail">
-            <div className="info-label">Plan</div>
-            <div className="info-value">{account.plan}</div>
-          </div>
-          <div className="account-detail">
-            <div className="info-label">Card Type</div>
-            <div className="info-value">
-              {account.type === "none"
-                ? "No Card"
-                : account.type === "Debeto"
-                ? "Debit Card"
-                : "Credit Card"}
-            </div>
+        <div className="account-detail">
+          <div className="info-label">Plan</div>
+          <div className="info-value">{account.plan}</div>
+        </div>
+        <div className="account-detail">
+          <div className="info-label">Card Type</div>
+          <div className="info-value">
+            {account.type === "none"
+              ? "No Card"
+              : account.type === "Debeto"
+              ? "Debit Card"
+              : "Credit Card"}
           </div>
         </div>
       </div>
-    ))
-  ) : (
-    <div className="no-data">
-      <CreditCard className="no-data-icon" />
-      <p className="no-data-text">No accounts found</p>
     </div>
-  )}
+  ))
+) : (
+  <div className="no-data">
+    <CreditCard className="no-data-icon" />
+    <p className="no-data-text">No accounts found</p>
+  </div>
+)}
 </div>
 
             </div>
@@ -1746,7 +1746,12 @@ const handleUpdateCrm = async (e) => {
                 <div className="crm-entry-header">
                     <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
                         {expandedCrmEntries[entry.id || `crm-${i}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        <span style={{ fontWeight: 600, marginLeft: "8px" }}>{entry.title || "Untitled Entry"}</span>
+                  <span style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: 'break-word' }}>
+                    {entry.title
+                      ? (entry.title.length > 75 ? entry.title.substring(0, 50): entry.title)
+                      : "Untitled Entry"
+                    }
+                  </span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span> {/* Uses contact_type from DB */}
@@ -1770,7 +1775,7 @@ const handleUpdateCrm = async (e) => {
                         </div>
                     </div>
                 </div>
-                {expandedCrmEntries[entry.id || `crm-${i}`] && <div className="crm-entry-content">{entry.content}</div>}
+                {expandedCrmEntries[entry.id || `crm-${i}`] && <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}} className="crm-entry-content">{entry.content}</div>}
             </div>
         ))
     ) : (
