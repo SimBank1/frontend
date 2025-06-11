@@ -744,7 +744,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     // Check currency limits - unlimited EUR, only one of each other currency
     if (selectedPerson && accountFormData.currency !== "EUR") {
       const existingCurrencyAccounts =
-        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
+        selectedPerson.bank_accs?.filter((acc) => acc.currency === accountFormData.currency) || []
       if (existingCurrencyAccounts.length >= 1) {
         newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
       }
@@ -767,38 +767,73 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }
 
-  const handleAddAccount = (e) => {
-    e.preventDefault()
-    if (!selectedPerson) return
-    if (!validateAccountForm()) return
-
+  const handleAddAccount = async (e) => {
+    e.preventDefault();
+    if (!selectedPerson) return;
+    if (!validateAccountForm()) return;
+  
     const newAccount = {
-      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
-      ...accountFormData,
-      balance: Number.parseFloat(accountFormData.balance),
-    }
+      first_name: selectedPerson.firstName || "", // optional but included if expected
+      personal_code: selectedPerson.personalCode,
+      iban: accountFormData.iban,
+      currency: accountFormData.currency,
+      balance: accountFormData.balance,
+      type: accountFormData.cardType,
+      plan: accountFormData.servicePlan,
+      opening_date: accountFormData.openingDate, // should be YYYY-MM-DD
+    };
+  
+    try {
+      const response = await fetch(getServerLink() + "/createBankAcc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ensures session is sent
+        body: JSON.stringify(newAccount),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create bank account");
+      }
 
-    const updatedPerson = {
-      ...selectedPerson,
-      accounts: [...(selectedPerson.accounts || []), newAccount],
-    }
+      const updatedPerson = {
+        ...selectedPerson,
+        bank_accs: [...(selectedPerson.bank_accs || []), data],
+      };
 
-    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-    setSelectedPerson(updatedPerson)
-    setAccountFormData({
-      iban: "",
-      currency: "EUR",
-      balance: "",
-      cardType: "none",
-      servicePlan: "Standard",
-      openingDate: new Date().toISOString().split("T")[0],
-    })
-    setErrors({})
-    closeModal("addAccount")
-    setTimeout(() => {
-      showSuccess("Bank account created successfully!")
-    }, 200)
-  }
+      setData((prev) =>
+        prev.map((person) =>
+          person.id === selectedPerson.id ? updatedPerson : person
+        )
+      );
+      setSelectedPerson(updatedPerson); // This line updates the currently selected person
+  
+      // Reset form
+      setAccountFormData({
+        iban: "",
+        currency: "EUR",
+        balance: "",
+        cardType: "none",
+        servicePlan: "Standard",
+        openingDate: new Date().toISOString().split("T")[0],
+      });
+      setErrors({});
+      closeModal("addAccount");
+  
+      setTimeout(() => {
+        showSuccess("Bank account created successfully!");
+      }, 200);
+    } catch (error) {
+      console.error("Error creating bank account:", error);
+      showSuccess("Error creating bank account. Please try again.");
+    }
+  };
+  
+
+
 
   // ADD CRM ENTRY with new structure and employee username
   const validateCrmForm = () => {
@@ -1343,45 +1378,46 @@ const handleUpdateCrm = async (e) => {
               Add Account
             </button>
           </div>
-              <div className="card-content">
-                {selectedPerson.accounts && selectedPerson.accounts.length > 0 ? (
-                  selectedPerson.accounts.map((account) => (
-                    <div key={account.id} className="account-item">
-                      <div className="account-header">
-                        <span className="account-iban">{account.iban}</span>
-                        <span className="account-badge">{account.currency}</span>
-                      </div>
-                      <div className="account-details">
-                        <div className="account-detail">
-                          <div className="info-label">Balance</div>
-                          <div className="info-value">
-                            {account.balance.toFixed(2)} {account.currency}
-                          </div>
-                        </div>
-                        <div className="account-detail">
-                          <div className="info-label">Plan</div>
-                          <div className="info-value">{account.servicePlan}</div>
-                        </div>
-                        <div className="account-detail">
-                          <div className="info-label">Card Type</div>
-                          <div className="info-value">
-                            {account.cardType === "none"
-                              ? "No Card"
-                              : account.cardType === "Debeto"
-                                ? "Debit Card"
-                                : "Credit Card"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="no-data">
-                    <CreditCard className="no-data-icon" />
-                    <p className="no-data-text">No accounts found</p>
-                  </div>
-                )}
-              </div>
+          <div className="card-content">
+  {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
+    selectedPerson.bank_accs.map((account) => (
+      <div key={account.id} className="account-item">
+        <div className="account-header">
+          <span className="account-iban">{account.iban}</span>
+          <span className="account-badge">{account.currency}</span>
+        </div>
+        <div className="account-details">
+          <div className="account-detail">
+            <div className="info-label">Balance</div>
+            <div className="info-value">
+              {Number(account.balance).toFixed(2)} {account.currency}
+            </div>
+          </div>
+          <div className="account-detail">
+            <div className="info-label">Plan</div>
+            <div className="info-value">{account.plan}</div>
+          </div>
+          <div className="account-detail">
+            <div className="info-label">Card Type</div>
+            <div className="info-value">
+              {account.type === "none"
+                ? "No Card"
+                : account.type === "Debeto"
+                ? "Debit Card"
+                : "Credit Card"}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))
+  ) : (
+    <div className="no-data">
+      <CreditCard className="no-data-icon" />
+      <p className="no-data-text">No accounts found</p>
+    </div>
+  )}
+</div>
+
             </div>
           )}
   
@@ -2434,7 +2470,7 @@ const handleUpdateCrm = async (e) => {
                 <br />
                 <strong>Entry:</strong> {deletingCrmEntry?.title || "Untitled Entry"}
                 <br />
-                <strong>Date:</strong> {deletingCrmEntry?.date}
+                <strong>Date:</strong> {deletingCrmEntry?.date_of_contact}
               </p>
               <div className="form-actions">
                 <button type="button" className="button-secondary" onClick={() => closeModal("deleteCrm")}>
