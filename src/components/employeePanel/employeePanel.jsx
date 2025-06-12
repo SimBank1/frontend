@@ -2251,6 +2251,18 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       </div>
 
                       <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+                    
+                      <div className="form-group">
                       <label className="form-label">Country *</label>
                       <input
                         className={`form-input ${errors.registrationCountry ? "error" : ""}`}
@@ -2263,17 +2275,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   
                     </div>
                     
-                    <div className="form-group">
-                      <label className="form-label">City *</label>
-                      <input
-                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
-                        value={clientFormData.registrationCity}
-                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
-                        placeholder="City or Village"
-                        required
-                      />
-                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
-                    </div>
+                   
                   </div>
                   <div className="form-checkbox">
                     <input

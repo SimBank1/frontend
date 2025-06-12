@@ -615,7 +615,7 @@ useEffect(() => {
             ) : person.marketingConsent !== undefined ? (
               <p className="user-preview no-recent-activities">No recent activities</p>
             ) : null}
-            {person.marketingConsent === undefined && <p className="user-preview">{person.email}</p>}
+            {person.marketingConsent === undefined && <p className="user-preview">{person.username}</p>}
           </div>
         </div>
       </div>
