@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useTheme } from "@/ThemeContext"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import "./login.css"
 import { getServerLink } from "@/server_link"
 export default function Login({ onLogin }) {
+  const { darkMode, toggleDarkMode } = useTheme()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -469,6 +471,17 @@ export default function Login({ onLogin }) {
                 <div className="nav-secure">
                   <Lock size={14} />
                   <span>Secure Access</span>
+                </div>
+                <div className="dark-mode-toggle">
+                  <span>Dark Mode</span>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={darkMode}
+                      onChange={toggleDarkMode}
+                    />
+                    <span className="slider" />
+                  </label>
                 </div>
               </div>
             </div>

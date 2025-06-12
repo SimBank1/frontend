@@ -28,6 +28,7 @@ import {
 import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { useTheme } from '@/ThemeContext';
 
 export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -35,6 +36,9 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
+
+  const adminUsername = currentUser?.username
+  const { darkMode, toggleDarkMode } = useTheme()
 
 
 
@@ -1182,6 +1186,14 @@ useEffect(() => {
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
             </button>
+          </div>
+          <p className="logged-user">Logged in as: {adminUsername}</p>
+          <div className="dark-mode-toggle">
+            <span>Dark Mode</span>
+            <label className="switch">
+              <input type="checkbox" checked={darkMode} onChange={toggleDarkMode} />
+              <span className="slider" />
+            </label>
           </div>
         </div>
       </div>

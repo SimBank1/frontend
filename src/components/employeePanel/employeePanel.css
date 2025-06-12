@@ -1428,3 +1428,90 @@ body {
   width: auto;
   opacity: 0.8;
 }
+
+.logged-user {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: linear-gradient(to right, #7c3aed, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .logged-user {
+  background: linear-gradient(to right, #c084fc, #60a5fa);
+}
+
+.dark-mode-toggle {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: #8b5cf6;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Dark mode overrides */
+.dark .employee-panel {
+  background-color: #1f2937;
+  color: #f8fafc;
+}
+
+.dark .sidebar,
+.dark .middle-panel,
+.dark .right-panel,
+.dark .header,
+.dark .bottom-section {
+  background-color: #111827;
+  border-color: #374151;
+  color: #f8fafc;
+}
+
+.dark .search-input {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #f8fafc;
+}
