@@ -82,11 +82,16 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [successClosing, setSuccessClosing] = useState(false)
+  
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+
+
+    // Apple-style success animation states
+    const [showSuccess, setShowSuccess] = useState(false)
+    const [closing, setClosing] = useState(false)
+    const [successMessage, setSuccessMessage] = useState("")
+  
 
 
 // In AdminPanel.jsx
