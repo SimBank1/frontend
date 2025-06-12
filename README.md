@@ -58,7 +58,7 @@ Use `--build` again whenever the code changes.
 
 ## 🛠 Config
 
-Adjust the backend URL in `src/server_link.js` in edit `vite.config.js` if you need a custom API endpoint.
+Adjust the backend URL in `src/server_link.js` and edit `vite.config.js` if you need a custom API endpoint.
 
 ---
 
