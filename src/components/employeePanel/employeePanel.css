@@ -123,6 +123,24 @@ body {
   z-index: 10;
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
 .header {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
@@ -442,6 +460,24 @@ body {
   padding: 24px;
   overflow-y: auto;
   background-color: #f8fafc;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
 
 /* Empty State */

@@ -696,9 +696,29 @@
   max-width: 24rem;
   width: 100%;
   margin: 0 16px;
+  max-height: 90vh;
+  overflow-y: auto;
   transform: scale(1);
   transition: all 0.2s ease-out;
   animation: popupEnter 0.2s ease-out;
+}
+
+.popup-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.popup-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
 
 .popup-content.closing {
