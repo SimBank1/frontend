@@ -313,31 +313,7 @@ useEffect(() => {
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
     }, 200)
   }
-  // Generate IBAN starting with LT817044
-  const generateIBAN = () => {
-    const prefix = "LT817044"
-    const randomDigits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")
-    return prefix + randomDigits
-  }
 
-  // Get date of birth from personal code
-  const getDateOfBirthFromPersonalCode = (personalCode) => {
-    if (personalCode.length !== 11) return ""
-    const century = personalCode[0]
-    const year = personalCode.substring(1, 3)
-    const month = personalCode.substring(3, 5)
-    const day = personalCode.substring(5, 7)
-    let fullYear
-
-    if (century === "1" || century === "2") fullYear = "18" + year
-    else if (century === "3" || century === "4") fullYear = "19" + year
-    else if (century === "5" || century === "6") fullYear = "20" + year
-    else return ""
-
-    return `${fullYear}-${month}-${day}`
-  }
-
-  // Filter and search logic with phone number search
   const filteredData = useMemo(() => {
     let filtered = data
 
@@ -347,7 +323,6 @@ useEffect(() => {
       filtered = filtered.filter((person) => person?.marketingConsent === undefined)
     }
 
-    // Apply search filter including phone numbers
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase()
 
