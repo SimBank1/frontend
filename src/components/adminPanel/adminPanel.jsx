@@ -228,15 +228,18 @@ useEffect(() => {
 
     return username
   }
-
   const generatePassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    const numbers = "0123456789"
     let password = ""
-    for (let i = 0; i < 6; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    for (let i = 0; i < 7; i++) {
+      password += letters.charAt(Math.floor(Math.random() * letters.length))
+    }
+    for (let i = 0; i < 3; i++) {
+      password += numbers.charAt(Math.floor(Math.random() * numbers.length))
     }
     return password
-  }
+  }  
 
   // Copy username and password together
   const copyCredentials = () => {
@@ -1235,7 +1238,7 @@ useEffect(() => {
             </div>
             <div className="modal-body">
               <form onSubmit={handleEmployeeSubmit}>
-                <div className="form-grid">
+                <div className="form-grid2">
                   <div className="form-group">
                     <label className="form-label">First Name *</label>
                     <input
