@@ -75,6 +75,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }, [data]);
 
+  // Automatically scroll the client list to the selected client
+  useEffect(() => {
+    if (selectedClientRef.current) {
+      selectedClientRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }
+  }, [selectedPerson]);
+
   useEffect(() => {
     if (closingCrmEntry) {
       const timer = setTimeout(() => setClosingCrmEntry(null), 400)
@@ -102,6 +113,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
+
+
+  const selectedClientRef = useRef(null)
 
   // Apple-style success animation implementation
   const triggerSuccess = (message) => {
@@ -813,7 +827,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (openingDateError) newErrors.openingDate = openingDateError
 
     console.log("hej", selectedPerson)
-    
+
     if (selectedPerson && accountFormData.currency !== "EUR") {
       const existingCurrencyAccounts =
         selectedPerson.bank_accs?.filter((acc) => acc.currency === accountFormData.currency) || []
@@ -840,7 +854,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
 
-  
+
 
 
   const createBankAccount = async (accountData) => {
@@ -852,14 +866,14 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(accountData),
-        credentials:"include"
+        credentials: "include"
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`API error: ${response.status} - ${errorData.message || response.statusText}`);
       }
-  
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -867,35 +881,35 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       throw error;
     }
   };
-  
+
   const handleAddAccount = async (e) => {
     e.preventDefault();
-  
+
     if (!selectedPerson) return;
     if (!validateAccountForm()) return;
-  
+
     const newAccount = {
       id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
       ...accountFormData,
       balance: Number.parseFloat(accountFormData.balance),
     };
-  
+
     const apiAccount = {
-      id: selectedPerson.accounts?.length + 1 || 1, 
+      id: selectedPerson.accounts?.length + 1 || 1,
       first_name: selectedPerson.firstName,
       personal_code: Number(selectedPerson.personalCode),
       iban: accountFormData.iban,
       currency: accountFormData.currency,
-      balance: Math.round(Number(accountFormData.balance)), 
+      balance: Math.round(Number(accountFormData.balance)),
       type: accountFormData.cardType === "none" ? "" : accountFormData.cardType,
       plan: accountFormData.servicePlan,
       opening_date: accountFormData.openingDate,
     };
-  
+
     try {
       const responseFromApi = await createBankAccount(apiAccount);
       console.log("Bank account created successfully on backend:", responseFromApi);
-  
+
       const updatedPerson = {
         ...selectedPerson,
         bank_accs: [...(selectedPerson.bank_accs || []), newAccount],
@@ -905,11 +919,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         prev.map((person) => (person.personalCode === selectedPerson.personalCode ? updatedPerson : person))
       );
       setSelectedPerson(updatedPerson);
-      
-      
 
-    
-  
+
+
+
+
       setAccountFormData({
         iban: "",
         currency: "EUR",
@@ -920,17 +934,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       });
       setErrors({});
       closeModal("addAccount");
-  
+
       setTimeout(() => {
         triggerSuccess("Bank account created successfully!");
       }, 200);
-  
+
     } catch (err) {
       console.error("Failed to create bank account:", err);
       triggerError("Failed to create account. Please try again.");
     }
   };
-  
+
 
   // ADD CRM ENTRY with new structure and employee username
   const validateCrmForm = () => {
@@ -1316,6 +1330,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         key={`${person.id}-${idx}`}
         className={`client-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
         onClick={() => handlePersonClick(person)}
+        ref={selectedPerson?.id === person.id ? selectedClientRef : null}
         style={{ animationDelay: `${idx * 0.05}s` }}
       >
         <div className="client-card-content">
@@ -2074,7 +2089,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <div className="form-group">
                   <label className="form-label">Registration Address *</label>
                   <div className="form-grid">
-                 
+
                     <div className="form-group">
                       <label className="form-label">Street *</label>
                       <input
@@ -2112,17 +2127,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   </div>
                   <div className="form-grid">
                     <div className="form-group">
-                    <label className="form-label">Postal Code *</label>
-                    <input
-                      className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
-                      value={clientFormData.registrationPostalCode}
-                      onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
-                      placeholder="Postal code"
-                      required
-                    />
-                    {errors.registrationPostalCode && (
-                      <div className="error-message">{errors.registrationPostalCode}</div>
-                    )}
+                      <label className="form-label">Postal Code *</label>
+                      <input
+                        className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                        value={clientFormData.registrationPostalCode}
+                        onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                        placeholder="Postal code"
+                        required
+                      />
+                      {errors.registrationPostalCode && (
+                        <div className="error-message">{errors.registrationPostalCode}</div>
+                      )}
 
                       <label className="form-label">Country *</label>
                       <input
@@ -2152,11 +2167,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                         value={clientFormData.registrationRegion}
                         onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
                         placeholder="Region"
-                        
+
                       />
                       {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
                     </div>
-                   
+
                   </div>
                   <div className="form-group">
                     <label className="form-label">Second Phone (Optional)</label>
