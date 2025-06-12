@@ -500,6 +500,17 @@ useEffect(() => {
         setTimeout(() => {
           triggerSuccess("Client deleted successfully!")
         }, 200)
+        setData((prev) => {
+          const updated = prev.filter((person) => person.id !== selectedPerson.id)
+          if (updated.length > 0) {
+            setSelectedPerson(updated[0])
+            localStorage.setItem("lastSelectedPersonId", updated[0].id)
+          } else {
+            setSelectedPerson(null)
+            localStorage.removeItem("lastSelectedPersonId")
+          }
+          return updated
+        })
 
       } else {
         // Handle cases where the server indicates a failure even with a 200 OK status

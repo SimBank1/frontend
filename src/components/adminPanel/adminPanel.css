@@ -205,6 +205,25 @@
   padding: 16px;
 }
 
+.user-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.user-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.user-list::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+
 .user-list h3 {
   font-size: 14px;
   font-weight: 500;
