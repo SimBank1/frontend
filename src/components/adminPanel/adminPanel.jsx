@@ -479,8 +479,9 @@ useEffect(() => {
     } catch (error) {
       console.error("Error creating employee:", error)
       setTimeout(() => {
-        triggerSuccess(`Email already in us`)
+        triggerSuccess(`Error creating employee`)
       }, 200)
+      closeModal("addEmployee")
     }
   }
 
