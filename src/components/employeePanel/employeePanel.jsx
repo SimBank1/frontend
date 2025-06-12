@@ -639,7 +639,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         };
 
 
-        setData((prev) => [...prev, newClient]);
+        setData((prev) => [newClient, ...prev]);
 
         // Reset form
         setClientFormData({
