@@ -671,6 +671,13 @@
   font-weight: 500;
 }
 
+/* CRM Section */
+.crm-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .crm-header {
   display: flex;
   align-items: center;
@@ -719,6 +726,11 @@
   padding: 16px;
   opacity: 1;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.crm-entry:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .crm-entry-header {
@@ -736,6 +748,11 @@
   flex: 1;
 }
 
+.crm-entry-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .crm-entry-badge {
   font-size: 12px;
   background-color: #ede9fe;
@@ -743,6 +760,12 @@
   border: 1px solid #c4b5fd;
   padding: 2px 8px;
   border-radius: 12px;
+}
+
+.crm-entry-date,
+.crm-entry-employee {
+  font-size: 13px;
+  color: #6b7280;
 }
 
 .crm-entry-meta {

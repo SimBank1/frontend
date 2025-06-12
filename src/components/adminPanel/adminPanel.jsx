@@ -1038,7 +1038,7 @@ useEffect(() => {
     }
 
     return (
-      <div>
+      <div className="crm-container">
         <div className="crm-header">
           <div className="crm-info">
             <div className="crm-avatar">
@@ -1055,38 +1055,63 @@ useEffect(() => {
 
         <div className="crm-entries">
           {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
-            selectedPerson.crmEntries.map((entry) => (
-              <div key={entry.id} className="crm-entry">
+            selectedPerson.crmEntries.map((entry, i) => (
+              <div key={entry.id || `crm-${i}`} className="crm-entry">
                 <div className="crm-entry-header">
-                  <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id)}>
-                    {expandedCrmEntries[entry.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <span className="crm-entry-badge">{entry.contactType}</span>
-                    <span className="crm-entry-meta">{entry.date}</span>
-                    <span className="crm-entry-meta">by {entry.employeeName}</span>
-                  </div>
-                  {canDeleteCrmEntry(entry) && (
-                    <button
-                      className="delete-crm-button"
-                      onClick={() => deleteCrmEntry(entry.id)}
-                      title="Delete CRM entry"
+                  <div
+                    className="crm-entry-title"
+                    onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}
+                  >
+                    {expandedCrmEntries[entry.id || `crm-${i}`] ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                    <span
+                      style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: "break-word" }}
                     >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+                      {entry.title
+                        ? entry.title.length > 75
+                          ? entry.title.substring(0, 50)
+                          : entry.title
+                        : "Untitled Entry"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span className="crm-entry-badge">{entry.contactType}</span>
+                    <span className="crm-entry-date">{entry.date}</span>
+                    <span className="crm-entry-employee">by {entry.employeeName}</span>
+                    {canDeleteCrmEntry(entry) && (
+                      <div className="crm-entry-actions">
+                        <button
+                          className="delete-crm-button"
+                          onClick={() => deleteCrmEntry(entry.id)}
+                          title="Delete CRM entry"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {(expandedCrmEntries[entry.id] || closingCrmEntry === entry.id) && (
-                  <p
-                    className={`crm-entry-content ${closingCrmEntry === entry.id ? "closing" : "opening"}`}
+                {(expandedCrmEntries[entry.id || `crm-${i}`] ||
+                  closingCrmEntry === (entry.id || `crm-${i}`)) && (
+                  <div
+                    style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
+                    className={`crm-entry-content ${
+                      closingCrmEntry === (entry.id || `crm-${i}`) ? "closing" : "opening"
+                    }`}
                   >
                     {entry.content}
-                  </p>
+                  </div>
                 )}
               </div>
             ))
           ) : (
             <div className="no-data">
               <FileText className="no-data-icon" />
-              <p className="no-data-text">No CRM entries found for this client</p>
+              <p className="no-data-text">No recent activities</p>
+              <p className="no-data-subtext">Create a new entry to start tracking client interactions</p>
             </div>
           )}
         </div>
