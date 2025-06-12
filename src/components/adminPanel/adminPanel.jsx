@@ -198,24 +198,6 @@ export default function AdminPanel({ data: initialData }) {
 
   const [errors, setErrors] = useState({})
 
-  // Auto-generate username and password when name changes
-  useEffect(() => {
-    if (employeeFormData.firstName && employeeFormData.lastName) {
-      const username = generateUsername(employeeFormData.firstName, employeeFormData.lastName)
-      const password = generatePassword()
-
-      setEmployeeFormData((prev) => ({
-        ...prev,
-        username,
-        password,
-      }))
-    }
-  }, [
-    employeeFormData.firstName, 
-    employeeFormData.lastName,
-    generateUsername,
-    generatePassword,
-  ])
 
   const generateUsername = useCallback(
     (firstName, lastName) => {
@@ -248,6 +230,25 @@ export default function AdminPanel({ data: initialData }) {
     return password
   }
   , [])
+
+    // Auto-generate username and password when name changes
+    useEffect(() => {
+      if (employeeFormData.firstName && employeeFormData.lastName) {
+        const username = generateUsername(employeeFormData.firstName, employeeFormData.lastName)
+        const password = generatePassword()
+  
+        setEmployeeFormData((prev) => ({
+          ...prev,
+          username,
+          password,
+        }))
+      }
+    }, [
+      employeeFormData.firstName, 
+      employeeFormData.lastName,
+      generateUsername,
+      generatePassword,
+    ])
 
   // Copy username and password together
   const copyCredentials = () => {
