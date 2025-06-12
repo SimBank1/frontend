@@ -876,7 +876,7 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
 }
-
+y
 .crm-entries {
   display: flex;
   flex-direction: column;
@@ -949,14 +949,22 @@ body {
   border-radius: 8px;
   border-left: 3px solid #8b5cf6;
   transform-origin: top center;
+
+}
+
+.crm-entry-content.showing,
+.crm-entry-content.open {
+  height: auto;
+  opacity: 1;
+  padding: 12px; 
 }
 
 .crm-entry-content.opening {
-  animation:  crmExpand 0.0s ease-out forwards;
+  animation: none; /* Remove the opening animation */
 }
 
 .crm-entry-content.closing {
-  animation: crmCollapse 0.0s ease-in forwards;
+  animation: none; /* Remove the closing animation */
 }
 
 .edit-button {
@@ -1435,27 +1443,6 @@ body {
   }
 }
 
-@keyframes crmExpand {
-  0% {
-    transform: scaleY(0); /* Start from collapsed/hidden */
-    opacity: 0;
-  }
-  100% {
-    transform: scaleY(1); /* Expand to full size */
-    opacity: 1;
-  }
-}
-
-@keyframes crmCollapse {
-  0% {
-    transform: scaleY(1); /* Start from full size */
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(0); /* Collapse to hidden */
-    opacity: 0;
-  }
-}
 
 /* Responsive Adjustments */
 @media (max-width: 1200px) {

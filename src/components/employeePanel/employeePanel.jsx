@@ -1842,14 +1842,14 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <div className="crm-entry-header">
                   <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
                     {expandedCrmEntries[entry.id || `crm-${i}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <span style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: 'break-word' }}>
+                    <span style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: 'break-word', userSelect: 'none' }}>
                       {entry.title
                         ? (entry.title.length > 75 ? entry.title.substring(0, 50) : entry.title)
                         : "Untitled Entry"
                       }
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" ,userSelect: 'none' }}>
                     <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span> {/* Uses contact_type from DB */}
                     <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span> {/* Uses date_of_contact from DB */}
                     <span className="crm-entry-employee">by {entry.username}</span> {/* Uses username from DB */}
@@ -1871,14 +1871,15 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     </div>
                   </div>
                 </div>
-                {(expandedCrmEntries[entry.id || `crm-${i}`] || closingCrmEntry === (entry.id || `crm-${i}`)) && (
-                  <div
-                    style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
-                    className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? 'closing' : 'opening'}`}
-                  >
-                    {entry.content}
-                  </div>
-                )}
+                  {expandedCrmEntries[entry.id || `crm-${i}`] && (
+                        <div
+                          style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
+                          className="crm-entry-content"
+                        >
+                          {entry.content}
+                        </div>
+                      )}
+
               </div>
             ))
           ) : (

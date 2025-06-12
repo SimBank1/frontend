@@ -1104,16 +1104,14 @@ export default function AdminPanel({ data: initialData }) {
                     <span className="crm-entry-employee">by {entry.username}</span>
                   </div>
                 </div>
-                {(expandedCrmEntries[entry.id || `crm-${i}`] ||
-                  closingCrmEntry === (entry.id || `crm-${i}`)) && (
-                    <div
-                      style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
-                      className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? "closing" : "opening"
-                        }`}
-                    >
-                      {entry.content}
-                    </div>
-                  )}
+                {expandedCrmEntries[entry.id || `crm-${i}`] && (
+                        <div
+                          style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
+                          className="crm-entry-content"
+                        >
+                          {entry.content}
+                        </div>
+                      )}
               </div>
             ))
           ) : (
