@@ -1455,7 +1455,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       <div>
         <div className="profile-header">
           <div className="profile-avatar">
-            {isEmployee ? <Briefcase size={24} color="white" /> : <User size={24} color="white" />}
+            <User size={24} color="white" />
           </div>
           <div className="profile-info">
             <h2>

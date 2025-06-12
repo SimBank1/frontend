@@ -156,9 +156,6 @@ export default function Login({ onLogin }) {
         if (popup.show) {
           hidePopup()
         }
-        if (successPopup.show && successPopup.canDismiss) {
-          handleSuccessPopupDismiss()
-        }
         if (matrixMode) {
           setMatrixMode(false)
           setMatrixChars([])
@@ -177,7 +174,6 @@ export default function Login({ onLogin }) {
     successPopup.canDismiss, 
     matrixMode, 
     showVegovaAnimation,
-    handleSuccessPopupDismiss
   ])
 
   // Logo click easter egg
@@ -327,24 +323,6 @@ export default function Login({ onLogin }) {
       handleLogin()
     }
   }
-
-  const handleSuccessPopupDismiss = useCallback(() => {
-    if (successPopup.canDismiss) {
-      setSuccessPopup((prev) => ({ ...prev, isClosing: true }))
-      setTimeout(() => {
-        setSuccessPopup({ show: false, message: "", canDismiss: false, isClosing: false })
-        if (onLogin) {
-          if (username === "admin") {
-            onLogin({ username, password, userType: "admin" })
-          } else {
-            onLogin({ username, password, userType: "employee" })
-          }
-        }
-        navigate("/dashboard")
-      }, 200)
-    }
-  }
-  , [successPopup.canDismiss, onLogin, navigate, username, password])
 
   return (
     <div className="login-container">
@@ -701,38 +679,6 @@ export default function Login({ onLogin }) {
               <button onClick={hidePopup} className="popup-button">
                 Dismiss
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Popup Modal */}
-      {successPopup.show && (
-        <div className="popup-overlay" onClick={handleSuccessPopupDismiss}>
-          <div className="popup-glow-container">
-            <div className="popup-outer-glow success" />
-            <div className="popup-inner-glow success" />
-            <div
-              className={`popup-content ${successPopup.isClosing ? "closing" : ""}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {successPopup.canDismiss && (
-                <button onClick={handleSuccessPopupDismiss} className="popup-close">
-                  <X size={18} />
-                </button>
-              )}
-              <div className="popup-header">
-                <div className="popup-icon success">
-                  <CheckCircle size={20} color="white" />
-                </div>
-                <h3 className="popup-title">Success</h3>
-              </div>
-              <p className="popup-message">{successPopup.message}</p>
-              {successPopup.canDismiss && (
-                <button onClick={handleSuccessPopupDismiss} className="popup-button">
-                  Continue
-                </button>
-              )}
             </div>
           </div>
         </div>
