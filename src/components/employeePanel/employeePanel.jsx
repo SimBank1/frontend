@@ -503,18 +503,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       cleanedPhone = '+' + cleanedPhone.slice(2)
     }
 
-    try {
-      // Try parsing as international number
-      const parsed = parsePhoneNumberFromString(cleanedPhone, "LT"); // fallback region
-
-      if (parsed && parsed.isValid()) {
-        return parsed.formatInternational()
-      }
-    } catch {
-      // If parsing fails, return false
-      return false;
-    }
-
     return false
   }
 
