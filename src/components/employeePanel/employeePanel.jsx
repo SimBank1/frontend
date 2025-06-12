@@ -1800,6 +1800,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               <img src="/vegova-logo.png" alt="Vegova Ljubljana" className="vegova-logo-sidebar-img" />
             </div>
           </div>
+          <div className="logged-in-info">Logged in as: {employeeUsername}</div>
           <div className="search-container">
             <Search className="search-icon" />
             <input

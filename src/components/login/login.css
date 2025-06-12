@@ -7,7 +7,7 @@
 .login-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #6d28d9, #1e40af, #7c3aed, #4f46e5);
+  background: linear-gradient(135deg, #0f172a, #1e3a8a, #2563eb, #1e40af);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -15,7 +15,7 @@
 .login-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2));
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.3), rgba(30, 64, 175, 0.3));
 }
 
 .animated-bg {

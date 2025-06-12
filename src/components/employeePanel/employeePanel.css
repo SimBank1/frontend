@@ -1428,3 +1428,10 @@ body {
   width: auto;
   opacity: 0.8;
 }
+
+.logged-in-info {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 12px;
+  text-align: center;
+}
