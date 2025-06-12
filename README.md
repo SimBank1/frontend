@@ -1,12 +1,67 @@
-# React + Vite
+# SimBank Frontend 🌐
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React-based UI for **SimBank**. It connects to the backend service to simulate banking operations.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔧 Requirements
 
-## Expanding the ESLint configuration
+- Node.js 18+
+- npm or yarn
+- Docker + Docker Compose (optional)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🚀 Run Without Docker
+
+1. Install Node.js 18+.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The app runs at: [http://localhost:5173](http://localhost:5173)
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🐳 Run With Docker
+
+Build and start the container:
+
+```bash
+docker compose up --build
+```
+
+The app will be available at [http://localhost:5173](http://localhost:5173).
+
+Use `--build` again whenever the code changes.
+
+---
+
+## 📁 Project Structure
+
+| File/Folder           | Purpose                         |
+|-----------------------|---------------------------------|
+| `src/`                | React source code               |
+| `index.html`          | Entry HTML                      |
+| `Dockerfile`          | Build container image           |
+| `docker-compose.yml`  | Run the app with Docker         |
+
+---
+
+## 🛠 Config
+
+Adjust the backend URL in `src/server_link.js` or edit `vite.config.js` if you need a custom API endpoint.
+
+---
+
+## 📜 License
+
+MIT
