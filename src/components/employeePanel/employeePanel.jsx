@@ -1454,10 +1454,16 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             </h3>
           </div>
           <div className="card-content">
+     
+
             <div className="contact-item">
-              <Mail className="contact-icon" />
-              <span>{selectedPerson.email || "N/A"}</span>
-            </div>
+                <Mail className="contact-icon" />
+                <div className="contact-text">
+                  <div className="info-label">Email</div> 
+                  <div className="info-value"> {selectedPerson.email || "N/A"}</div>
+                </div>
+              </div>
+
             {selectedPerson.phoneNumber && (
               <div className="contact-item">
                 <Phone className="contact-icon" />
