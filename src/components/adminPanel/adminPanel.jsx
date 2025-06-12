@@ -31,7 +31,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function AdminPanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeFilter, setActiveFilter] = useState("")
+  const [activeFilter, setActiveFilter] = useState("employees")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
@@ -443,7 +443,7 @@ useEffect(() => {
       if (!response.ok) {
         const errorData = await response.json()
         setTimeout(() => {
-          triggerSuccess(`Error creating employee`)
+          triggerSuccess(`Email already in use`)
         }, 200)
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
 
@@ -476,7 +476,7 @@ useEffect(() => {
     } catch (error) {
       console.error("Error creating employee:", error)
       setTimeout(() => {
-        triggerSuccess(`Error creating employee`)
+        triggerSuccess(`Email already in us`)
       }, 200)
     }
   }
@@ -1069,7 +1069,7 @@ useEffect(() => {
 
         <div className="crm-entries">
           {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
-            selectedPerson.crm.map((entry, i) => (
+            selectedPerson.crm.slice().reverse().map((entry, i) => (
               <div key={entry.id || `crm-${i}`} className="crm-entry">
                 <div className="crm-entry-header">
                   <div

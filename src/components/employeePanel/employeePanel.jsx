@@ -1879,7 +1879,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         </div>
         <div className="crm-entries">
           {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
-            selectedPerson.crm.map((entry, i) => ( // Changed from selectedPerson.crmEntries to selectedPerson.crm
+            selectedPerson.crm.slice().reverse().map((entry, i) => ( 
               <div key={entry.id || `crm-${i}`} className="crm-entry" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="crm-entry-header">
                   <div className="crm-entry-title" onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}>
