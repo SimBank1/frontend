@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import {
   User,
   Briefcase,
@@ -51,15 +51,15 @@ export default function AdminPanel({ data: initialData }) {
   }
 
 
-   function formatPhoneNumber(input, defaultCountry = 'LT') {
+  function formatPhoneNumber(input, defaultCountry = 'LT') {
     if (!input) return '';
 
-  const phoneNumber = parsePhoneNumberFromString(input, defaultCountry);
+    const phoneNumber = parsePhoneNumberFromString(input, defaultCountry);
 
-  if (!phoneNumber || !phoneNumber.isValid()) return input; // fallback to raw input
+    if (!phoneNumber || !phoneNumber.isValid()) return input; // fallback to raw input
 
-  return phoneNumber.formatInternational(); // always returns in +XXX format
-}
+    return phoneNumber.formatInternational(); // always returns in +XXX format
+  }
 
 
   // Handle mouse up on modal overlay - only close if it's the same target as mouse down
@@ -87,12 +87,12 @@ export default function AdminPanel({ data: initialData }) {
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
 
-    // Apple-style success animation states
-    const [showSuccess, setShowSuccess] = useState(false)
-    const [closing, setClosing] = useState(false)
-    const [successMessage, setSuccessMessage] = useState("")
-  
-    // Apple-style success animation implementation
+  // Apple-style success animation states
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+
+  // Apple-style success animation implementation
   const triggerSuccess = (message) => {
     setSuccessMessage(message)
     setShowSuccess(true)
@@ -121,39 +121,39 @@ export default function AdminPanel({ data: initialData }) {
   }, [closing])
 
 
-// In AdminPanel.jsx
-useEffect(() => {
-  if (selectedPerson) {
-    const type = selectedPerson.marketingConsent !== undefined ? "clients" : "employees";
-    localStorage.setItem(
-      "lastSelectedPerson",
-      JSON.stringify({ id: selectedPerson.id, type: type })
-    );
-  } 
-}, [selectedPerson]);
-
-useEffect(() => {
-  const storedPerson = localStorage.getItem("lastSelectedPerson");
-  if (storedPerson && data.length > 0) {
-    try {
-      const { id, type } = JSON.parse(storedPerson);
-      setActiveFilter(type);
-      setSelectedPerson(null);
-      const foundPerson = data.find(
-        (person) =>
-          String(person.id) === String(id) &&
-          ((person.marketingConsent !== undefined) ||
-            (person.marketingConsent === undefined))
+  // In AdminPanel.jsx
+  useEffect(() => {
+    if (selectedPerson) {
+      const type = selectedPerson.marketingConsent !== undefined ? "clients" : "employees";
+      localStorage.setItem(
+        "lastSelectedPerson",
+        JSON.stringify({ id: selectedPerson.id, type: type })
       );
-      if (foundPerson) {
-        setSelectedPerson(foundPerson);
-      }
-    } catch (error) {
-      console.error("Failed to parse lastSelectedPerson from localStorage", error);
-      localStorage.removeItem("lastSelectedPerson"); // Clear invalid data
     }
-  }
-}, [data]);
+  }, [selectedPerson]);
+
+  useEffect(() => {
+    const storedPerson = localStorage.getItem("lastSelectedPerson");
+    if (storedPerson && data.length > 0) {
+      try {
+        const { id, type } = JSON.parse(storedPerson);
+        setActiveFilter(type);
+        setSelectedPerson(null);
+        const foundPerson = data.find(
+          (person) =>
+            String(person.id) === String(id) &&
+            ((person.marketingConsent !== undefined) ||
+              (person.marketingConsent === undefined))
+        );
+        if (foundPerson) {
+          setSelectedPerson(foundPerson);
+        }
+      } catch (error) {
+        console.error("Failed to parse lastSelectedPerson from localStorage", error);
+        localStorage.removeItem("lastSelectedPerson"); // Clear invalid data
+      }
+    }
+  }, [data]);
 
 
   // Automatically scroll the client list to the selected client
@@ -212,23 +212,25 @@ useEffect(() => {
     }
   }, [employeeFormData.firstName, employeeFormData.lastName])
 
-  // Generate username from first and last name
-  const generateUsername = (firstName, lastName) => {
-    const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, "")
-    const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, "")
-    const baseUsername = cleanFirst + cleanLast
+  const generateUsername = useCallback(
+    (firstName, lastName) => {
+      const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, "")
+      const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, "")
+      const baseUsername = cleanFirst + cleanLast
 
-    // Check if username exists and add number if needed
-    let username = baseUsername
-    let counter = 1
-    while (data.some((person) => person.username === username)) {
-      username = baseUsername + counter
-      counter++
-    }
+      // Check if username exists and add number if needed
+      let username = baseUsername
+      let counter = 1
+      while (data.some((person) => person.username === username)) {
+        username = baseUsername + counter
+        counter++
+      }
 
-    return username
-  }
-  const generatePassword = () => {
+      return username
+    },
+    [data],
+  )
+  const generatePassword = useCallback(() => {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     const numbers = "0123456789"
     let password = ""
@@ -239,7 +241,8 @@ useEffect(() => {
       password += numbers.charAt(Math.floor(Math.random() * numbers.length))
     }
     return password
-  }  
+  }
+  , [])
 
   // Copy username and password together
   const copyCredentials = () => {
@@ -451,8 +454,8 @@ useEffect(() => {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
 
       }
-    
-   
+
+
 
       if (response.ok) {
         const newEmployee = {
@@ -734,37 +737,37 @@ useEffect(() => {
         </div>
 
         <div className="info-card">
-      <div className="card-header">
-        <h3 className="card-title">
-          <Mail size={16} />
-          Contact
-        </h3>
-      </div>
-      <div className="card-content">
-        <div className="contact-item">
-          <Mail className="contact-icon" />
-          <span>{selectedPerson.email || "N/A"}</span>
-        </div>
-        {(selectedPerson.phoneNumber || selectedPerson.phone) && (
-        <div className="contact-item">
-          <Phone className="contact-icon" />
-          <div className="contact-text">
-            <div className="info-label">Primary Phone</div> {/* Simplified label */}
-            <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
+          <div className="card-header">
+            <h3 className="card-title">
+              <Mail size={16} />
+              Contact
+            </h3>
           </div>
-        </div>
-        )}
-        {selectedPerson.otherPhoneNumber && (
-          <div className="contact-item">
-            <Phone className="contact-icon" />
-            <div className="contact-text">
-              <div className="info-label">Secondary Phone</div>
-              <div className="info-value"> {formatPhoneNumber(selectedPerson.otherPhoneNumber)}</div>
+          <div className="card-content">
+            <div className="contact-item">
+              <Mail className="contact-icon" />
+              <span>{selectedPerson.email || "N/A"}</span>
             </div>
+            {(selectedPerson.phoneNumber || selectedPerson.phone) && (
+              <div className="contact-item">
+                <Phone className="contact-icon" />
+                <div className="contact-text">
+                  <div className="info-label">Primary Phone</div> {/* Simplified label */}
+                  <div className="info-value"> {formatPhoneNumber(selectedPerson.phoneNumber || selectedPerson.phone)}</div>
+                </div>
+              </div>
+            )}
+            {selectedPerson.otherPhoneNumber && (
+              <div className="contact-item">
+                <Phone className="contact-icon" />
+                <div className="contact-text">
+                  <div className="info-label">Secondary Phone</div>
+                  <div className="info-value"> {formatPhoneNumber(selectedPerson.otherPhoneNumber)}</div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
         {/* Bank Accounts for clients */}
         {isClient && (
           <div className="info-card">
@@ -1065,7 +1068,7 @@ useEffect(() => {
             <div className="crm-title">
               <h2>CRM History</h2>
               <p>
-                {selectedPerson.first_name || selectedPerson.firstName} {selectedPerson.last_name|| selectedPerson.last_name}
+                {selectedPerson.first_name || selectedPerson.firstName} {selectedPerson.last_name || selectedPerson.last_name}
               </p>
             </div>
           </div>
@@ -1103,15 +1106,14 @@ useEffect(() => {
                 </div>
                 {(expandedCrmEntries[entry.id || `crm-${i}`] ||
                   closingCrmEntry === (entry.id || `crm-${i}`)) && (
-                  <div
-                    style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
-                    className={`crm-entry-content ${
-                      closingCrmEntry === (entry.id || `crm-${i}`) ? "closing" : "opening"
-                    }`}
-                  >
-                    {entry.content}
-                  </div>
-                )}
+                    <div
+                      style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
+                      className={`crm-entry-content ${closingCrmEntry === (entry.id || `crm-${i}`) ? "closing" : "opening"
+                        }`}
+                    >
+                      {entry.content}
+                    </div>
+                  )}
               </div>
             ))
           ) : (

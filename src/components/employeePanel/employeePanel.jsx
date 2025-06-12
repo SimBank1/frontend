@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import {
   Search,
   User,
@@ -505,7 +505,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     try {
       // Try parsing as international number
-      const parsed = parsePhoneNumber(cleanedPhone, 'LT'); // fallback region
+      const parsed = parsePhoneNumberFromString(cleanedPhone, "LT"); // fallback region
 
       if (parsed && parsed.isValid()) {
         return parsed.formatInternational()
@@ -818,7 +818,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   };
 
 
-  const copyRegistrationToCorrespondence = () => {
+  const copyRegistrationToCorrespondence = useCallback(() => {
     if (sameAsRegistration) {
       setClientFormData((prev) => ({
         ...prev,
@@ -832,6 +832,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       }))
     }
   }
+, [sameAsRegistration])
 
   useEffect(() => {
     if (sameAsRegistration) {
@@ -846,6 +847,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     clientFormData.registrationHouse,
     clientFormData.registrationApartment,
     clientFormData.registrationPostalCode,
+    copyRegistrationToCorrespondence,
   ])
 
   // ADD ACCOUNT
@@ -1448,7 +1450,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
 
     const isClient = selectedPerson.marketingConsent !== undefined
-    const isEmployee = selectedPerson.marketingConsent === undefined
 
     return (
       <div>
@@ -1465,17 +1466,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           </div>
           {isClient && (
             <button className="delete-client-button" onClick={() => setIsDeleteClientOpen(true)} title="Delete Client">
-              <Trash2 size={16} />
-            </button>
-          )}
-          {isEmployee && (
-            <button
-              className="delete-client-button"
-              onClick={() => {
-                setDeletingEmployee(selectedPerson)
-              }}
-              title="Delete Employee"
-            >
               <Trash2 size={16} />
             </button>
           )}

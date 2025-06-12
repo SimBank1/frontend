@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import "./login.css"
@@ -171,7 +171,14 @@ export default function Login({ onLogin }) {
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [popup.show, successPopup.show, successPopup.canDismiss, matrixMode, showVegovaAnimation])
+  }, [
+    popup.show, 
+    successPopup.show, 
+    successPopup.canDismiss, 
+    matrixMode, 
+    showVegovaAnimation,
+    handleSuccessPopupDismiss
+  ])
 
   // Logo click easter egg
   const handleLogoClick = () => {
@@ -321,7 +328,7 @@ export default function Login({ onLogin }) {
     }
   }
 
-  const handleSuccessPopupDismiss = () => {
+  const handleSuccessPopupDismiss = useCallback(() => {
     if (successPopup.canDismiss) {
       setSuccessPopup((prev) => ({ ...prev, isClosing: true }))
       setTimeout(() => {
@@ -337,6 +344,7 @@ export default function Login({ onLogin }) {
       }, 200)
     }
   }
+  , [successPopup.canDismiss, onLogin, navigate, username, password])
 
   return (
     <div className="login-container">
