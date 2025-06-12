@@ -952,11 +952,11 @@ body {
 }
 
 .crm-entry-content.opening {
-  animation:  crmExpand 0.3s ease-out forwards;
+  animation:  crmExpand 0.0s ease-out forwards;
 }
 
 .crm-entry-content.closing {
-  animation: crmCollapse 0.3s ease-in forwards;
+  animation: crmCollapse 0.0s ease-in forwards;
 }
 
 .edit-button {
