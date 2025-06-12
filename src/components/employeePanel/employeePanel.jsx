@@ -812,10 +812,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     const openingDateError = validateDateIsToday(accountFormData.openingDate)
     if (openingDateError) newErrors.openingDate = openingDateError
 
-    // Check currency limits - unlimited EUR, only one of each other currency
+    console.log("hej", selectedPerson)
+    
     if (selectedPerson && accountFormData.currency !== "EUR") {
       const existingCurrencyAccounts =
-        selectedPerson.accounts?.filter((acc) => acc.currency === accountFormData.currency) || []
+        selectedPerson.bank_accs?.filter((acc) => acc.currency === accountFormData.currency) || []
       if (existingCurrencyAccounts.length >= 1) {
         newErrors.currency = `Only one ${accountFormData.currency} account allowed per client`
       }
@@ -839,34 +840,37 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
 
-  async function createBankAccount(accountData) {
+  
+
+
+  const createBankAccount = async (accountData) => {
+    console.log(accountData)
     try {
-      const response = await fetch('/api/createBankAcc', {
+      const response = await fetch(getServerLink() + "/createBankAcc", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(accountData),
+        credentials:"include"
       });
   
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create bank account');
+        throw new Error(`API error: ${response.status} - ${errorData.message || response.statusText}`);
       }
   
-      const result = await response.json();
-      return result;
+      const responseData = await response.json();
+      return responseData;
     } catch (error) {
-      console.error('Error creating bank account:', error);
+      console.error("Error in createBankAccount API call:", error);
       throw error;
     }
-  }
-
+  };
   
-
-
   const handleAddAccount = async (e) => {
     e.preventDefault();
+  
     if (!selectedPerson) return;
     if (!validateAccountForm()) return;
   
@@ -877,29 +881,35 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     };
   
     const apiAccount = {
-      first_name: selectedPerson.first_name,
-      personal_code: selectedPerson.personal_code,
+      id: selectedPerson.accounts?.length + 1 || 1, 
+      first_name: selectedPerson.firstName,
+      personal_code: Number(selectedPerson.personalCode),
       iban: accountFormData.iban,
       currency: accountFormData.currency,
-      balance: Number.parseFloat(accountFormData.balance),
+      balance: Math.round(Number(accountFormData.balance)), 
       type: accountFormData.cardType === "none" ? "" : accountFormData.cardType,
       plan: accountFormData.servicePlan,
-      opening_date: accountFormData.openingDate, // Should already be in YYYY-MM-DD format
+      opening_date: accountFormData.openingDate,
     };
   
     try {
-      await createBankAccount(apiAccount);
+      const responseFromApi = await createBankAccount(apiAccount);
+      console.log("Bank account created successfully on backend:", responseFromApi);
   
-      // Update local state only after successful API response
       const updatedPerson = {
         ...selectedPerson,
-        accounts: [...(selectedPerson.accounts || []), newAccount],
+        bank_accs: [...(selectedPerson.bank_accs || []), newAccount],
       };
-  
+
       setData((prev) =>
-        prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person))
+        prev.map((person) => (person.personalCode === selectedPerson.personalCode ? updatedPerson : person))
       );
       setSelectedPerson(updatedPerson);
+      
+      
+
+    
+  
       setAccountFormData({
         iban: "",
         currency: "EUR",
@@ -910,9 +920,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       });
       setErrors({});
       closeModal("addAccount");
+  
       setTimeout(() => {
         triggerSuccess("Bank account created successfully!");
       }, 200);
+  
     } catch (err) {
       console.error("Failed to create bank account:", err);
       triggerError("Failed to create account. Please try again.");
@@ -2058,41 +2070,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <div className="form-group">
                   <label className="form-label">Registration Address *</label>
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">Country *</label>
-                      <input
-                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
-                        value={clientFormData.registrationCountry}
-                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
-                        placeholder="Country"
-                        required
-                      />
-                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Region *</label>
-                      <input
-                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
-                        value={clientFormData.registrationRegion}
-                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
-                        placeholder="Region"
-                        required
-                      />
-                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">City/Village *</label>
-                      <input
-                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
-                        value={clientFormData.registrationCity}
-                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
-                        placeholder="City or Village"
-                        required
-                      />
-                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
-                    </div>
-                  </div>
-                  <div className="form-grid">
+                 
                     <div className="form-group">
                       <label className="form-label">Street *</label>
                       <input
@@ -2128,7 +2106,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       )}
                     </div>
                   </div>
-                  <div className="form-group">
+                  <div className="form-grid">
+                    <div className="form-group">
                     <label className="form-label">Postal Code *</label>
                     <input
                       className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
@@ -2140,6 +2119,42 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     {errors.registrationPostalCode && (
                       <div className="error-message">{errors.registrationPostalCode}</div>
                     )}
+
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                        value={clientFormData.registrationCountry}
+                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Region</label>
+                      <input
+                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
+                        value={clientFormData.registrationRegion}
+                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
+                        placeholder="Region"
+                        
+                      />
+                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                    </div>
+                   
+                  </div>
+                  <div className="form-group">
                     <label className="form-label">Second Phone (Optional)</label>
                     <div className="phone-input-group">
                       <input
