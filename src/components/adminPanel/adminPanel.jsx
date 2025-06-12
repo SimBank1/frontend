@@ -443,8 +443,14 @@ useEffect(() => {
 
       if (!response.ok) {
         const errorData = await response.json()
+        setTimeout(() => {
+          triggerSuccess(`Error creating employee`)
+        }, 200)
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+
       }
+    
+   
 
       if (response.ok) {
         const newEmployee = {
@@ -471,7 +477,7 @@ useEffect(() => {
     } catch (error) {
       console.error("Error creating employee:", error)
       setTimeout(() => {
-        triggerSuccess(`Error creating employee: ${error.message}`)
+        triggerSuccess(`Error creating employee`)
       }, 200)
     }
   }
@@ -621,8 +627,8 @@ useEffect(() => {
                 {person.marketingConsent !== undefined ? "client" : "employee"}
               </span>
             </div>
-            {person.marketingConsent !== undefined && person.crmEntries && person.crmEntries.length > 0 ? (
-              <p className="user-preview">Last interaction: {person.crmEntries[0].date}</p>
+            {person.marketingConsent !== undefined && person.crm && person.crm.length > 0 ? (
+              <p className="user-preview">Last interaction: {person.crm[0].date_of_contact}</p>
             ) : person.marketingConsent !== undefined ? (
               <p className="user-preview no-recent-activities">No recent activities</p>
             ) : null}
