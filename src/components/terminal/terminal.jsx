@@ -287,7 +287,7 @@ export default function Terminal() {
           width: 100vw;
           height: 100vh;
           background: #000;
-          color: #00ff00;
+          color: #fff;
           font-family: 'Courier New', monospace;
           display: flex;
           flex-direction: column;
@@ -336,7 +336,7 @@ export default function Terminal() {
         }
         
         .terminal-status {
-          color: ${accessLevel === "root" ? "#ff5f56" : "#27ca3f"};
+          color:#fff;
           font-size: 12px;
           font-weight: bold;
         }
@@ -366,14 +366,14 @@ export default function Terminal() {
         }
 
         .terminal-prompt {
-          color: #00ff00;
+          color: #fff;
           margin-right: 8px;
         }
 
         .terminal-input {
           background: transparent;
           border: none;
-          color: #00ff00;
+          color: #fff;
           font-family: 'Courier New', monospace;
           font-size: 14px;
           outline: none;
@@ -381,7 +381,7 @@ export default function Terminal() {
         }
 
         .terminal-input::placeholder {
-          color: #006600;
+          color: #fff;
         }
         
         /* Matrix Mode Overlay */
