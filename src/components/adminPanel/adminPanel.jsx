@@ -1238,7 +1238,7 @@ useEffect(() => {
             </div>
             <div className="modal-body">
               <form onSubmit={handleEmployeeSubmit}>
-                <div className="form-grid">
+                <div className="form-grid2">
                   <div className="form-group">
                     <label className="form-label">First Name *</label>
                     <input
