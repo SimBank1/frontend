@@ -82,7 +82,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  
+
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
@@ -92,6 +92,33 @@ export default function AdminPanel({ data: initialData, currentUser }) {
     const [closing, setClosing] = useState(false)
     const [successMessage, setSuccessMessage] = useState("")
   
+    // Apple-style success animation implementation
+  const triggerSuccess = (message) => {
+    setSuccessMessage(message)
+    setShowSuccess(true)
+    setClosing(false)
+  }
+  // Automatically start closing after 3.5s
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setClosing(true)
+      }, 3500)
+      // Cleanup timeout if unmounted or toast hidden early
+      return () => clearTimeout(timer)
+    }
+  }, [showSuccess])
+  // Remove toast after closing animation ends (~400ms)
+  useEffect(() => {
+    if (closing) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false)
+        setClosing(false)
+        setSuccessMessage("")
+      }, 400)
+      return () => clearTimeout(timer)
+    }
+  }, [closing])
 
 
 // In AdminPanel.jsx
@@ -286,15 +313,6 @@ useEffect(() => {
       setModalClosing((prev) => ({ ...prev, [modalType]: false }))
     }, 200)
   }
-
-  // Show success message with auto-dismiss
-  const triggerSuccess = (message) => {
-    setSuccessMessage(message)
-    setTimeout(() => {
-      setSuccessMessage("")
-    }, 3000)
-  }
-
   // Generate IBAN starting with LT817044
   const generateIBAN = () => {
     const prefix = "LT817044"
