@@ -31,7 +31,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeFilter, setActiveFilter] = useState("employees")
+  const [activeFilter, setActiveFilter] = useState("")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
@@ -92,7 +92,7 @@ export default function AdminPanel({ data: initialData, currentUser }) {
 // In AdminPanel.jsx
 useEffect(() => {
   if (selectedPerson) {
-    const type = selectedPerson.marketingConsent !== undefined ? "client" : "employee";
+    const type = selectedPerson.marketingConsent !== undefined ? "clients" : "employees";
     localStorage.setItem(
       "lastSelectedPerson",
       JSON.stringify({ id: selectedPerson.id, type: type })
@@ -105,6 +105,9 @@ useEffect(() => {
   if (storedPerson && data.length > 0) {
     try {
       const { id, type } = JSON.parse(storedPerson);
+      setActiveFilter(type);
+      console.log(type)
+      setSelectedPerson(null);
       const foundPerson = data.find(
         (person) =>
           String(person.id) === String(id) &&
