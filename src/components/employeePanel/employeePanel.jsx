@@ -48,7 +48,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [employeeUsername, setEmployeeUsername] = useState(username);
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const sameAsRegistration = true
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
@@ -74,6 +74,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       }
     }
   }, [data]);
+
+  // Automatically scroll the client list to the selected client
+  useEffect(() => {
+    if (selectedClientRef.current) {
+      selectedClientRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }
+  }, [selectedPerson]);
 
   useEffect(() => {
     if (closingCrmEntry) {
@@ -102,6 +113,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   // Search input ref for focus management
   const searchInputRef = useRef(null)
+
+
+  const selectedClientRef = useRef(null)
 
   // Apple-style success animation implementation
   const triggerSuccess = (message) => {
@@ -827,7 +841,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     if (openingDateError) newErrors.openingDate = openingDateError
 
     console.log("hej", selectedPerson)
-    
+
     if (selectedPerson && accountFormData.currency !== "EUR") {
       const existingCurrencyAccounts =
         selectedPerson.bank_accs?.filter((acc) => acc.currency === accountFormData.currency) || []
@@ -854,7 +868,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }
 
 
-  
+
 
 
   const createBankAccount = async (accountData) => {
@@ -866,14 +880,14 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(accountData),
-        credentials:"include"
+        credentials: "include"
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`API error: ${response.status} - ${errorData.message || response.statusText}`);
       }
-  
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -881,35 +895,35 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       throw error;
     }
   };
-  
+
   const handleAddAccount = async (e) => {
     e.preventDefault();
-  
+
     if (!selectedPerson) return;
     if (!validateAccountForm()) return;
-  
+
     const newAccount = {
       id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
       ...accountFormData,
       balance: Number.parseFloat(accountFormData.balance),
     };
-  
+
     const apiAccount = {
-      id: selectedPerson.accounts?.length + 1 || 1, 
+      id: selectedPerson.accounts?.length + 1 || 1,
       first_name: selectedPerson.firstName,
       personal_code: Number(selectedPerson.personalCode),
       iban: accountFormData.iban,
       currency: accountFormData.currency,
-      balance: Math.round(Number(accountFormData.balance)), 
+      balance: Math.round(Number(accountFormData.balance)),
       type: accountFormData.cardType === "none" ? "" : accountFormData.cardType,
       plan: accountFormData.servicePlan,
       opening_date: accountFormData.openingDate,
     };
-  
+
     try {
       const responseFromApi = await createBankAccount(apiAccount);
       console.log("Bank account created successfully on backend:", responseFromApi);
-  
+
       const updatedPerson = {
         ...selectedPerson,
         bank_accs: [...(selectedPerson.bank_accs || []), newAccount],
@@ -919,11 +933,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         prev.map((person) => (person.personalCode === selectedPerson.personalCode ? updatedPerson : person))
       );
       setSelectedPerson(updatedPerson);
-      
-      
 
-    
-  
+
+
+
+
       setAccountFormData({
         iban: "",
         currency: "EUR",
@@ -934,17 +948,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       });
       setErrors({});
       closeModal("addAccount");
-  
+
       setTimeout(() => {
         triggerSuccess("Bank account created successfully!");
       }, 200);
-  
+
     } catch (err) {
       console.error("Failed to create bank account:", err);
       triggerError("Failed to create account. Please try again.");
     }
   };
-  
+
 
   // ADD CRM ENTRY with new structure and employee username
   const validateCrmForm = () => {
@@ -1250,15 +1264,64 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return entry.employeeName === currentUser?.username
   }
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (!selectedPerson) return
 
+    try {
+      const response = await fetch(`${getServerLink()}/deleteClient`, {
+        method: "POST", // Changed method to POST
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ personal_code: selectedPerson.personalCode }), // Added request body
+      })
+
+      if (!response.ok) {
+        // Handle HTTP errors
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // You might want to check `result` to see if the employee was actually created on the server
+      // For example, if the server returns a success field or the created employee data.
+      if (response.ok) {
+        setTimeout(() => {
+          triggerSuccess("Client deleted successfully!")
+        }, 200)
+        setData((prev) => {
+          const updated = prev.filter((person) => person.id !== selectedPerson.id)
+          if (updated.length > 0) {
+            setSelectedPerson(updated[0])
+            localStorage.setItem("lastSelectedPersonId", updated[0].id)
+          } else {
+            setSelectedPerson(null)
+            localStorage.removeItem("lastSelectedPersonId")
+          }
+          return updated
+        })
+
+      } else {
+        // Handle cases where the server indicates a failure even with a 200 OK status
+        const result = await response.json()
+        throw new Error(result.message || "Failed to create employee on server.")
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      // You might want to show an error message to the user
+      setTimeout(() => {
+        console.error(`Error deleting client: ${error.message}`)
+      }, 200)
+    }
+
     setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+
+    // Clear the selected person
     setSelectedPerson(null)
+
+    // Close the modal
     closeModal("deleteClient")
-    setTimeout(() => {
-      triggerSuccess("Client deleted successfully!")
-    }, 200)
+
   }
 
   const normalize = (str) =>
@@ -1330,6 +1393,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         key={`${person.id}-${idx}`}
         className={`client-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
         onClick={() => handlePersonClick(person)}
+        ref={selectedPerson?.id === person.id ? selectedClientRef : null}
         style={{ animationDelay: `${idx * 0.05}s` }}
       >
         <div className="client-card-content">
@@ -2051,6 +2115,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     </div>
                     {errors.phone && <div className="error-message">{errors.phone}</div>}
                   </div>
+                  <div className="form-group">
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <input
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
+                        placeholder="Second phone number"
+                      />
+                    </div>
+                  </div>
 
                   <div className="form-group">
                     <label className="form-label">Document Type *</label>
@@ -2098,7 +2173,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <div className="form-group">
                   <label className="form-label">Registration Address *</label>
                   <div className="form-grid">
-                 
+
                     <div className="form-group">
                       <label className="form-label">Street *</label>
                       <input
@@ -2136,18 +2211,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   </div>
                   <div className="form-grid">
                     <div className="form-group">
-                    <label className="form-label">Postal Code *</label>
-                    <input
-                      className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
-                      value={clientFormData.registrationPostalCode}
-                      onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
-                      placeholder="Postal code"
-                      required
-                    />
-                    {errors.registrationPostalCode && (
-                      <div className="error-message">{errors.registrationPostalCode}</div>
-                    )}
+                      <label className="form-label">Postal Code *</label>
+                      <input
+                        className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                        value={clientFormData.registrationPostalCode}
+                        onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                        placeholder="Postal code"
+                        required
+                      />
+                      {errors.registrationPostalCode && (
+                        <div className="error-message">{errors.registrationPostalCode}</div>
+                      )}
+                      </div>
 
+                      <div className="form-group">
                       <label className="form-label">Country *</label>
                       <input
                         className={`form-input ${errors.registrationCountry ? "error" : ""}`}
@@ -2157,7 +2234,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                         required
                       />
                       {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                  
                     </div>
+                    
                     <div className="form-group">
                       <label className="form-label">City *</label>
                       <input
@@ -2169,30 +2248,85 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       />
                       {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
                     </div>
+                  </div>
+                  <div className="form-checkbox">
+                    <input
+                      type="checkbox"
+                      id="sameAsRegistration"
+                      checked={sameAsRegistration}
+                      onChange={(e) => setSameAsRegistration(e.target.checked)}
+                    />
+                    <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
+                  </div>
+
+                  {!sameAsRegistration && (
                     <div className="form-group">
-                      <label className="form-label">Region</label>
-                      <input
-                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
-                        value={clientFormData.registrationRegion}
-                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
-                        placeholder="Region"
-                        
-                      />
-                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                      <label className="form-label">Correspondence Address *</label>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Street *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                            value={clientFormData.correspondenceStreet}
+                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                            placeholder="Street name"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">House *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                            value={clientFormData.correspondenceHouse}
+                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                            placeholder="House number"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Apartment</label>
+                          <input
+                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                            value={clientFormData.correspondenceApartment}
+                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                            placeholder="Apartment (optional)"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Postal Code *</label>
+                          <input
+                            className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                            value={clientFormData.correspondencePostalCode}
+                            onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                            placeholder="Postal code"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Country *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                            value={clientFormData.correspondenceCountry}
+                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                            placeholder="Country"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">City *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                            value={clientFormData.correspondenceCity}
+                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                            placeholder="City or Village"
+                            required
+                          />
+                        </div>  
+                      </div>
                     </div>
-                   
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Second Phone (Optional)</label>
-                    <div className="phone-input-group">
-                      <input
-                        className="form-input"
-                        value={clientFormData.secondPhone}
-                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
-                        placeholder="Second phone number"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
                 <div className="form-checkbox">
                   <input
