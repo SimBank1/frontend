@@ -1250,15 +1250,64 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     return entry.employeeName === currentUser?.username
   }
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (!selectedPerson) return
 
+    try {
+      const response = await fetch(`${getServerLink()}/deleteClient`, {
+        method: "POST", // Changed method to POST
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ personal_code: selectedPerson.personalCode }), // Added request body
+      })
+
+      if (!response.ok) {
+        // Handle HTTP errors
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // You might want to check `result` to see if the employee was actually created on the server
+      // For example, if the server returns a success field or the created employee data.
+      if (response.ok) {
+        setTimeout(() => {
+          triggerSuccess("Client deleted successfully!")
+        }, 200)
+        setData((prev) => {
+          const updated = prev.filter((person) => person.id !== selectedPerson.id)
+          if (updated.length > 0) {
+            setSelectedPerson(updated[0])
+            localStorage.setItem("lastSelectedPersonId", updated[0].id)
+          } else {
+            setSelectedPerson(null)
+            localStorage.removeItem("lastSelectedPersonId")
+          }
+          return updated
+        })
+
+      } else {
+        // Handle cases where the server indicates a failure even with a 200 OK status
+        const result = await response.json()
+        throw new Error(result.message || "Failed to create employee on server.")
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      // You might want to show an error message to the user
+      setTimeout(() => {
+        console.error(`Error deleting client: ${error.message}`)
+      }, 200)
+    }
+
     setData((prev) => prev.filter((person) => person.id !== selectedPerson.id))
+
+    // Clear the selected person
     setSelectedPerson(null)
+
+    // Close the modal
     closeModal("deleteClient")
-    setTimeout(() => {
-      triggerSuccess("Client deleted successfully!")
-    }, 200)
+
   }
 
   const normalize = (str) =>
@@ -2256,7 +2305,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                             placeholder="City or Village"
                             required
                           />
-                        </div>
+                        </div>  
                       </div>
                     </div>
                   )}
