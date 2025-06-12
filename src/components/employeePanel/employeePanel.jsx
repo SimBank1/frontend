@@ -340,6 +340,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   };
 
+  const isSameAddress = (addr1, addr2) => {
+    if (!addr1 || !addr2) return false;
+    return (
+      addr1.street === addr2.street &&
+      addr1.house === addr2.house &&
+      addr1.apartment === addr2.apartment &&
+      addr1.postalCode === addr2.postalCode &&
+      addr1.cityOrVillage === addr2.cityOrVillage &&
+      addr1.region === addr2.region &&
+      addr1.country === addr2.country
+    );
+  };
+  
+
 
   // Get date of birth from personal code
   const getDateOfBirthFromPersonalCode = (personalCode) => {
@@ -1201,7 +1215,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       if (data.error) {
 
         setTimeout(() => {
-          triggerSuccess("You must be the creator of this CRM to delete it!");
+          triggerSuccess("Only creator can delete CRM!");
         }, 200);
         return
 
@@ -1709,23 +1723,27 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div className="address-content">
                     <div className="info-label">Correspondence Address</div>
                     <div className="info-value">
-                      {selectedPerson.corAddress ? (
-                        <>
-                          <div>
-                            {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
-                            {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
-                          </div>
-                          <div>
-                            {selectedPerson.corAddress.postalCode || "N/A"}{" "}
-                            {selectedPerson.corAddress.cityOrVillage || "N/A"}
-                          </div>
-                          <div>
-                            {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
-                          </div>
-                        </>
-                      ) : (
-                        <div>Same as registration address</div>
-                      )}
+                    {selectedPerson.corAddress ? (
+        isSameAddress(selectedPerson.corAddress, selectedPerson.regAddress) ? (
+          <div>Same as registration address</div>
+        ) : (
+          <>
+            <div>
+              {selectedPerson.corAddress.street || "N/A"} {selectedPerson.corAddress.house || "N/A"}
+              {selectedPerson.corAddress.apartment && `, Apt ${selectedPerson.corAddress.apartment}`}
+            </div>
+            <div>
+              {selectedPerson.corAddress.postalCode || "N/A"}{" "}
+              {selectedPerson.corAddress.cityOrVillage || "N/A"}
+            </div>
+            <div>
+              {selectedPerson.corAddress.region || "N/A"}, {selectedPerson.corAddress.country || "N/A"}
+            </div>
+          </>
+        )
+      ) : (
+        <div>No correspondence address</div>
+      )}
                     </div>
                   </div>
                 </div>
