@@ -265,6 +265,24 @@ body {
   margin-bottom: 12px;
 }
 
+.client-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.client-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.client-list::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.client-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
 .client-card {
   margin-bottom: 12px;
   padding: 16px;
@@ -419,7 +437,27 @@ body {
   background-color: white;
   border-right: 1px solid #e2e8f0;
   overflow-y: auto;
-  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.05);.middle-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.middle-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.middle-panel::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 2px;
+  transition: background 0.15s ease-in-out;
+}
+
+.middle-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.middle-content {
+  padding: 20px;
+}
 }
 
 .middle-panel::-webkit-scrollbar {
