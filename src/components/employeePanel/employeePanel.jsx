@@ -30,6 +30,7 @@ import {
 import "./employeePanel.css";
 import { getServerLink } from "@/server_link";
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import { useTheme } from '@/ThemeContext';
 
 export default function EmployeePanel({ data: initialData, currentUser, username }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -45,7 +46,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [deletingCrmEntry, setDeletingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
 
-  const [employeeUsername, setEmployeeUsername] = useState(username);
+  const employeeUsername = username;
+
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const sameAsRegistration = true
@@ -81,6 +84,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return () => clearTimeout(timer)
     }
   }, [closingCrmEntry])
+
+
 
 
 
@@ -1832,6 +1837,14 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             <button className="icon-button" onClick={() => setIsLogoutOpen(true)}>
               <LogOut size={16} />
             </button>
+          </div>
+          <p className="logged-user">Logged in as: {employeeUsername}</p>
+          <div className="dark-mode-toggle">
+            <span>Dark Mode</span>
+            <label className="switch">
+              <input type="checkbox" checked={darkMode} onChange={toggleDarkMode} />
+              <span className="slider" />
+            </label>
           </div>
         </div>
       </div>

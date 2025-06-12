@@ -78,6 +78,11 @@ body {
   line-height: 1.5;
 }
 
+.dark body {
+  background-color: #1f2937;
+  color: #f8fafc;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
