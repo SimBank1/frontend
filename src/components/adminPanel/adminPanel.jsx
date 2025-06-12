@@ -138,7 +138,6 @@ useEffect(() => {
     try {
       const { id, type } = JSON.parse(storedPerson);
       setActiveFilter(type);
-      console.log(type)
       setSelectedPerson(null);
       const foundPerson = data.find(
         (person) =>
