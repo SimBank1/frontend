@@ -1135,8 +1135,14 @@ useEffect(() => {
 
   return (
     <div className="admin-panel dashboard-fade-in">
+      {/* Apple-style Success Toast */}
       {showSuccess && (
-        <div className={`success-toast ${successClosing ? "closing" : "showing"}`}>
+        <div
+          className={`success-toast ${closing ? "closing" : "showing"}`}
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
           <CheckCircle size={20} />
           <span>{successMessage}</span>
         </div>
