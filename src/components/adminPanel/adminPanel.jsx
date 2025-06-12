@@ -73,6 +73,8 @@ export default function AdminPanel({ data: initialData, currentUser }) {
   // Search input ref for focus management
   const searchInputRef = useRef(null)
 
+  const selectedClientRef = useRef(null)
+
   const merged = [...(initialData?.clients || []), ...(initialData?.employees || [])]
   const [data, setData] = useState(merged)
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false)
@@ -119,6 +121,17 @@ useEffect(() => {
   }
 }, [data]);
 
+
+  // Automatically scroll the client list to the selected client
+  useEffect(() => {
+    if (selectedClientRef.current) {
+      selectedClientRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }
+  }, [selectedPerson]);
 
 
 
@@ -578,6 +591,7 @@ useEffect(() => {
         key={`${person.username}-${person.id}`}
         className={`user-card ${selectedPerson?.id === person.id ? "selected" : ""}`}
         onClick={() => handlePersonClick(person)}
+        ref={selectedPerson?.id === person.id ? selectedClientRef : null}
       >
         <div className="user-card-content">
           <div className={`user-icon ${person.marketingConsent !== undefined ? "client" : "employee"}`}>
