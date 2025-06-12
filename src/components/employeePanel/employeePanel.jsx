@@ -1480,36 +1480,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             </h3>
           </div>
           <div className="card-content">
-            {isEmployee ? (
-              <>
-                <div className="info-item">
-                  <div className="info-label">Username</div>
-                  <div className="info-value">{selectedPerson.username || "N/A"}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Email</div>
-                  <div className="info-value">{selectedPerson.email || "N/A"}</div>
-                </div>
-                <div className="info-item">
-                  <div className="info-label">Password</div>
-                  <div className="password-container">
-                    <span className="password-value">{selectedPerson.password || "N/A"}</span>
-                    <button
-                      className="copy-button"
-                      onClick={() => {
-                        const credentials = `Username: ${selectedPerson.username || "N/A"}\nPassword: ${selectedPerson.password || "N/A"}`
-                        navigator.clipboard.writeText(credentials)
-                        triggerSuccess("Credentials copied!")
-                      }}
-                      title="Copy credentials"
-                    >
-                      <Copy size={16} />
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
                 <div className="info-item">
                   <div className="info-label">Personal Code</div>
                   <div className="info-value">{selectedPerson.personalCode}</div>
@@ -1526,8 +1496,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div className="info-label">Document Number</div>
                   <div className="info-value">{selectedPerson.docNumber}</div>
                 </div>
-              </>
-            )}
           </div>
         </div>
 

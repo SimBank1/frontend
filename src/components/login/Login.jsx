@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import "./login.css"
 import { getServerLink } from "@/server_link"
-export default function Login({ onLogin }) {
+export default function Login() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -19,20 +19,12 @@ export default function Login({ onLogin }) {
   const [authError, setAuthError] = useState(false)
   const [serverErr, setServerErr] = useState(false)
 
-  const navigate = useNavigate()
-
   const [fieldErrors, setFieldErrors] = useState({
     username: false,
     password: false,
   })
 
   const [shakeField, setShakeField] = useState("")
-  const [successPopup, setSuccessPopup] = useState({
-    show: false,
-    message: "",
-    canDismiss: false,
-    isClosing: false,
-  })
 
   // Easter egg states
   const logoClickCountRef = useRef(0)
@@ -170,8 +162,6 @@ export default function Login({ onLogin }) {
     return () => document.removeEventListener("keydown", handleEscape)
   }, [
     popup.show, 
-    successPopup.show, 
-    successPopup.canDismiss, 
     matrixMode, 
     showVegovaAnimation,
   ])
