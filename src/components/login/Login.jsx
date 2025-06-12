@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Eye, EyeOff, X, CheckCircle, AlertCircle, Shield, Lock } from "lucide-react"
-import { useNavigate } from "react-router-dom"
 import "./login.css"
 import { getServerLink } from "@/server_link"
 export default function Login() {
