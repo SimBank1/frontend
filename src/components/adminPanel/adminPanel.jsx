@@ -210,7 +210,12 @@ export default function AdminPanel({ data: initialData }) {
         password,
       }))
     }
-  }, [employeeFormData.firstName, employeeFormData.lastName])
+  }, [
+    employeeFormData.firstName, 
+    employeeFormData.lastName,
+    generateUsername,
+    generatePassword,
+  ])
 
   const generateUsername = useCallback(
     (firstName, lastName) => {
