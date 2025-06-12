@@ -1054,8 +1054,8 @@ useEffect(() => {
         </div>
 
         <div className="crm-entries">
-          {selectedPerson.crmEntries && selectedPerson.crmEntries.length > 0 ? (
-            selectedPerson.crmEntries.map((entry, i) => (
+          {selectedPerson.crm && selectedPerson.crm.length > 0 ? (
+            selectedPerson.crm.map((entry, i) => (
               <div key={entry.id || `crm-${i}`} className="crm-entry">
                 <div className="crm-entry-header">
                   <div
@@ -1078,20 +1078,9 @@ useEffect(() => {
                     </span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span className="crm-entry-badge">{entry.contactType}</span>
-                    <span className="crm-entry-date">{entry.date}</span>
-                    <span className="crm-entry-employee">by {entry.employeeName}</span>
-                    {canDeleteCrmEntry(entry) && (
-                      <div className="crm-entry-actions">
-                        <button
-                          className="delete-crm-button"
-                          onClick={() => deleteCrmEntry(entry.id)}
-                          title="Delete CRM entry"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
+                    <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span>
+                    <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span>
+                    <span className="crm-entry-employee">by {entry.username}</span>
                   </div>
                 </div>
                 {(expandedCrmEntries[entry.id || `crm-${i}`] ||
