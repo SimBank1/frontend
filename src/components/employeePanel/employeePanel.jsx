@@ -45,7 +45,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [deletingCrmEntry, setDeletingCrmEntry] = useState(null)
   const [errors, setErrors] = useState({})
 
-  const [employeeUsername, setEmployeeUsername] = useState(username);
+  const [employeeUsername] = useState(username);
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
@@ -975,7 +975,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     } catch (err) {
       console.error("Failed to create bank account:", err);
-      triggerError("Failed to create account. Please try again.");
     }
   };
 
@@ -1474,7 +1473,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               className="delete-client-button"
               onClick={() => {
                 setDeletingEmployee(selectedPerson)
-                setIsDeleteEmployeeOpen(true)
               }}
               title="Delete Employee"
             >
