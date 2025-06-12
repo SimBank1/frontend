@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminPanel from "../adminPanel/adminPanel";
 import EmployeePanel from "../employeePanel/employeePanel";
+import LoadingPage from "@/components/loadingPage/loadingPage";
 import { getServerLink } from "@/server_link";
 
 const Dashboard = () => {
@@ -61,7 +62,7 @@ const Dashboard = () => {
     }
   }, [isLoading, isAdmin, isEmployee])
 
-  if (isLoading) return <div>Loading dashboard...</div>
+  if (isLoading) return <LoadingPage />
   if (isAdmin) return <AdminPanel data={sessionData} currentUser={currentUser} />
   if (isEmployee) return <EmployeePanel data={sessionData} currentUser={currentUser} username={employee_username} />
   return null
