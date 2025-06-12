@@ -48,7 +48,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [employeeUsername, setEmployeeUsername] = useState(username);
 
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const sameAsRegistration = true
+  const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
@@ -2048,6 +2048,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     </div>
                     {errors.phone && <div className="error-message">{errors.phone}</div>}
                   </div>
+                  <div className="form-group">
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <input
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
+                        placeholder="Second phone number"
+                      />
+                    </div>
+                  </div>
 
                   <div className="form-group">
                     <label className="form-label">Document Type *</label>
@@ -2144,7 +2155,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       {errors.registrationPostalCode && (
                         <div className="error-message">{errors.registrationPostalCode}</div>
                       )}
+                      </div>
 
+                      <div className="form-group">
                       <label className="form-label">Country *</label>
                       <input
                         className={`form-input ${errors.registrationCountry ? "error" : ""}`}
@@ -2154,7 +2167,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                         required
                       />
                       {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+                  
                     </div>
+                    
                     <div className="form-group">
                       <label className="form-label">City *</label>
                       <input
@@ -2166,30 +2181,85 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       />
                       {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
                     </div>
+                  </div>
+                  <div className="form-checkbox">
+                    <input
+                      type="checkbox"
+                      id="sameAsRegistration"
+                      checked={sameAsRegistration}
+                      onChange={(e) => setSameAsRegistration(e.target.checked)}
+                    />
+                    <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
+                  </div>
+
+                  {!sameAsRegistration && (
                     <div className="form-group">
-                      <label className="form-label">Region</label>
-                      <input
-                        className={`form-input ${errors.registrationRegion ? "error" : ""}`}
-                        value={clientFormData.registrationRegion}
-                        onChange={(e) => handleClientFormChange("registrationRegion", e.target.value)}
-                        placeholder="Region"
-
-                      />
-                      {errors.registrationRegion && <div className="error-message">{errors.registrationRegion}</div>}
+                      <label className="form-label">Correspondence Address *</label>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Street *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                            value={clientFormData.correspondenceStreet}
+                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                            placeholder="Street name"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">House *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                            value={clientFormData.correspondenceHouse}
+                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                            placeholder="House number"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Apartment</label>
+                          <input
+                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                            value={clientFormData.correspondenceApartment}
+                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                            placeholder="Apartment (optional)"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Postal Code *</label>
+                          <input
+                            className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                            value={clientFormData.correspondencePostalCode}
+                            onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                            placeholder="Postal code"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Country *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                            value={clientFormData.correspondenceCountry}
+                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                            placeholder="Country"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">City *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                            value={clientFormData.correspondenceCity}
+                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                            placeholder="City or Village"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
-
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Second Phone (Optional)</label>
-                    <div className="phone-input-group">
-                      <input
-                        className="form-input"
-                        value={clientFormData.secondPhone}
-                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
-                        placeholder="Second phone number"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
                 <div className="form-checkbox">
                   <input
