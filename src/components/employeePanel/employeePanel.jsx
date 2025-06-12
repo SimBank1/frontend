@@ -52,6 +52,26 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
 
+  // Track mouse down position to distinguish clicks from drags
+  const [mouseDownTarget, setMouseDownTarget] = useState(null)
+
+  // Handle mouse down on modal overlay
+  const handleModalMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      setMouseDownTarget(e.target)
+    } else {
+      setMouseDownTarget(null)
+    }
+  }
+
+  // Handle mouse up on modal overlay - only close if it's the same target as mouse down
+  const handleModalMouseUp = (e, modalType) => {
+    if (e.target === e.currentTarget && e.target === mouseDownTarget) {
+      closeModal(modalType)
+    }
+    setMouseDownTarget(null)
+  }
+
 
 
   useEffect(() => {
@@ -2001,7 +2021,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Logout Confirmation Modal */}
       {isLogoutOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("logout")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "logout")}
+        >
           <div
             className={`modal-content logout-modal ${modalClosing.logout ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2035,7 +2059,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Add Client Modal */}
       {isAddClientOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addClient")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "addClient")}
+        >
           <div
             className={`modal-content large-modal ${modalClosing.addClient ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2354,7 +2382,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Add Account Modal */}
       {isAddAccountOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addAccount")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "addAccount")}
+        >
           <div
             className={`modal-content ${modalClosing.addAccount ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2495,7 +2527,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Add CRM Modal - Made wider */}
       {isAddCrmOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("addCrm")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "addCrm")}
+        >
           <div
             className={`modal-content crm-modal ${modalClosing.addCrm ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2599,7 +2635,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Edit CRM Modal */}
       {isEditCrmOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("editCrm")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "editCrm")}
+        >
           <div
             className={`modal-content crm-modal ${modalClosing.editCrm ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2703,7 +2743,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Delete CRM Modal */}
       {isDeleteCrmOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteCrm")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteCrm")}
+        >
           <div
             className={`modal-content ${modalClosing.deleteCrm ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
@@ -2742,7 +2786,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
       {/* Delete Client Modal */}
       {isDeleteClientOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeModal("deleteClient")}>
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteClient")}
+        >
           <div
             className={`modal-content ${modalClosing.deleteClient ? "closing" : ""}`}
             onClick={(e) => e.stopPropagation()}
