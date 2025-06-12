@@ -838,38 +838,87 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }
 
-  const handleAddAccount = (e) => {
-    e.preventDefault()
-    if (!selectedPerson) return
-    if (!validateAccountForm()) return
 
+  async function createBankAccount(accountData) {
+    try {
+      const response = await fetch('/api/createBankAcc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accountData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create bank account');
+      }
+  
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating bank account:', error);
+      throw error;
+    }
+  }
+
+  
+
+
+  const handleAddAccount = async (e) => {
+    e.preventDefault();
+    if (!selectedPerson) return;
+    if (!validateAccountForm()) return;
+  
     const newAccount = {
       id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
       ...accountFormData,
       balance: Number.parseFloat(accountFormData.balance),
+    };
+  
+    const apiAccount = {
+      first_name: selectedPerson.first_name,
+      personal_code: selectedPerson.personal_code,
+      iban: accountFormData.iban,
+      currency: accountFormData.currency,
+      balance: Number.parseFloat(accountFormData.balance),
+      type: accountFormData.cardType === "none" ? "" : accountFormData.cardType,
+      plan: accountFormData.servicePlan,
+      opening_date: accountFormData.openingDate, // Should already be in YYYY-MM-DD format
+    };
+  
+    try {
+      await createBankAccount(apiAccount);
+  
+      // Update local state only after successful API response
+      const updatedPerson = {
+        ...selectedPerson,
+        accounts: [...(selectedPerson.accounts || []), newAccount],
+      };
+  
+      setData((prev) =>
+        prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person))
+      );
+      setSelectedPerson(updatedPerson);
+      setAccountFormData({
+        iban: "",
+        currency: "EUR",
+        balance: "",
+        cardType: "none",
+        servicePlan: "Standard",
+        openingDate: new Date().toISOString().split("T")[0],
+      });
+      setErrors({});
+      closeModal("addAccount");
+      setTimeout(() => {
+        triggerSuccess("Bank account created successfully!");
+      }, 200);
+    } catch (err) {
+      console.error("Failed to create bank account:", err);
+      triggerError("Failed to create account. Please try again.");
     }
-
-    const updatedPerson = {
-      ...selectedPerson,
-      accounts: [...(selectedPerson.accounts || []), newAccount],
-    }
-
-    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-    setSelectedPerson(updatedPerson)
-    setAccountFormData({
-      iban: "",
-      currency: "EUR",
-      balance: "",
-      cardType: "none",
-      servicePlan: "Standard",
-      openingDate: new Date().toISOString().split("T")[0],
-    })
-    setErrors({})
-    closeModal("addAccount")
-    setTimeout(() => {
-      triggerSuccess("Bank account created successfully!")
-    }, 200)
-  }
+  };
+  
 
   // ADD CRM ENTRY with new structure and employee username
   const validateCrmForm = () => {
@@ -1222,7 +1271,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     const normSearch = normalize(searchTerm)
     const searchTokens = normSearch.split(" ").filter(Boolean)
     const normSearchPhone = normalizePhoneForCompare(searchTerm)
-    console.log(normSearchPhone)
 
     return data.filter((person) => {
       const fullName = normalize(`${person.firstName} ${person.lastName}`)
