@@ -29,7 +29,7 @@ import "./adminPanel.css"
 import { getServerLink } from "@/server_link"
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
-export default function AdminPanel({ data: initialData, currentUser }) {
+export default function AdminPanel({ data: initialData }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("")
   const [selectedPerson, setSelectedPerson] = useState(null)
@@ -584,23 +584,6 @@ useEffect(() => {
       setSelectedPerson(null)
     }
     closeModal("deleteEmployee")
-  }
-
-  const deleteCrmEntry = (entryId) => {
-    if (!selectedPerson) return
-
-    const updatedPerson = {
-      ...selectedPerson,
-      crmEntries: selectedPerson.crmEntries?.filter((entry) => entry.id !== entryId) || [],
-    }
-
-    setData((prev) => prev.map((person) => (person.id === selectedPerson.id ? updatedPerson : person)))
-    setSelectedPerson(updatedPerson)
-    triggerSuccess("CRM entry deleted successfully!")
-  }
-
-  const canDeleteCrmEntry = (entry) => {
-    return (entry.employeeName|| entry.username) === currentUser?.username
   }
 
   const renderPersonList = () => {
