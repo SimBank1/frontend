@@ -31,7 +31,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function AdminPanel({ data: initialData, currentUser }) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeFilter, setActiveFilter] = useState("all")
+  const [activeFilter, setActiveFilter] = useState("employees")
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [isDeleteEmployeeOpen, setIsDeleteEmployeeOpen] = useState(false)
   const [deletingEmployee, setDeletingEmployee] = useState(null)
@@ -1161,12 +1161,6 @@ useEffect(() => {
 
         <div className="filter-section">
           <div className="filter-buttons">
-            <button
-              className={`filter-button ${activeFilter === "all" ? "active" : ""}`}
-              onClick={() => setActiveFilter("all")}
-            >
-              All Users
-            </button>
             <button
               className={`filter-button ${activeFilter === "employees" ? "active" : ""}`}
               onClick={() => setActiveFilter("employees")}
