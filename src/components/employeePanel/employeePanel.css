@@ -194,7 +194,7 @@ body {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8b5cf6;
+  color: #fff;
   width: 16px;
   height: 16px;
 }
@@ -996,7 +996,7 @@ y
   background: none;
   border: none;
   border-radius: 6px;
-  color: #8b5cf6;
+  color: #fff;
   cursor: pointer;
   transition: all 0.2s;
 }

@@ -1444,17 +1444,44 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     setIsDeleteAccountOpen(true)
   }
 
-  const confirmDeleteAccount = () => {
+  const confirmDeleteAccount = async () => {
     if (!selectedPerson || !deletingAccount) return
-    const updatedAccounts = selectedPerson.bank_accs.filter((acc) => acc !== deletingAccount)
-    const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts }
-    setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
-    setSelectedPerson(updatedPerson)
-    setDeletingAccount(null)
-    closeModal("deleteAccount")
-    setTimeout(() => {
-      triggerSuccess("Bank account deleted!")
-    }, 200)
+
+    try {
+      const response = await fetch(getServerLink() + "/deleteBankAcc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          personal_code: selectedPerson.personalCode,
+          iban: deletingAccount.iban,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const updatedAccounts = selectedPerson.bank_accs.filter((acc) => acc !== deletingAccount)
+      const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts }
+      setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+      setSelectedPerson(updatedPerson)
+      setDeletingAccount(null)
+      closeModal("deleteAccount")
+      setTimeout(() => {
+        triggerSuccess("Bank account deleted!")
+      }, 200)
+    } catch (error) {
+      console.error("Error deleting bank account:", error)
+      setDeletingAccount(null)
+      closeModal("deleteAccount")
+      setTimeout(() => {
+        triggerSuccess("Failed to delete bank account.")
+      }, 200)
+    }
   }
 
   const normalize = (str) =>
