@@ -51,6 +51,30 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+  const [isEditInfoOpen, setIsEditInfoOpen] = useState(false)
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(null)
+  const [infoFormData, setInfoFormData] = useState({
+    phone: "",
+    secondPhone: "",
+    docType: "ID Card",
+    docNumber: "",
+    docExpiry: "",
+    registrationCountry: "",
+    registrationRegion: "",
+    registrationCity: "",
+    registrationStreet: "",
+    registrationHouse: "",
+    registrationApartment: "",
+    registrationPostalCode: "",
+    correspondenceCountry: "",
+    correspondenceRegion: "",
+    correspondenceCity: "",
+    correspondenceStreet: "",
+    correspondenceHouse: "",
+    correspondenceApartment: "",
+    correspondencePostalCode: "",
+  })
 
   // Track mouse down position to distinguish clicks from drags
   const [mouseDownTarget, setMouseDownTarget] = useState(null)
@@ -172,8 +196,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     addAccount: false,
     addCrm: false,
     editCrm: false,
+    editInfo: false,
     deleteClient: false,
     deleteCrm: false,
+    deleteAccount: false,
     logout: false,
   })
 
@@ -242,8 +268,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         if (isAddAccountOpen) closeModal("addAccount")
         if (isAddCrmOpen) closeModal("addCrm")
         if (isEditCrmOpen) closeModal("editCrm")
+        if (isEditInfoOpen) closeModal("editInfo")
         if (isDeleteClientOpen) closeModal("deleteClient")
         if (isDeleteCrmOpen) closeModal("deleteCrm")
+        if (isDeleteAccountOpen) closeModal("deleteAccount")
         if (isLogoutOpen) closeModal("logout")
       }
     }
@@ -254,8 +282,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     isAddAccountOpen,
     isAddCrmOpen,
     isEditCrmOpen,
+    isEditInfoOpen,
     isDeleteClientOpen,
     isDeleteCrmOpen,
+    isDeleteAccountOpen,
     isLogoutOpen,
     searchTerm,
   ])
@@ -277,12 +307,19 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           setIsEditCrmOpen(false)
           setEditingCrmEntry(null)
           break
+        case "editInfo":
+          setIsEditInfoOpen(false)
+          break
         case "deleteClient":
           setIsDeleteClientOpen(false)
           break
         case "deleteCrm":
           setIsDeleteCrmOpen(false)
           setDeletingCrmEntry(null)
+          break
+        case "deleteAccount":
+          setIsDeleteAccountOpen(false)
+          setDeletingAccount(null)
           break
         case "logout":
           setIsLogoutOpen(false)
@@ -1329,8 +1366,95 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     setSelectedPerson(null)
 
     // Close the modal
-    closeModal("deleteClient")
+  closeModal("deleteClient")
 
+}
+
+  const handleOpenEditInfo = () => {
+    if (!selectedPerson) return
+    setInfoFormData({
+      phone: selectedPerson.phoneNumber || "",
+      secondPhone: selectedPerson.otherPhoneNumber || "",
+      docType: selectedPerson.docType || selectedPerson.documentType || "ID Card",
+      docNumber: selectedPerson.docNumber || selectedPerson.documentNumber || "",
+      docExpiry: selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "",
+      registrationCountry: selectedPerson.regAddress?.country || "",
+      registrationRegion: selectedPerson.regAddress?.region || "",
+      registrationCity: selectedPerson.regAddress?.cityOrVillage || "",
+      registrationStreet: selectedPerson.regAddress?.street || "",
+      registrationHouse: selectedPerson.regAddress?.house || "",
+      registrationApartment: selectedPerson.regAddress?.apartment || "",
+      registrationPostalCode: selectedPerson.regAddress?.postalCode || "",
+      correspondenceCountry: selectedPerson.corAddress?.country || "",
+      correspondenceRegion: selectedPerson.corAddress?.region || "",
+      correspondenceCity: selectedPerson.corAddress?.cityOrVillage || "",
+      correspondenceStreet: selectedPerson.corAddress?.street || "",
+      correspondenceHouse: selectedPerson.corAddress?.house || "",
+      correspondenceApartment: selectedPerson.corAddress?.apartment || "",
+      correspondencePostalCode: selectedPerson.corAddress?.postalCode || "",
+    })
+    setIsEditInfoOpen(true)
+  }
+
+  const handleInfoFormChange = (field, value) => {
+    setInfoFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleUpdateInfo = (e) => {
+    e.preventDefault()
+    if (!selectedPerson) return
+
+    const updatedPerson = {
+      ...selectedPerson,
+      phoneNumber: infoFormData.phone,
+      otherPhoneNumber: infoFormData.secondPhone,
+      docType: infoFormData.docType,
+      docNumber: infoFormData.docNumber,
+      docExpiryDate: infoFormData.docExpiry,
+      regAddress: {
+        country: infoFormData.registrationCountry,
+        region: infoFormData.registrationRegion,
+        cityOrVillage: infoFormData.registrationCity,
+        street: infoFormData.registrationStreet,
+        house: infoFormData.registrationHouse,
+        apartment: infoFormData.registrationApartment,
+        postalCode: infoFormData.registrationPostalCode,
+      },
+      corAddress: {
+        country: infoFormData.correspondenceCountry,
+        region: infoFormData.correspondenceRegion,
+        cityOrVillage: infoFormData.correspondenceCity,
+        street: infoFormData.correspondenceStreet,
+        house: infoFormData.correspondenceHouse,
+        apartment: infoFormData.correspondenceApartment,
+        postalCode: infoFormData.correspondencePostalCode,
+      },
+    }
+
+    setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+    setSelectedPerson(updatedPerson)
+    closeModal("editInfo")
+    setTimeout(() => {
+      triggerSuccess("Client information updated!")
+    }, 200)
+  }
+
+  const handleDeleteAccount = (account) => {
+    setDeletingAccount(account)
+    setIsDeleteAccountOpen(true)
+  }
+
+  const confirmDeleteAccount = () => {
+    if (!selectedPerson || !deletingAccount) return
+    const updatedAccounts = selectedPerson.bank_accs.filter((acc) => acc !== deletingAccount)
+    const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts }
+    setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+    setSelectedPerson(updatedPerson)
+    setDeletingAccount(null)
+    closeModal("deleteAccount")
+    setTimeout(() => {
+      triggerSuccess("Bank account deleted!")
+    }, 200)
   }
 
   const normalize = (str) =>
@@ -1494,6 +1618,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               <Mail size={16} />
               Contact
             </h3>
+            <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+              <Edit size={16} />
+            </button>
           </div>
           <div className="card-content">
      
@@ -1545,7 +1672,16 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div key={`${account.id}-${index}`} className="account-item">
                     <div className="account-header">
                       <span className="account-iban">{account.iban}</span>
-                      <span className="account-badge">{account.currency}</span>
+                      <div className="account-actions">
+                        <span className="account-badge">{account.currency}</span>
+                        <button
+                          className="delete-account-button"
+                          onClick={() => handleDeleteAccount(account)}
+                          title="Delete Account"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     <div className="account-details">
                       <div className="account-detail">
@@ -1592,6 +1728,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <Shield size={16} />
                   Document Information
                 </h3>
+                <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+                  <Edit size={16} />
+                </button>
               </div>
               <div className="card-content">
                 <div className="info-item">
@@ -1654,6 +1793,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <MapPin size={16} />
                   Address Information
                 </h3>
+                <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+                  <Edit size={16} />
+                </button>
               </div>
               <div className="card-content">
                 <div className="address-item">
@@ -2763,6 +2905,204 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <button type="button" className="button-danger" onClick={handleDeleteClient}>
                   <Trash2 size={16} style={{ marginRight: "8px" }} />
                   Delete Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Info Modal */}
+      {isEditInfoOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "editInfo")}
+        >
+          <div
+            className={`modal-content large-modal ${modalClosing.editInfo ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Edit size={20} color="#8b5cf6" />
+                Edit Client Information
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("editInfo")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleUpdateInfo}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Primary Phone</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.phone}
+                      onChange={(e) => handleInfoFormChange("phone", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Secondary Phone</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.secondPhone}
+                      onChange={(e) => handleInfoFormChange("secondPhone", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Type</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.docType}
+                      onChange={(e) => handleInfoFormChange("docType", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Number</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.docNumber}
+                      onChange={(e) => handleInfoFormChange("docNumber", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Expiry</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={infoFormData.docExpiry}
+                      onChange={(e) => handleInfoFormChange("docExpiry", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Registration Country</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.registrationCountry}
+                      onChange={(e) => handleInfoFormChange("registrationCountry", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration City</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.registrationCity}
+                      onChange={(e) => handleInfoFormChange("registrationCity", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration Street</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.registrationStreet}
+                      onChange={(e) => handleInfoFormChange("registrationStreet", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration House</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.registrationHouse}
+                      onChange={(e) => handleInfoFormChange("registrationHouse", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration Postal Code</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.registrationPostalCode}
+                      onChange={(e) => handleInfoFormChange("registrationPostalCode", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Correspondence Country</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.correspondenceCountry}
+                      onChange={(e) => handleInfoFormChange("correspondenceCountry", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Correspondence City</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.correspondenceCity}
+                      onChange={(e) => handleInfoFormChange("correspondenceCity", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Correspondence Street</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.correspondenceStreet}
+                      onChange={(e) => handleInfoFormChange("correspondenceStreet", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Correspondence House</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.correspondenceHouse}
+                      onChange={(e) => handleInfoFormChange("correspondenceHouse", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Correspondence Postal Code</label>
+                    <input
+                      className="form-input"
+                      value={infoFormData.correspondencePostalCode}
+                      onChange={(e) => handleInfoFormChange("correspondencePostalCode", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("editInfo")}>Cancel</button>
+                  <button type="submit" className="button-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {isDeleteAccountOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteAccount")}
+        >
+          <div
+            className={`modal-content ${modalClosing.deleteAccount ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Account
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteAccount")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete account {deletingAccount?.iban}?
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteAccount")}>Cancel</button>
+                <button type="button" className="button-danger" onClick={confirmDeleteAccount}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Account
                 </button>
               </div>
             </div>
