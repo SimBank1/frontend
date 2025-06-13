@@ -739,64 +739,79 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       triggerSuccess(`Failed to create client. Error: ${error.message}`);
     }
   };
-  const validateClientForm = () => {
-    const newErrors = {}
 
+
+
+  const validateClientForm = (notEmail = false, skipPersonalCode = false) => {
+    const newErrors = {};
+  
     // First Name
     if (!clientFormData.firstName?.trim()) {
-      newErrors.firstName = "First name is required."
+      newErrors.firstName = "First name is required.";
     } else {
-      const firstNameError = validateName(clientFormData.firstName, "First name")
-      if (firstNameError) newErrors.firstName = firstNameError
+      const firstNameError = validateName(clientFormData.firstName, "First name");
+      if (firstNameError) newErrors.firstName = firstNameError;
     }
-
+  
     // Last Name
     if (!clientFormData.lastName?.trim()) {
-      newErrors.lastName = "Last name is required."
+      newErrors.lastName = "Last name is required.";
     } else {
-      const lastNameError = validateName(clientFormData.lastName, "Last name")
-      if (lastNameError) newErrors.lastName = lastNameError
+      const lastNameError = validateName(clientFormData.lastName, "Last name");
+      if (lastNameError) newErrors.lastName = lastNameError;
     }
-
+  
     // Personal Code
-    if (!clientFormData.personalCode?.trim()) {
-      newErrors.personalCode = "Personal code is required."
-    } else {
-      const personalCodeError = validatePersonalCode(clientFormData.personalCode)
-      if (personalCodeError) newErrors.personalCode = personalCodeError
-    }
 
+    if (!skipPersonalCode) {
+      if (!String(clientFormData.personalCode || "").trim()) {
+        newErrors.personalCode = "Personal code is required.";
+      } else {
+        const personalCodeError = validatePersonalCode(String(clientFormData.personalCode));
+        if (personalCodeError) newErrors.personalCode = personalCodeError;
+      }
+    }
+  
+  
     // Document Number
-    if (!clientFormData.documentNumber?.trim()) {
-      newErrors.documentNumber = "Document number is required."
+    if (!String(clientFormData.documentNumber || "").trim()) {
+      newErrors.documentNumber = "Document number is required.";
     } else {
-      const documentNumberError = validateDocumentNumber(clientFormData.documentNumber)
-      if (documentNumberError) newErrors.documentNumber = documentNumberError
+      const documentNumberError = validateDocumentNumber(clientFormData.documentNumber);
+      if (documentNumberError) newErrors.documentNumber = documentNumberError;
     }
-
+  
     // Document Expiry
     if (!clientFormData.documentExpiry) {
-      newErrors.documentExpiry = "Document expiry date is required."
+      newErrors.documentExpiry = "Document expiry date is required.";
     } else {
-      const expiryError = validateFutureDate(clientFormData.documentExpiry)
-      if (expiryError) newErrors.documentExpiry = expiryError
+      const expiryError = validateFutureDate(clientFormData.documentExpiry);
+      if (expiryError) newErrors.documentExpiry = expiryError;
     }
-
+  
     // Email
-    if (clientFormData.email?.trim()) {
-      const emailError = validateEmail(clientFormData.email)
-      if (emailError) newErrors.email = emailError
+    if (!notEmail && clientFormData.email?.trim()) {
+      const emailError = validateEmail(clientFormData.email);
+      if (emailError) newErrors.email = emailError;
     }
-
+    else{
+      if(clientFormData.email?.trim()){
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailError = regex.test(clientFormData.email);
+      if (!emailError) newErrors.email = emailError;
+}
+    }
+  
     // Phone
     if (clientFormData.phone?.trim()) {
-      const phoneError = validatePhone(clientFormData.phone)
-      if (phoneError) newErrors.phone = phoneError
+      const phoneError = validatePhone(clientFormData.phone);
+      if (phoneError) newErrors.phone = phoneError;
     }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
 
   const handleClientFormChange = async (field, value) => {
     if (field === "personalCode") {
@@ -1402,7 +1417,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const handleUpdateClient = async (e) => {
     e.preventDefault()
     if (!selectedPerson) return
-    if (!validateClientForm()) return
+    if (!validateClientForm(true, true)) return;
 
     const payload = {
       personal_code: selectedPerson.personalCode,
@@ -1435,6 +1450,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       },
     }
 
+
+    console.log(payload)
     try {
       const response = await fetch(getServerLink() + "/editClient", {
         method: "POST",
@@ -3041,19 +3058,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     />
                     {errors.lastName && <div className="error-message">{errors.lastName}</div>}
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Personal Code *</label>
-                    <input
-                      className={`form-input ${errors.personalCode ? "error" : ""}`}
-                      value={clientFormData.personalCode}
-                      onChange={(e) => handleClientFormChange("personalCode", e.target.value)}
-                      placeholder="Enter 11-digit personal code"
-                      required
-                      maxLength={11}
-                      disabled
-                    />
-                    {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
-                  </div>
+              
                 </div>
 
                 <div className="form-group">
