@@ -1399,25 +1399,23 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     setIsEditInfoOpen(true)
   }
 
-  const handleUpdateClient = (e) => {
+  const handleUpdateClient = async (e) => {
     e.preventDefault()
     if (!selectedPerson) return
     if (!validateClientForm()) return
 
-    const updatedPerson = {
-      ...selectedPerson,
-      firstName: clientFormData.firstName,
-      lastName: clientFormData.lastName,
-      personalCode: clientFormData.personalCode,
+    const payload = {
+      personal_code: selectedPerson.personalCode,
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
       email: clientFormData.email,
-      phoneNumber: clientFormData.phone,
-      otherPhoneNumber: clientFormData.secondPhone,
-      docType: clientFormData.documentType,
-      docNumber: clientFormData.documentNumber,
-      docExpiryDate: clientFormData.documentExpiry,
-      dateOfBirth: clientFormData.dateOfBirth,
-      marketingConsent: clientFormData.marketingConsent,
-      regAddress: {
+      phone_number: clientFormData.phone,
+      other_phone_number: clientFormData.secondPhone,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      marketing_consent: clientFormData.marketingConsent,
+      reg_address: {
         country: clientFormData.registrationCountry,
         region: clientFormData.registrationRegion || null,
         cityOrVillage: clientFormData.registrationCity || null,
@@ -1426,7 +1424,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         apartment: clientFormData.registrationApartment || null,
         postalCode: clientFormData.registrationPostalCode || null,
       },
-      corAddress: {
+      cor_address: {
         country: clientFormData.correspondenceCountry,
         region: clientFormData.correspondenceRegion || null,
         cityOrVillage: clientFormData.correspondenceCity || null,
@@ -1437,12 +1435,65 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       },
     }
 
-    setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
-    setSelectedPerson(updatedPerson)
-    closeModal("editInfo")
-    setTimeout(() => {
-      triggerSuccess("Client information updated!")
-    }, 200)
+    try {
+      const response = await fetch(getServerLink() + "/editClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const updatedPerson = {
+        ...selectedPerson,
+        firstName: clientFormData.firstName,
+        lastName: clientFormData.lastName,
+        email: clientFormData.email,
+        phoneNumber: clientFormData.phone,
+        otherPhoneNumber: clientFormData.secondPhone,
+        docType: clientFormData.documentType,
+        docNumber: clientFormData.documentNumber,
+        docExpiryDate: clientFormData.documentExpiry,
+        marketingConsent: clientFormData.marketingConsent,
+        regAddress: {
+          country: clientFormData.registrationCountry,
+          region: clientFormData.registrationRegion || null,
+          cityOrVillage: clientFormData.registrationCity || null,
+          street: clientFormData.registrationStreet,
+          house: clientFormData.registrationHouse || null,
+          apartment: clientFormData.registrationApartment || null,
+          postalCode: clientFormData.registrationPostalCode || null,
+        },
+        corAddress: {
+          country: clientFormData.correspondenceCountry,
+          region: clientFormData.correspondenceRegion || null,
+          cityOrVillage: clientFormData.correspondenceCity || null,
+          street: clientFormData.correspondenceStreet,
+          house: clientFormData.correspondenceHouse || null,
+          apartment: clientFormData.correspondenceApartment || null,
+          postalCode: clientFormData.correspondencePostalCode || null,
+        },
+      }
+
+      setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+      setSelectedPerson(updatedPerson)
+      closeModal("editInfo")
+      setTimeout(() => {
+        triggerSuccess("Client information updated!")
+      }, 200)
+    } catch (error) {
+      console.error("Error updating client:", error)
+      closeModal("editInfo")
+      setTimeout(() => {
+        triggerSuccess("Failed to update client information.")
+      }, 200)
+    }
   }
 
   const handleDeleteAccount = (account) => {
@@ -2999,6 +3050,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       placeholder="Enter 11-digit personal code"
                       required
                       maxLength={11}
+                      disabled
                     />
                     {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
                   </div>
