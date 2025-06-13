@@ -54,27 +54,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false)
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(null)
-  const [infoFormData, setInfoFormData] = useState({
-    phone: "",
-    secondPhone: "",
-    docType: "ID Card",
-    docNumber: "",
-    docExpiry: "",
-    registrationCountry: "",
-    registrationRegion: "",
-    registrationCity: "",
-    registrationStreet: "",
-    registrationHouse: "",
-    registrationApartment: "",
-    registrationPostalCode: "",
-    correspondenceCountry: "",
-    correspondenceRegion: "",
-    correspondenceCity: "",
-    correspondenceStreet: "",
-    correspondenceHouse: "",
-    correspondenceApartment: "",
-    correspondencePostalCode: "",
-  })
 
   // Track mouse down position to distinguish clicks from drags
   const [mouseDownTarget, setMouseDownTarget] = useState(null)
@@ -1372,12 +1351,20 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
   const handleOpenEditInfo = () => {
     if (!selectedPerson) return
-    setInfoFormData({
+
+    setClientFormData({
+      firstName: selectedPerson.firstName || "",
+      lastName: selectedPerson.lastName || "",
+      personalCode: selectedPerson.personalCode || "",
+      email: selectedPerson.email || "",
       phone: selectedPerson.phoneNumber || "",
       secondPhone: selectedPerson.otherPhoneNumber || "",
-      docType: selectedPerson.docType || selectedPerson.documentType || "ID Card",
-      docNumber: selectedPerson.docNumber || selectedPerson.documentNumber || "",
-      docExpiry: selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "",
+      documentType: selectedPerson.docType || selectedPerson.documentType || "ID Card",
+      documentNumber: selectedPerson.docNumber || selectedPerson.documentNumber || "",
+      documentExpiry: selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "",
+      dateOfBirth:
+        selectedPerson.dateOfBirth ||
+        getDateOfBirthFromPersonalCode(selectedPerson.personalCode || ""),
       registrationCountry: selectedPerson.regAddress?.country || "",
       registrationRegion: selectedPerson.regAddress?.region || "",
       registrationCity: selectedPerson.regAddress?.cityOrVillage || "",
@@ -1392,42 +1379,61 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       correspondenceHouse: selectedPerson.corAddress?.house || "",
       correspondenceApartment: selectedPerson.corAddress?.apartment || "",
       correspondencePostalCode: selectedPerson.corAddress?.postalCode || "",
+      marketingConsent: selectedPerson.marketingConsent || false,
     })
+
+    const reg = selectedPerson.regAddress
+    const cor = selectedPerson.corAddress
+    const same =
+      reg &&
+      cor &&
+      reg.country === cor.country &&
+      reg.region === cor.region &&
+      reg.cityOrVillage === cor.cityOrVillage &&
+      reg.street === cor.street &&
+      reg.house === cor.house &&
+      reg.apartment === cor.apartment &&
+      reg.postalCode === cor.postalCode
+
+    setSameAsRegistration(!!same)
     setIsEditInfoOpen(true)
   }
 
-  const handleInfoFormChange = (field, value) => {
-    setInfoFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleUpdateInfo = (e) => {
+  const handleUpdateClient = (e) => {
     e.preventDefault()
     if (!selectedPerson) return
+    if (!validateClientForm()) return
 
     const updatedPerson = {
       ...selectedPerson,
-      phoneNumber: infoFormData.phone,
-      otherPhoneNumber: infoFormData.secondPhone,
-      docType: infoFormData.docType,
-      docNumber: infoFormData.docNumber,
-      docExpiryDate: infoFormData.docExpiry,
+      firstName: clientFormData.firstName,
+      lastName: clientFormData.lastName,
+      personalCode: clientFormData.personalCode,
+      email: clientFormData.email,
+      phoneNumber: clientFormData.phone,
+      otherPhoneNumber: clientFormData.secondPhone,
+      docType: clientFormData.documentType,
+      docNumber: clientFormData.documentNumber,
+      docExpiryDate: clientFormData.documentExpiry,
+      dateOfBirth: clientFormData.dateOfBirth,
+      marketingConsent: clientFormData.marketingConsent,
       regAddress: {
-        country: infoFormData.registrationCountry,
-        region: infoFormData.registrationRegion,
-        cityOrVillage: infoFormData.registrationCity,
-        street: infoFormData.registrationStreet,
-        house: infoFormData.registrationHouse,
-        apartment: infoFormData.registrationApartment,
-        postalCode: infoFormData.registrationPostalCode,
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion || null,
+        cityOrVillage: clientFormData.registrationCity || null,
+        street: clientFormData.registrationStreet,
+        house: clientFormData.registrationHouse || null,
+        apartment: clientFormData.registrationApartment || null,
+        postalCode: clientFormData.registrationPostalCode || null,
       },
       corAddress: {
-        country: infoFormData.correspondenceCountry,
-        region: infoFormData.correspondenceRegion,
-        cityOrVillage: infoFormData.correspondenceCity,
-        street: infoFormData.correspondenceStreet,
-        house: infoFormData.correspondenceHouse,
-        apartment: infoFormData.correspondenceApartment,
-        postalCode: infoFormData.correspondencePostalCode,
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion || null,
+        cityOrVillage: clientFormData.correspondenceCity || null,
+        street: clientFormData.correspondenceStreet,
+        house: clientFormData.correspondenceHouse || null,
+        apartment: clientFormData.correspondenceApartment || null,
+        postalCode: clientFormData.correspondencePostalCode || null,
       },
     }
 
@@ -2960,140 +2966,301 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               </button>
             </div>
             <div className="modal-body">
-              <form onSubmit={handleUpdateInfo}>
+              <form onSubmit={handleUpdateClient}>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Primary Phone</label>
+                    <label className="form-label">First Name *</label>
                     <input
-                      className="form-input"
-                      value={infoFormData.phone}
-                      onChange={(e) => handleInfoFormChange("phone", e.target.value)}
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={clientFormData.firstName}
+                      onChange={(e) => handleClientFormChange("firstName", e.target.value)}
+                      placeholder="Enter first name"
+                      required
                     />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Secondary Phone</label>
+                    <label className="form-label">Last Name *</label>
                     <input
-                      className="form-input"
-                      value={infoFormData.secondPhone}
-                      onChange={(e) => handleInfoFormChange("secondPhone", e.target.value)}
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={clientFormData.lastName}
+                      onChange={(e) => handleClientFormChange("lastName", e.target.value)}
+                      placeholder="Enter last name"
+                      required
                     />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Document Type</label>
+                    <label className="form-label">Personal Code *</label>
                     <input
-                      className="form-input"
-                      value={infoFormData.docType}
-                      onChange={(e) => handleInfoFormChange("docType", e.target.value)}
+                      className={`form-input ${errors.personalCode ? "error" : ""}`}
+                      value={clientFormData.personalCode}
+                      onChange={(e) => handleClientFormChange("personalCode", e.target.value)}
+                      placeholder="Enter 11-digit personal code"
+                      required
+                      maxLength={11}
                     />
+                    {errors.personalCode && <div className="error-message">{errors.personalCode}</div>}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={clientFormData.email}
+                    onChange={(e) => handleClientFormChange("email", e.target.value)}
+                    placeholder="Enter email"
+                    required
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Phone *</label>
+                    <div className="phone-input-group">
+                      <input
+                        className={`form-input ${errors.phone ? "error" : ""}`}
+                        value={clientFormData.phone}
+                        onChange={(e) => handleClientFormChange("phone", e.target.value)}
+                        placeholder="Phone number"
+                        required
+                      />
+                    </div>
+                    {errors.phone && <div className="error-message">{errors.phone}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Document Number</label>
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <input
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
+                        placeholder="Second phone number"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Document Type *</label>
+                    <select
+                      className="form-select"
+                      value={clientFormData.documentType}
+                      onChange={(e) => handleClientFormChange("documentType", e.target.value)}
+                      required
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="ID Card">ID Card</option>
+                      <option value="Driver's License">Driver's License</option>
+                      <option value="Temporary Residence Permit">Residence Permit</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Number *</label>
                     <input
-                      className="form-input"
-                      value={infoFormData.docNumber}
-                      onChange={(e) => handleInfoFormChange("docNumber", e.target.value)}
+                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
+                      value={clientFormData.documentNumber}
+                      onChange={(e) => handleClientFormChange("documentNumber", e.target.value)}
+                      placeholder="8 alphanumeric characters"
+                      required
                     />
+                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Document Expiry</label>
+                    <label className="form-label">Document Expiry *</label>
                     <input
                       type="date"
-                      className="form-input"
-                      value={infoFormData.docExpiry}
-                      onChange={(e) => handleInfoFormChange("docExpiry", e.target.value)}
+                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
+                      value={clientFormData.documentExpiry}
+                      onChange={(e) => handleClientFormChange("documentExpiry", e.target.value)}
+                      required
                     />
+                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Date of Birth (Auto-filled)</label>
+                    <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
                   </div>
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Registration Address *</label>
+                  <div className="form-grid">
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Registration Country</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.registrationCountry}
-                      onChange={(e) => handleInfoFormChange("registrationCountry", e.target.value)}
-                    />
+                    <div className="form-group">
+                      <label className="form-label">Street *</label>
+                      <input
+                        className={`form-input ${errors.registrationStreet ? "error" : ""}`}
+                        value={clientFormData.registrationStreet}
+                        onChange={(e) => handleClientFormChange("registrationStreet", e.target.value)}
+                        placeholder="Street name"
+                        required
+                      />
+                      {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">House *</label>
+                      <input
+                        className={`form-input ${errors.registrationHouse ? "error" : ""}`}
+                        value={clientFormData.registrationHouse}
+                        onChange={(e) => handleClientFormChange("registrationHouse", e.target.value)}
+                        placeholder="House number"
+                        required
+                      />
+                      {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apartment</label>
+                      <input
+                        className={`form-input ${errors.registrationApartment ? "error" : ""}`}
+                        value={clientFormData.registrationApartment}
+                        onChange={(e) => handleClientFormChange("registrationApartment", e.target.value)}
+                        placeholder="Apartment (optional)"
+                      />
+                      {errors.registrationApartment && (
+                        <div className="error-message">{errors.registrationApartment}</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Registration City</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.registrationCity}
-                      onChange={(e) => handleInfoFormChange("registrationCity", e.target.value)}
-                    />
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Postal Code *</label>
+                      <input
+                        className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                        value={clientFormData.registrationPostalCode}
+                        onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                        placeholder="Postal code"
+                        required
+                      />
+                      {errors.registrationPostalCode && (
+                        <div className="error-message">{errors.registrationPostalCode}</div>
+                      )}
+                      </div>
+
+                      <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+
+                      <div className="form-group">
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                        value={clientFormData.registrationCountry}
+                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+
+                    </div>
+
+
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Registration Street</label>
+                  <div className="form-checkbox">
                     <input
-                      className="form-input"
-                      value={infoFormData.registrationStreet}
-                      onChange={(e) => handleInfoFormChange("registrationStreet", e.target.value)}
+                      type="checkbox"
+                      id="sameAsRegistration"
+                      checked={sameAsRegistration}
+                      onChange={(e) => setSameAsRegistration(e.target.checked)}
                     />
+                    <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Registration House</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.registrationHouse}
-                      onChange={(e) => handleInfoFormChange("registrationHouse", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Registration Postal Code</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.registrationPostalCode}
-                      onChange={(e) => handleInfoFormChange("registrationPostalCode", e.target.value)}
-                    />
-                  </div>
+
+                  {!sameAsRegistration && (
+                    <div className="form-group">
+                      <label className="form-label">Correspondence Address *</label>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Street *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                            value={clientFormData.correspondenceStreet}
+                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                            placeholder="Street name"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">House *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                            value={clientFormData.correspondenceHouse}
+                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                            placeholder="House number"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Apartment</label>
+                          <input
+                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                            value={clientFormData.correspondenceApartment}
+                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                            placeholder="Apartment (optional)"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Postal Code *</label>
+                          <input
+                            className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                            value={clientFormData.correspondencePostalCode}
+                            onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                            placeholder="Postal code"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Country *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                            value={clientFormData.correspondenceCountry}
+                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                            placeholder="Country"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">City *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                            value={clientFormData.correspondenceCity}
+                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                            placeholder="City or Village"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Correspondence Country</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.correspondenceCountry}
-                      onChange={(e) => handleInfoFormChange("correspondenceCountry", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Correspondence City</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.correspondenceCity}
-                      onChange={(e) => handleInfoFormChange("correspondenceCity", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Correspondence Street</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.correspondenceStreet}
-                      onChange={(e) => handleInfoFormChange("correspondenceStreet", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Correspondence House</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.correspondenceHouse}
-                      onChange={(e) => handleInfoFormChange("correspondenceHouse", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Correspondence Postal Code</label>
-                    <input
-                      className="form-input"
-                      value={infoFormData.correspondencePostalCode}
-                      onChange={(e) => handleInfoFormChange("correspondencePostalCode", e.target.value)}
-                    />
-                  </div>
+                <div className="form-checkbox">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={clientFormData.marketingConsent}
+                    onChange={(e) => handleClientFormChange("marketingConsent", e.target.checked)}
+                  />
+                  <label htmlFor="marketingConsent">Marketing consent</label>
                 </div>
 
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("editInfo")}>Cancel</button>
-                  <button type="submit" className="button-primary">Save Changes</button>
+                  <button type="submit" className="button-primary">
+                    Save Changes
+                  </button>
                 </div>
               </form>
             </div>
