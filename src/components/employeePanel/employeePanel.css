@@ -784,6 +784,20 @@ body {
   background-color: #fef2f2;
 }
 
+.edit-account-button {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.edit-account-button:hover {
+  background-color: #f3f4f6;
+}
+
 .account-iban {
   font-size: 14px;
   font-weight: 500;
