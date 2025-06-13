@@ -1664,23 +1664,45 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div className="address-content">
                     <div className="info-label">Registration Address</div>
                     <div className="info-value">
-                      {selectedPerson.regAddress ? (
-                        <>
-                          <div>
-                            {selectedPerson.regAddress.street || "N/A"} {selectedPerson.regAddress.house || "N/A"}
-                            {selectedPerson.regAddress.apartment && `, Apt ${selectedPerson.regAddress.apartment}`}
-                          </div>
-                          <div>
-                            {selectedPerson.regAddress.postalCode || "N/A"}{" "}
-                            {selectedPerson.regAddress.cityOrVillage || "N/A"}
-                          </div>
-                          <div>
-                            {selectedPerson.regAddress.region || "N/A"}, {selectedPerson.regAddress.country || "N/A"}
-                          </div>
-                        </>
-                      ) : (
-                        <div>No registration address</div>
-                      )}
+                    {selectedPerson.regAddress ? (
+  <>
+    <div>
+      {selectedPerson.regAddress.street && selectedPerson.regAddress.street !== "null" && (
+        <span>{selectedPerson.regAddress.street} </span>
+      )}
+      {selectedPerson.regAddress.house && selectedPerson.regAddress.house !== "null" && (
+        <span>{selectedPerson.regAddress.house}</span>
+      )}
+      {selectedPerson.regAddress.apartment && selectedPerson.regAddress.apartment !== "null" && (
+        <span>, Apt {selectedPerson.regAddress.apartment}</span>
+      )}
+    </div>
+    <div>
+      {selectedPerson.regAddress.postalCode && selectedPerson.regAddress.postalCode !== "null" && (
+        <span>{selectedPerson.regAddress.postalCode} </span>
+      )}
+      {selectedPerson.regAddress.cityOrVillage && selectedPerson.regAddress.cityOrVillage !== "null" && (
+        <span>{selectedPerson.regAddress.cityOrVillage}</span>
+      )}
+    </div>
+    <div>
+      {selectedPerson.regAddress.region && selectedPerson.regAddress.region !== "null" && (
+        <span>{selectedPerson.regAddress.region}</span>
+      )}
+      {selectedPerson.regAddress.region && selectedPerson.regAddress.region !== "null" &&
+       selectedPerson.regAddress.country && selectedPerson.regAddress.country !== "null" && (
+        <span>, </span>
+      )}
+      {selectedPerson.regAddress.country && selectedPerson.regAddress.country !== "null" && (
+        <span>{selectedPerson.regAddress.country}</span>
+      )}
+    </div>
+  </>
+) : (
+  <div>No registration address</div>
+)}
+
+
                     </div>
                   </div>
                 </div>
