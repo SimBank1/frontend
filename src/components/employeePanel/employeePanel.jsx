@@ -939,6 +939,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         bank_accs: [...(selectedPerson.bank_accs || []), newAccount],
       };
 
+      console.log(updatedPerson)
+
       setData((prev) =>
         prev.map((person) => (person.personalCode === selectedPerson.personalCode ? updatedPerson : person))
       );
@@ -1556,16 +1558,17 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       </div>
                       <div className="account-detail">
                         <div className="info-label">Plan</div>
-                        <div className="info-value">{account.plan}</div>
+                        <div className="info-value">{account.plan || account.servicePlan}</div>
                       </div>
                       <div className="account-detail">
                         <div className="info-label">Card Type</div>
-                        <div className="info-value">
-                          {account.type === "none"
-                            ? "No Card"
-                            : account.type === "Debeto"
-                              ? "Debit Card"
-                              : "Credit Card"}
+                        <div className="info-value">  
+                        {(account.type || account.cardType) === "none"
+                        ? "No Card"
+                        : (account.type || account.cardType) === "Debeto"
+                          ? "Debit Card"
+                          : "Credit Card"}
+
                         </div>
                       </div>
                     </div>
