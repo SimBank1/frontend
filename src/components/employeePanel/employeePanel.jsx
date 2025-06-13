@@ -2111,8 +2111,8 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     <span className="crm-entry-employee">by {entry.username}</span> {/* Uses username from DB */}
                     <div className="crm-entry-actions">
                       {canEditCrmEntry(entry) && (
-                        <button className="edit-button" onClick={() => handleEditCrm(entry)}>
-                          <Edit size={16} />
+                        <button className="edit-button"  style={{ color: '#8064f3' }}onClick={() => handleEditCrm(entry) }>
+                          <Edit size={16} color="#8064f3" />
                         </button>
                       )}
                       {canDeleteCrmEntry(entry) && (
