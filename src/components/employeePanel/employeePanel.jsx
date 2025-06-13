@@ -1978,10 +1978,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <Plus size={14} style={{ marginRight: "4px" }} />
                 Add Account
               </button>
-              <button className="button-add-account" onClick={() => setIsAddBasicAccountOpen(true)}>
-                <Plus size={14} style={{ marginRight: "4px" }} />
-                Add Basic Account
-              </button>
             </div>
             <div className="card-content">
               {selectedPerson.bank_accs && selectedPerson.bank_accs.length > 0 ? (
@@ -3009,29 +3005,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     <option value="Investment">Investment</option>
                     <option value="Loan">Loan</option>
                   </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Card Type</label>
-                  <select
-                    className="form-input"
-                    value={basicAccountFormData.cardType}
-                    onChange={(e) => handleBasicAccountFormChange("cardType", e.target.value)}
-                    disabled={!["Jaunimo", "Standard", "Gold"].includes(basicAccountFormData.servicePlan)}
-                  >
-                    <option value="none">/</option>
-                    {["Jaunimo", "Standard", "Gold"].includes(basicAccountFormData.servicePlan) && (
-                      <>
-                        <option value="Debeto">Debit Card</option>
-                        <option value="Kredito">Credit Card</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="button-secondary" onClick={() => closeModal("addBasicAccount")}>Cancel</button>
-                  <button type="submit" className="button-primary">Create Account</button>
                 </div>
               </form>
             </div>
