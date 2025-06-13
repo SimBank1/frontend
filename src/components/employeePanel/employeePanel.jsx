@@ -2542,6 +2542,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                     <option value="phone">Phone</option>
                     <option value="visit">Visit</option>
                     <option value="website">Website</option>
+                    <option value="email">Email</option>
                   </select>
                   {errors.contactType && <div className="error-message">{errors.contactType}</div>}
                 </div>
