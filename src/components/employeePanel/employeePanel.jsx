@@ -1414,7 +1414,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
             </div>
             {person.crm && person.crm.length > 0 ? (
               <p className="client-preview">
-                Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact : "No interactions"}
+                Last interaction: {person.crm.length > 0 ? person.crm[person.crm.length - 1].date_of_contact || person.crm[person.crm.length - 1].date : "No interactions"}
               </p>
             ) : (
               <p className="client-preview no-recent-activities">No recent activities</p>
