@@ -51,6 +51,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [sameAsRegistration, setSameAsRegistration] = useState(true)
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+  const [isEditInfoOpen, setIsEditInfoOpen] = useState(false)
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(null)
 
   // Track mouse down position to distinguish clicks from drags
   const [mouseDownTarget, setMouseDownTarget] = useState(null)
@@ -172,8 +175,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     addAccount: false,
     addCrm: false,
     editCrm: false,
+    editInfo: false,
     deleteClient: false,
     deleteCrm: false,
+    deleteAccount: false,
     logout: false,
   })
 
@@ -242,8 +247,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         if (isAddAccountOpen) closeModal("addAccount")
         if (isAddCrmOpen) closeModal("addCrm")
         if (isEditCrmOpen) closeModal("editCrm")
+        if (isEditInfoOpen) closeModal("editInfo")
         if (isDeleteClientOpen) closeModal("deleteClient")
         if (isDeleteCrmOpen) closeModal("deleteCrm")
+        if (isDeleteAccountOpen) closeModal("deleteAccount")
         if (isLogoutOpen) closeModal("logout")
       }
     }
@@ -254,8 +261,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     isAddAccountOpen,
     isAddCrmOpen,
     isEditCrmOpen,
+    isEditInfoOpen,
     isDeleteClientOpen,
     isDeleteCrmOpen,
+    isDeleteAccountOpen,
     isLogoutOpen,
     searchTerm,
   ])
@@ -277,12 +286,19 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           setIsEditCrmOpen(false)
           setEditingCrmEntry(null)
           break
+        case "editInfo":
+          setIsEditInfoOpen(false)
+          break
         case "deleteClient":
           setIsDeleteClientOpen(false)
           break
         case "deleteCrm":
           setIsDeleteCrmOpen(false)
           setDeletingCrmEntry(null)
+          break
+        case "deleteAccount":
+          setIsDeleteAccountOpen(false)
+          setDeletingAccount(null)
           break
         case "logout":
           setIsLogoutOpen(false)
@@ -723,64 +739,79 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       triggerSuccess(`Failed to create client. Error: ${error.message}`);
     }
   };
-  const validateClientForm = () => {
-    const newErrors = {}
 
+
+
+  const validateClientForm = (notEmail = false, skipPersonalCode = false) => {
+    const newErrors = {};
+  
     // First Name
     if (!clientFormData.firstName?.trim()) {
-      newErrors.firstName = "First name is required."
+      newErrors.firstName = "First name is required.";
     } else {
-      const firstNameError = validateName(clientFormData.firstName, "First name")
-      if (firstNameError) newErrors.firstName = firstNameError
+      const firstNameError = validateName(clientFormData.firstName, "First name");
+      if (firstNameError) newErrors.firstName = firstNameError;
     }
-
+  
     // Last Name
     if (!clientFormData.lastName?.trim()) {
-      newErrors.lastName = "Last name is required."
+      newErrors.lastName = "Last name is required.";
     } else {
-      const lastNameError = validateName(clientFormData.lastName, "Last name")
-      if (lastNameError) newErrors.lastName = lastNameError
+      const lastNameError = validateName(clientFormData.lastName, "Last name");
+      if (lastNameError) newErrors.lastName = lastNameError;
     }
-
+  
     // Personal Code
-    if (!clientFormData.personalCode?.trim()) {
-      newErrors.personalCode = "Personal code is required."
-    } else {
-      const personalCodeError = validatePersonalCode(clientFormData.personalCode)
-      if (personalCodeError) newErrors.personalCode = personalCodeError
-    }
 
+    if (!skipPersonalCode) {
+      if (!String(clientFormData.personalCode || "").trim()) {
+        newErrors.personalCode = "Personal code is required.";
+      } else {
+        const personalCodeError = validatePersonalCode(String(clientFormData.personalCode));
+        if (personalCodeError) newErrors.personalCode = personalCodeError;
+      }
+    }
+  
+  
     // Document Number
-    if (!clientFormData.documentNumber?.trim()) {
-      newErrors.documentNumber = "Document number is required."
+    if (!String(clientFormData.documentNumber || "").trim()) {
+      newErrors.documentNumber = "Document number is required.";
     } else {
-      const documentNumberError = validateDocumentNumber(clientFormData.documentNumber)
-      if (documentNumberError) newErrors.documentNumber = documentNumberError
+      const documentNumberError = validateDocumentNumber(clientFormData.documentNumber);
+      if (documentNumberError) newErrors.documentNumber = documentNumberError;
     }
-
+  
     // Document Expiry
     if (!clientFormData.documentExpiry) {
-      newErrors.documentExpiry = "Document expiry date is required."
+      newErrors.documentExpiry = "Document expiry date is required.";
     } else {
-      const expiryError = validateFutureDate(clientFormData.documentExpiry)
-      if (expiryError) newErrors.documentExpiry = expiryError
+      const expiryError = validateFutureDate(clientFormData.documentExpiry);
+      if (expiryError) newErrors.documentExpiry = expiryError;
     }
-
+  
     // Email
-    if (clientFormData.email?.trim()) {
-      const emailError = validateEmail(clientFormData.email)
-      if (emailError) newErrors.email = emailError
+    if (!notEmail && clientFormData.email?.trim()) {
+      const emailError = validateEmail(clientFormData.email);
+      if (emailError) newErrors.email = emailError;
     }
-
+    else{
+      if(clientFormData.email?.trim()){
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailError = regex.test(clientFormData.email);
+      if (!emailError) newErrors.email = emailError;
+}
+    }
+  
     // Phone
     if (clientFormData.phone?.trim()) {
-      const phoneError = validatePhone(clientFormData.phone)
-      if (phoneError) newErrors.phone = phoneError
+      const phoneError = validatePhone(clientFormData.phone);
+      if (phoneError) newErrors.phone = phoneError;
     }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
 
   const handleClientFormChange = async (field, value) => {
     if (field === "personalCode") {
@@ -1331,8 +1362,202 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     setSelectedPerson(null)
 
     // Close the modal
-    closeModal("deleteClient")
+  closeModal("deleteClient")
 
+}
+
+  const handleOpenEditInfo = () => {
+    if (!selectedPerson) return
+
+    setClientFormData({
+      firstName: selectedPerson.firstName || "",
+      lastName: selectedPerson.lastName || "",
+      personalCode: selectedPerson.personalCode || "",
+      email: selectedPerson.email || "",
+      phone: selectedPerson.phoneNumber || "",
+      secondPhone: selectedPerson.otherPhoneNumber || "",
+      documentType: selectedPerson.docType || selectedPerson.documentType || "ID Card",
+      documentNumber: selectedPerson.docNumber || selectedPerson.documentNumber || "",
+      documentExpiry: selectedPerson.docExpiryDate || selectedPerson.documentExpiry || "",
+      dateOfBirth:
+        selectedPerson.dateOfBirth ||
+        getDateOfBirthFromPersonalCode(selectedPerson.personalCode || ""),
+      registrationCountry: selectedPerson.regAddress?.country || "",
+      registrationRegion: selectedPerson.regAddress?.region || "",
+      registrationCity: selectedPerson.regAddress?.cityOrVillage || "",
+      registrationStreet: selectedPerson.regAddress?.street || "",
+      registrationHouse: selectedPerson.regAddress?.house || "",
+      registrationApartment: selectedPerson.regAddress?.apartment || "",
+      registrationPostalCode: selectedPerson.regAddress?.postalCode || "",
+      correspondenceCountry: selectedPerson.corAddress?.country || "",
+      correspondenceRegion: selectedPerson.corAddress?.region || "",
+      correspondenceCity: selectedPerson.corAddress?.cityOrVillage || "",
+      correspondenceStreet: selectedPerson.corAddress?.street || "",
+      correspondenceHouse: selectedPerson.corAddress?.house || "",
+      correspondenceApartment: selectedPerson.corAddress?.apartment || "",
+      correspondencePostalCode: selectedPerson.corAddress?.postalCode || "",
+      marketingConsent: selectedPerson.marketingConsent || false,
+    })
+
+    const reg = selectedPerson.regAddress
+    const cor = selectedPerson.corAddress
+    const same =
+      reg &&
+      cor &&
+      reg.country === cor.country &&
+      reg.region === cor.region &&
+      reg.cityOrVillage === cor.cityOrVillage &&
+      reg.street === cor.street &&
+      reg.house === cor.house &&
+      reg.apartment === cor.apartment &&
+      reg.postalCode === cor.postalCode
+
+    setSameAsRegistration(!!same)
+    setIsEditInfoOpen(true)
+  }
+
+  const handleUpdateClient = async (e) => {
+    e.preventDefault()
+    if (!selectedPerson) return
+    if (!validateClientForm(true, true)) return;
+
+    const payload = {
+      personal_code: selectedPerson.personalCode,
+      first_name: clientFormData.firstName,
+      last_name: clientFormData.lastName,
+      email: clientFormData.email,
+      phone_number: clientFormData.phone,
+      other_phone_number: clientFormData.secondPhone,
+      doc_type: clientFormData.documentType,
+      doc_number: clientFormData.documentNumber,
+      doc_expiry_date: clientFormData.documentExpiry,
+      marketing_consent: clientFormData.marketingConsent,
+      reg_address: {
+        country: clientFormData.registrationCountry,
+        region: clientFormData.registrationRegion || null,
+        cityOrVillage: clientFormData.registrationCity || null,
+        street: clientFormData.registrationStreet,
+        house: clientFormData.registrationHouse || null,
+        apartment: clientFormData.registrationApartment || null,
+        postalCode: clientFormData.registrationPostalCode || null,
+      },
+      cor_address: {
+        country: clientFormData.correspondenceCountry,
+        region: clientFormData.correspondenceRegion || null,
+        cityOrVillage: clientFormData.correspondenceCity || null,
+        street: clientFormData.correspondenceStreet,
+        house: clientFormData.correspondenceHouse || null,
+        apartment: clientFormData.correspondenceApartment || null,
+        postalCode: clientFormData.correspondencePostalCode || null,
+      },
+    }
+
+
+    console.log(payload)
+    try {
+      const response = await fetch(getServerLink() + "/editClient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const updatedPerson = {
+        ...selectedPerson,
+        firstName: clientFormData.firstName,
+        lastName: clientFormData.lastName,
+        email: clientFormData.email,
+        phoneNumber: clientFormData.phone,
+        otherPhoneNumber: clientFormData.secondPhone,
+        docType: clientFormData.documentType,
+        docNumber: clientFormData.documentNumber,
+        docExpiryDate: clientFormData.documentExpiry,
+        marketingConsent: clientFormData.marketingConsent,
+        regAddress: {
+          country: clientFormData.registrationCountry,
+          region: clientFormData.registrationRegion || null,
+          cityOrVillage: clientFormData.registrationCity || null,
+          street: clientFormData.registrationStreet,
+          house: clientFormData.registrationHouse || null,
+          apartment: clientFormData.registrationApartment || null,
+          postalCode: clientFormData.registrationPostalCode || null,
+        },
+        corAddress: {
+          country: clientFormData.correspondenceCountry,
+          region: clientFormData.correspondenceRegion || null,
+          cityOrVillage: clientFormData.correspondenceCity || null,
+          street: clientFormData.correspondenceStreet,
+          house: clientFormData.correspondenceHouse || null,
+          apartment: clientFormData.correspondenceApartment || null,
+          postalCode: clientFormData.correspondencePostalCode || null,
+        },
+      }
+
+      setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+      setSelectedPerson(updatedPerson)
+      closeModal("editInfo")
+      setTimeout(() => {
+        triggerSuccess("Client information updated!")
+      }, 200)
+    } catch (error) {
+      console.error("Error updating client:", error)
+      closeModal("editInfo")
+      setTimeout(() => {
+        triggerSuccess("Failed to update client information.")
+      }, 200)
+    }
+  }
+
+  const handleDeleteAccount = (account) => {
+    setDeletingAccount(account)
+    setIsDeleteAccountOpen(true)
+  }
+
+  const confirmDeleteAccount = async () => {
+    if (!selectedPerson || !deletingAccount) return
+
+    try {
+      const response = await fetch(getServerLink() + "/deleteBankAcc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          personal_code: selectedPerson.personalCode,
+          iban: deletingAccount.iban,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const updatedAccounts = selectedPerson.bank_accs.filter((acc) => acc !== deletingAccount)
+      const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts }
+      setData((prev) => prev.map((p) => (p.id === selectedPerson.id ? updatedPerson : p)))
+      setSelectedPerson(updatedPerson)
+      setDeletingAccount(null)
+      closeModal("deleteAccount")
+      setTimeout(() => {
+        triggerSuccess("Bank account deleted!")
+      }, 200)
+    } catch (error) {
+      console.error("Error deleting bank account:", error)
+      setDeletingAccount(null)
+      closeModal("deleteAccount")
+      setTimeout(() => {
+        triggerSuccess("Failed to delete bank account.")
+      }, 200)
+    }
   }
 
   const normalize = (str) =>
@@ -1496,6 +1721,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
               <Mail size={16} />
               Contact
             </h3>
+            <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+              <Edit size={16} />
+            </button>
           </div>
           <div className="card-content">
      
@@ -1547,7 +1775,16 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <div key={`${account.id}-${index}`} className="account-item">
                     <div className="account-header">
                       <span className="account-iban">{account.iban}</span>
-                      <span className="account-badge">{account.currency}</span>
+                      <div className="account-actions">
+                        <span className="account-badge">{account.currency}</span>
+                        <button
+                          className="delete-account-button"
+                          onClick={() => handleDeleteAccount(account)}
+                          title="Delete Account"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     <div className="account-details">
                       <div className="account-detail">
@@ -1595,6 +1832,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <Shield size={16} />
                   Document Information
                 </h3>
+                <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+                  <Edit size={16} />
+                </button>
               </div>
               <div className="card-content">
                 <div className="info-item">
@@ -1657,6 +1897,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <MapPin size={16} />
                   Address Information
                 </h3>
+                <button className="edit-button" onClick={handleOpenEditInfo} title="Edit Information">
+                  <Edit size={16} />
+                </button>
               </div>
               <div className="card-content">
                 <div className="address-item">
@@ -2788,6 +3031,354 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <button type="button" className="button-danger" onClick={handleDeleteClient}>
                   <Trash2 size={16} style={{ marginRight: "8px" }} />
                   Delete Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Info Modal */}
+      {isEditInfoOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "editInfo")}
+        >
+          <div
+            className={`modal-content large-modal ${modalClosing.editInfo ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Edit size={20} color="#8b5cf6" />
+                Edit Client Information
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("editInfo")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleUpdateClient}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">First Name *</label>
+                    <input
+                      className={`form-input ${errors.firstName ? "error" : ""}`}
+                      value={clientFormData.firstName}
+                      onChange={(e) => handleClientFormChange("firstName", e.target.value)}
+                      placeholder="Enter first name"
+                      required
+                    />
+                    {errors.firstName && <div className="error-message">{errors.firstName}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name *</label>
+                    <input
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
+                      value={clientFormData.lastName}
+                      onChange={(e) => handleClientFormChange("lastName", e.target.value)}
+                      placeholder="Enter last name"
+                      required
+                    />
+                    {errors.lastName && <div className="error-message">{errors.lastName}</div>}
+                  </div>
+              
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    type="email"
+                    className={`form-input ${errors.email ? "error" : ""}`}
+                    value={clientFormData.email}
+                    onChange={(e) => handleClientFormChange("email", e.target.value)}
+                    placeholder="Enter email"
+                    required
+                  />
+                  {errors.email && <div className="error-message">{errors.email}</div>}
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Phone *</label>
+                    <div className="phone-input-group">
+                      <input
+                        className={`form-input ${errors.phone ? "error" : ""}`}
+                        value={clientFormData.phone}
+                        onChange={(e) => handleClientFormChange("phone", e.target.value)}
+                        placeholder="Phone number"
+                        required
+                      />
+                    </div>
+                    {errors.phone && <div className="error-message">{errors.phone}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Second Phone (Optional)</label>
+                    <div className="phone-input-group">
+                      <input
+                        className="form-input"
+                        value={clientFormData.secondPhone}
+                        onChange={(e) => handleClientFormChange("secondPhone", e.target.value)}
+                        placeholder="Second phone number"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Document Type *</label>
+                    <select
+                      className="form-select"
+                      value={clientFormData.documentType}
+                      onChange={(e) => handleClientFormChange("documentType", e.target.value)}
+                      required
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="ID Card">ID Card</option>
+                      <option value="Driver's License">Driver's License</option>
+                      <option value="Temporary Residence Permit">Residence Permit</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Document Number *</label>
+                    <input
+                      className={`form-input ${errors.documentNumber ? "error" : ""}`}
+                      value={clientFormData.documentNumber}
+                      onChange={(e) => handleClientFormChange("documentNumber", e.target.value)}
+                      placeholder="8 alphanumeric characters"
+                      required
+                    />
+                    {errors.documentNumber && <div className="error-message">{errors.documentNumber}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Document Expiry *</label>
+                    <input
+                      type="date"
+                      className={`form-input ${errors.documentExpiry ? "error" : ""}`}
+                      value={clientFormData.documentExpiry}
+                      onChange={(e) => handleClientFormChange("documentExpiry", e.target.value)}
+                      required
+                    />
+                    {errors.documentExpiry && <div className="error-message">{errors.documentExpiry}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Date of Birth (Auto-filled)</label>
+                    <input type="date" className="form-input readonly" value={clientFormData.dateOfBirth} readOnly />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Registration Address *</label>
+                  <div className="form-grid">
+
+                    <div className="form-group">
+                      <label className="form-label">Street *</label>
+                      <input
+                        className={`form-input ${errors.registrationStreet ? "error" : ""}`}
+                        value={clientFormData.registrationStreet}
+                        onChange={(e) => handleClientFormChange("registrationStreet", e.target.value)}
+                        placeholder="Street name"
+                        required
+                      />
+                      {errors.registrationStreet && <div className="error-message">{errors.registrationStreet}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">House *</label>
+                      <input
+                        className={`form-input ${errors.registrationHouse ? "error" : ""}`}
+                        value={clientFormData.registrationHouse}
+                        onChange={(e) => handleClientFormChange("registrationHouse", e.target.value)}
+                        placeholder="House number"
+                        required
+                      />
+                      {errors.registrationHouse && <div className="error-message">{errors.registrationHouse}</div>}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apartment</label>
+                      <input
+                        className={`form-input ${errors.registrationApartment ? "error" : ""}`}
+                        value={clientFormData.registrationApartment}
+                        onChange={(e) => handleClientFormChange("registrationApartment", e.target.value)}
+                        placeholder="Apartment (optional)"
+                      />
+                      {errors.registrationApartment && (
+                        <div className="error-message">{errors.registrationApartment}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Postal Code *</label>
+                      <input
+                        className={`form-input ${errors.registrationPostalCode ? "error" : ""}`}
+                        value={clientFormData.registrationPostalCode}
+                        onChange={(e) => handleClientFormChange("registrationPostalCode", e.target.value)}
+                        placeholder="Postal code"
+                        required
+                      />
+                      {errors.registrationPostalCode && (
+                        <div className="error-message">{errors.registrationPostalCode}</div>
+                      )}
+                      </div>
+
+                      <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input
+                        className={`form-input ${errors.registrationCity ? "error" : ""}`}
+                        value={clientFormData.registrationCity}
+                        onChange={(e) => handleClientFormChange("registrationCity", e.target.value)}
+                        placeholder="City or Village"
+                        required
+                      />
+                      {errors.registrationCity && <div className="error-message">{errors.registrationCity}</div>}
+                    </div>
+
+                      <div className="form-group">
+                      <label className="form-label">Country *</label>
+                      <input
+                        className={`form-input ${errors.registrationCountry ? "error" : ""}`}
+                        value={clientFormData.registrationCountry}
+                        onChange={(e) => handleClientFormChange("registrationCountry", e.target.value)}
+                        placeholder="Country"
+                        required
+                      />
+                      {errors.registrationCountry && <div className="error-message">{errors.registrationCountry}</div>}
+
+                    </div>
+
+
+                  </div>
+                  <div className="form-checkbox">
+                    <input
+                      type="checkbox"
+                      id="sameAsRegistration"
+                      checked={sameAsRegistration}
+                      onChange={(e) => setSameAsRegistration(e.target.checked)}
+                    />
+                    <label htmlFor="sameAsRegistration">Correspondence address same as registration</label>
+                  </div>
+
+                  {!sameAsRegistration && (
+                    <div className="form-group">
+                      <label className="form-label">Correspondence Address *</label>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Street *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceStreet ? "error" : ""}`}
+                            value={clientFormData.correspondenceStreet}
+                            onChange={(e) => handleClientFormChange("correspondenceStreet", e.target.value)}
+                            placeholder="Street name"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">House *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceHouse ? "error" : ""}`}
+                            value={clientFormData.correspondenceHouse}
+                            onChange={(e) => handleClientFormChange("correspondenceHouse", e.target.value)}
+                            placeholder="House number"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Apartment</label>
+                          <input
+                            className={`form-input ${errors.correspondenceApartment ? "error" : ""}`}
+                            value={clientFormData.correspondenceApartment}
+                            onChange={(e) => handleClientFormChange("correspondenceApartment", e.target.value)}
+                            placeholder="Apartment (optional)"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label className="form-label">Postal Code *</label>
+                          <input
+                            className={`form-input ${errors.correspondencePostalCode ? "error" : ""}`}
+                            value={clientFormData.correspondencePostalCode}
+                            onChange={(e) => handleClientFormChange("correspondencePostalCode", e.target.value)}
+                            placeholder="Postal code"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Country *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCountry ? "error" : ""}`}
+                            value={clientFormData.correspondenceCountry}
+                            onChange={(e) => handleClientFormChange("correspondenceCountry", e.target.value)}
+                            placeholder="Country"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">City *</label>
+                          <input
+                            className={`form-input ${errors.correspondenceCity ? "error" : ""}`}
+                            value={clientFormData.correspondenceCity}
+                            onChange={(e) => handleClientFormChange("correspondenceCity", e.target.value)}
+                            placeholder="City or Village"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="form-checkbox">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={clientFormData.marketingConsent}
+                    onChange={(e) => handleClientFormChange("marketingConsent", e.target.checked)}
+                  />
+                  <label htmlFor="marketingConsent">Marketing consent</label>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("editInfo")}>Cancel</button>
+                  <button type="submit" className="button-primary">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {isDeleteAccountOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "deleteAccount")}
+        >
+          <div
+            className={`modal-content ${modalClosing.deleteAccount ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Trash2 size={20} color="#ef4444" />
+                Delete Account
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("deleteAccount")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="delete-warning">
+                Are you sure you want to delete account {deletingAccount?.iban}?
+              </p>
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => closeModal("deleteAccount")}>Cancel</button>
+                <button type="button" className="button-danger" onClick={confirmDeleteAccount}>
+                  <Trash2 size={16} style={{ marginRight: "8px" }} />
+                  Delete Account
                 </button>
               </div>
             </div>

@@ -194,7 +194,7 @@ body {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8b5cf6;
+  color: #fff;
   width: 16px;
   height: 16px;
 }
@@ -764,6 +764,26 @@ body {
   margin-bottom: 8px;
 }
 
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-account-button {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.delete-account-button:hover {
+  background-color: #fef2f2;
+}
+
 .account-iban {
   font-size: 14px;
   font-weight: 500;
@@ -976,7 +996,7 @@ y
   background: none;
   border: none;
   border-radius: 6px;
-  color: #8b5cf6;
+  color: #fff;
   cursor: pointer;
   transition: all 0.2s;
 }
