@@ -37,6 +37,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [data, setData] = useState(initialData?.clients || [])
   const [isAddClientOpen, setIsAddClientOpen] = useState(false)
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false)
+  const [isAddBasicAccountOpen, setIsAddBasicAccountOpen] = useState(false)
   const [isAddCrmOpen, setIsAddCrmOpen] = useState(false)
   const [isEditCrmOpen, setIsEditCrmOpen] = useState(false)
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false)
@@ -54,6 +55,13 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false)
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(null)
+  const [isEditAccountOpen, setIsEditAccountOpen] = useState(false)
+  const [editingAccount, setEditingAccount] = useState(null)
+  const [editAccountFormData, setEditAccountFormData] = useState({
+    balance: "",
+    cardType: "none",
+    servicePlan: "Standard",
+  })
 
   // Track mouse down position to distinguish clicks from drags
   const [mouseDownTarget, setMouseDownTarget] = useState(null)
@@ -173,9 +181,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   const [modalClosing, setModalClosing] = useState({
     addClient: false,
     addAccount: false,
+    addBasicAccount: false,
     addCrm: false,
     editCrm: false,
     editInfo: false,
+    editAccount: false,
     deleteClient: false,
     deleteCrm: false,
     deleteAccount: false,
@@ -226,6 +236,12 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     openingDate: new Date().toISOString().split("T")[0],
   })
 
+  const [basicAccountFormData, setBasicAccountFormData] = useState({
+    balance: "",
+    cardType: "none",
+    servicePlan: "Standard",
+  })
+
   // Enhanced ESC key handling for search functionality
   useEffect(() => {
     const handleEscape = (e) => {
@@ -245,9 +261,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         // Handle modal escapes
         if (isAddClientOpen) closeModal("addClient")
         if (isAddAccountOpen) closeModal("addAccount")
+        if (isAddBasicAccountOpen) closeModal("addBasicAccount")
         if (isAddCrmOpen) closeModal("addCrm")
         if (isEditCrmOpen) closeModal("editCrm")
         if (isEditInfoOpen) closeModal("editInfo")
+        if (isEditAccountOpen) closeModal("editAccount")
         if (isDeleteClientOpen) closeModal("deleteClient")
         if (isDeleteCrmOpen) closeModal("deleteCrm")
         if (isDeleteAccountOpen) closeModal("deleteAccount")
@@ -259,9 +277,11 @@ export default function EmployeePanel({ data: initialData, currentUser, username
   }, [
     isAddClientOpen,
     isAddAccountOpen,
+    isAddBasicAccountOpen,
     isAddCrmOpen,
     isEditCrmOpen,
     isEditInfoOpen,
+    isEditAccountOpen,
     isDeleteClientOpen,
     isDeleteCrmOpen,
     isDeleteAccountOpen,
@@ -279,6 +299,9 @@ export default function EmployeePanel({ data: initialData, currentUser, username
         case "addAccount":
           setIsAddAccountOpen(false)
           break
+        case "addBasicAccount":
+          setIsAddBasicAccountOpen(false)
+          break
         case "addCrm":
           setIsAddCrmOpen(false)
           break
@@ -288,6 +311,10 @@ export default function EmployeePanel({ data: initialData, currentUser, username
           break
         case "editInfo":
           setIsEditInfoOpen(false)
+          break
+        case "editAccount":
+          setIsEditAccountOpen(false)
+          setEditingAccount(null)
           break
         case "deleteClient":
           setIsDeleteClientOpen(false)
@@ -908,6 +935,27 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   }
 
+  const validateBasicAccountForm = () => {
+    const newErrors = {}
+    const balanceError = validateBalance(basicAccountFormData.balance)
+    if (balanceError) newErrors.basicBalance = balanceError
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleBasicAccountFormChange = (field, value) => {
+    setBasicAccountFormData((prev) => ({ ...prev, [field]: value }))
+
+    if (field === "servicePlan" && !["Jaunimo", "Standard", "Gold"].includes(value)) {
+      setBasicAccountFormData((prev) => ({ ...prev, cardType: "none" }))
+    }
+
+    const errField = field === "balance" ? "basicBalance" : field
+    if (errors[errField]) {
+      setErrors((prev) => ({ ...prev, [errField]: null }))
+    }
+  }
+
 
 
 
@@ -933,6 +981,29 @@ export default function EmployeePanel({ data: initialData, currentUser, username
       return responseData;
     } catch (error) {
       console.error("Error in createBankAccount API call:", error);
+      throw error;
+    }
+  };
+
+  const createBasicBankAccount = async (accountData) => {
+    try {
+      const response = await fetch(getServerLink() + "/createBankAccBasic", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accountData),
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API error: ${response.status} - ${errorData.message || response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error in createBasicBankAccount API call:", error);
       throw error;
     }
   };
@@ -998,6 +1069,145 @@ export default function EmployeePanel({ data: initialData, currentUser, username
 
     } catch (err) {
       console.error("Failed to create bank account:", err);
+    }
+  };
+
+  const handleAddBasicAccount = async (e) => {
+    e.preventDefault();
+    if (!selectedPerson) return;
+    if (!validateBasicAccountForm()) return;
+
+    const newAccount = {
+      id: `acc${selectedPerson.accounts ? selectedPerson.accounts.length + 1 : 1}`,
+      ...basicAccountFormData,
+      balance: Number.parseFloat(basicAccountFormData.balance),
+    };
+
+    const apiAccount = {
+      personal_code: Number(selectedPerson.personalCode),
+      balance: Math.round(Number(basicAccountFormData.balance)),
+      type: basicAccountFormData.cardType === "none" ? "" : basicAccountFormData.cardType,
+      plan: basicAccountFormData.servicePlan,
+    };
+
+    try {
+      await createBasicBankAccount(apiAccount);
+
+      const updatedPerson = {
+        ...selectedPerson,
+        bank_accs: [...(selectedPerson.bank_accs || []), newAccount],
+      };
+
+      setData((prev) =>
+        prev.map((person) => (person.personalCode === selectedPerson.personalCode ? updatedPerson : person))
+      );
+      setSelectedPerson(updatedPerson);
+
+      setBasicAccountFormData({ balance: "", cardType: "none", servicePlan: "Standard" });
+      setErrors({});
+      closeModal("addBasicAccount");
+
+      setTimeout(() => {
+        triggerSuccess("Bank account created successfully!");
+      }, 200);
+    } catch (err) {
+      console.error("Failed to create bank account:", err);
+    }
+  };
+
+  const handleOpenEditAccount = (account) => {
+    setEditingAccount(account);
+    setEditAccountFormData({
+      balance: String(account.balance),
+      cardType: account.type || account.cardType || "none",
+      servicePlan: account.plan || account.servicePlan || "Standard",
+    });
+    setIsEditAccountOpen(true);
+  };
+
+  const validateEditAccountForm = () => {
+    const newErrors = {};
+    const balanceError = validateBalance(editAccountFormData.balance);
+    if (balanceError) newErrors.editBalance = balanceError;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEditAccountFormChange = (field, value) => {
+    setEditAccountFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "servicePlan" && !["Jaunimo", "Standard", "Gold"].includes(value)) {
+      setEditAccountFormData((prev) => ({ ...prev, cardType: "none" }));
+    }
+    const errField = field === "balance" ? "editBalance" : field;
+    if (errors[errField]) {
+      setErrors((prev) => ({ ...prev, [errField]: null }));
+    }
+  };
+
+  const handleUpdateAccount = async (e) => {
+    e.preventDefault();
+    if (!selectedPerson || !editingAccount) return;
+    if (!validateEditAccountForm()) return;
+
+    const updatedAccount = {
+      ...editingAccount,
+      balance: Number.parseFloat(editAccountFormData.balance),
+    };
+    if ("servicePlan" in editingAccount || editAccountFormData.servicePlan) {
+      updatedAccount.servicePlan = editAccountFormData.servicePlan;
+      delete updatedAccount.plan;
+    } else {
+      updatedAccount.plan = editAccountFormData.servicePlan;
+    }
+    if ("cardType" in editingAccount || editAccountFormData.cardType) {
+      updatedAccount.cardType = editAccountFormData.cardType;
+      delete updatedAccount.type;
+    } else {
+      updatedAccount.type = editAccountFormData.cardType === "none" ? "" : editAccountFormData.cardType;
+    }
+
+    const apiAccount = {
+      personal_code: Number(selectedPerson.personalCode),
+      iban: editingAccount.iban,
+      balance: Math.round(Number(editAccountFormData.balance)),
+      type: editAccountFormData.cardType === "none" ? "" : editAccountFormData.cardType,
+      plan: editAccountFormData.servicePlan,
+    };
+
+    try {
+      const response = await fetch(getServerLink() + "/editBankAcc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(apiAccount),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const updatedAccounts = selectedPerson.bank_accs.map((acc) =>
+        acc === editingAccount ? { ...updatedAccount } : acc
+      );
+      const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts };
+      setData((prev) => prev.map((p) => (p.personalCode === selectedPerson.personalCode ? updatedPerson : p)));
+      setSelectedPerson(updatedPerson);
+      setEditingAccount(null);
+      setErrors({});
+      closeModal("editAccount");
+      setTimeout(() => {
+        triggerSuccess("Bank account updated!");
+      }, 200);
+    } catch (error) {
+      console.error("Error updating bank account:", error);
+      setEditingAccount(null);
+      closeModal("editAccount");
+      setTimeout(() => {
+        triggerSuccess("Failed to update bank account.");
+      }, 200);
     }
   };
 
@@ -1777,6 +1987,13 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       <span className="account-iban">{account.iban}</span>
                       <div className="account-actions">
                         <span className="account-badge">{account.currency}</span>
+                        <button
+                          className="edit-account-button"
+                          onClick={() => handleOpenEditAccount(account)}
+                          title="Edit Account"
+                        >
+                          <Edit size={14} />
+                        </button>
                         <button
                           className="delete-account-button"
                           onClick={() => handleDeleteAccount(account)}
@@ -2733,6 +2950,139 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                   <button type="submit" className="button-primary">
                     Create Account
                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Basic Account Modal */}
+      {isAddBasicAccountOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "addBasicAccount")}
+        >
+          <div
+            className={`modal-content ${modalClosing.addBasicAccount ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <CreditCard size={20} color="#8b5cf6" />
+                Create Basic Account
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("addBasicAccount")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddBasicAccount}>
+                <div className="form-group">
+                  <label className="form-label">Account Balance *</label>
+                  <input
+                    className={`form-input ${errors.basicBalance ? "error" : ""}`}
+                    value={basicAccountFormData.balance}
+                    onChange={(e) => handleBasicAccountFormChange("balance", e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                  {errors.basicBalance && <div className="error-message">{errors.basicBalance}</div>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Service Plan *</label>
+                  <select
+                    className="form-input"
+                    value={basicAccountFormData.servicePlan}
+                    onChange={(e) => handleBasicAccountFormChange("servicePlan", e.target.value)}
+                    required
+                  >
+                    <option value="Jaunimo">Jaunimo</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Loan">Loan</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Account Modal */}
+      {isEditAccountOpen && (
+        <div
+          className="modal-overlay"
+          onMouseDown={handleModalMouseDown}
+          onMouseUp={(e) => handleModalMouseUp(e, "editAccount")}
+        >
+          <div
+            className={`modal-content ${modalClosing.editAccount ? "closing" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <CreditCard size={20} color="#8b5cf6" />
+                Edit Account
+              </h3>
+              <button className="modal-close" onClick={() => closeModal("editAccount")}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleUpdateAccount}>
+                <div className="form-group">
+                  <label className="form-label">Account Balance *</label>
+                  <input
+                    className={`form-input ${errors.editBalance ? "error" : ""}`}
+                    value={editAccountFormData.balance}
+                    onChange={(e) => handleEditAccountFormChange("balance", e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                  {errors.editBalance && <div className="error-message">{errors.editBalance}</div>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Service Plan *</label>
+                  <select
+                    className="form-input"
+                    value={editAccountFormData.servicePlan}
+                    onChange={(e) => handleEditAccountFormChange("servicePlan", e.target.value)}
+                    required
+                  >
+                    <option value="Jaunimo">Jaunimo</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Loan">Loan</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Card Type</label>
+                  <select
+                    className="form-input"
+                    value={editAccountFormData.cardType}
+                    onChange={(e) => handleEditAccountFormChange("cardType", e.target.value)}
+                    disabled={!["Jaunimo", "Standard", "Gold"].includes(editAccountFormData.servicePlan)}
+                  >
+                    <option value="none">/</option>
+                    {["Jaunimo", "Standard", "Gold"].includes(editAccountFormData.servicePlan) && (
+                      <>
+                        <option value="Debeto">Debit Card</option>
+                        <option value="Kredito">Credit Card</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="button-secondary" onClick={() => closeModal("editAccount")}>Cancel</button>
+                  <button type="submit" className="button-primary">Save Changes</button>
                 </div>
               </form>
             </div>
