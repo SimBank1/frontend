@@ -1144,72 +1144,6 @@ export default function EmployeePanel({ data: initialData, currentUser, username
     }
   };
 
-  const handleUpdateAccount = async (e) => {
-    e.preventDefault();
-    if (!selectedPerson || !editingAccount) return;
-    if (!validateEditAccountForm()) return;
-
-    const updatedAccount = {
-      ...editingAccount,
-      balance: Number.parseFloat(editAccountFormData.balance),
-    };
-    if ("servicePlan" in editingAccount || editAccountFormData.servicePlan) {
-      updatedAccount.servicePlan = editAccountFormData.servicePlan;
-      delete updatedAccount.plan;
-    } else {
-      updatedAccount.plan = editAccountFormData.servicePlan;
-    }
-    if ("cardType" in editingAccount || editAccountFormData.cardType) {
-      updatedAccount.cardType = editAccountFormData.cardType;
-      delete updatedAccount.type;
-    } else {
-      updatedAccount.type = editAccountFormData.cardType === "none" ? "" : editAccountFormData.cardType;
-    }
-
-    const apiAccount = {
-      personal_code: Number(selectedPerson.personalCode),
-      iban: editingAccount.iban,
-      balance: Math.round(Number(editAccountFormData.balance)),
-      type: editAccountFormData.cardType === "none" ? "" : editAccountFormData.cardType,
-      plan: editAccountFormData.servicePlan,
-    };
-
-    try {
-      const response = await fetch(getServerLink() + "/editBankAcc", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(apiAccount),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const updatedAccounts = selectedPerson.bank_accs.map((acc) =>
-        acc === editingAccount ? { ...updatedAccount } : acc
-      );
-      const updatedPerson = { ...selectedPerson, bank_accs: updatedAccounts };
-      setData((prev) => prev.map((p) => (p.personalCode === selectedPerson.personalCode ? updatedPerson : p)));
-      setSelectedPerson(updatedPerson);
-      setEditingAccount(null);
-      setErrors({});
-      closeModal("editAccount");
-      setTimeout(() => {
-        triggerSuccess("Bank account updated!");
-      }, 200);
-    } catch (error) {
-      console.error("Error updating bank account:", error);
-      setEditingAccount(null);
-      closeModal("editAccount");
-      setTimeout(() => {
-        triggerSuccess("Failed to update bank account.");
-      }, 200);
-    }
-  };
 
 
   // ADD CRM ENTRY with new structure and employee username
@@ -1987,13 +1921,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                       <span className="account-iban">{account.iban}</span>
                       <div className="account-actions">
                         <span className="account-badge">{account.currency}</span>
-                        <button
-                          className="edit-account-button"
-                          onClick={() => handleOpenEditAccount(account)}
-                          title="Edit Account"
-                        >
-                          <Edit size={14} />
-                        </button>
+                 
                         <button
                           className="delete-account-button"
                           onClick={() => handleDeleteAccount(account)}
@@ -3083,6 +3011,7 @@ export default function EmployeePanel({ data: initialData, currentUser, username
                 <div className="form-actions">
                   <button type="button" className="button-secondary" onClick={() => closeModal("editAccount")}>Cancel</button>
                   <button type="submit" className="button-primary">Save Changes</button>
+
                 </div>
               </form>
             </div>
