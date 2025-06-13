@@ -1076,7 +1076,7 @@ export default function AdminPanel({ data: initialData }) {
       )
     }
 
-    if (selectedPerson.type === "employee") {
+    if (selectedPerson.marketingConsent === undefined) {
       return (
         <div className="crm-container">
           <div className="crm-header">
