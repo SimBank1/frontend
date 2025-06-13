@@ -85,6 +85,7 @@ export default function AdminPanel({ data: initialData }) {
 
   const [expandedCrmEntries, setExpandedCrmEntries] = useState({})
   const [closingCrmEntry, setClosingCrmEntry] = useState(null)
+  const [employeeCrmEntries, setEmployeeCrmEntries] = useState([])
 
 
   // Apple-style success animation states
@@ -166,6 +167,29 @@ export default function AdminPanel({ data: initialData }) {
       });
     }
   }, [selectedPerson]);
+
+  useEffect(() => {
+    if (selectedPerson && selectedPerson.marketingConsent === undefined) {
+      const username = selectedPerson.username;
+      const entries = [];
+      data.forEach(person => {
+        if (person.marketingConsent !== undefined && Array.isArray(person.crm)) {
+          person.crm.forEach(entry => {
+            if (entry.username === username) {
+              entries.push({
+                ...entry,
+                clientName: `${person.first_name || person.firstName || ""} ${person.last_name || person.lastName || ""}`,
+              });
+            }
+          });
+        }
+      });
+      entries.sort((a, b) => new Date(b.date_of_contact || b.date) - new Date(a.date_of_contact || a.date));
+      setEmployeeCrmEntries(entries);
+    } else {
+      setEmployeeCrmEntries([]);
+    }
+  }, [selectedPerson, data]);
 
 
 
@@ -1054,11 +1078,68 @@ export default function AdminPanel({ data: initialData }) {
 
     if (selectedPerson.type === "employee") {
       return (
-        <div className="empty-state">
-          <div className="empty-content">
-            <Briefcase className="empty-icon" />
-            <h2 className="empty-title">Employee Profile</h2>
-            <p className="empty-description">Employees do not have CRM data</p>
+        <div className="crm-container">
+          <div className="crm-header">
+            <div className="crm-info">
+              <div className="crm-avatar">
+                <FileText size={24} color="white" />
+              </div>
+              <div className="crm-title">
+                <h2>CRM History</h2>
+                <p>
+                  {selectedPerson.first_name || selectedPerson.firstName} {selectedPerson.last_name || selectedPerson.lastName}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="crm-entries">
+            {employeeCrmEntries.length > 0 ? (
+              employeeCrmEntries.map((entry, i) => (
+                <div key={entry.id || `crm-${i}`} className="crm-entry">
+                  <div className="crm-entry-header">
+                    <div
+                      className="crm-entry-title"
+                      onClick={() => toggleCrmExpansion(entry.id || `crm-${i}`)}
+                    >
+                      {expandedCrmEntries[entry.id || `crm-${i}`] ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                      <span
+                        style={{ fontWeight: 600, marginLeft: "8px", overflowWrap: "break-word" }}
+                      >
+                        {entry.title
+                          ? entry.title.length > 75
+                            ? entry.title.substring(0, 50)
+                            : entry.title
+                          : "Untitled Entry"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span className="crm-entry-badge">{entry.contactType || entry.contact_type}</span>
+                      <span className="crm-entry-date">{entry.date_of_contact || entry.date}</span>
+                      <span className="crm-entry-employee">for {entry.clientName}</span>
+                    </div>
+                  </div>
+                  {expandedCrmEntries[entry.id || `crm-${i}`] && (
+                          <div
+                            style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}
+                            className="crm-entry-content"
+                          >
+                            {entry.content}
+                          </div>
+                        )}
+                </div>
+              ))
+            ) : (
+              <div className="no-data">
+                <FileText className="no-data-icon" />
+                <p className="no-data-text">No CRM entries</p>
+                <p className="no-data-subtext">This employee has not created any CRM entries</p>
+              </div>
+            )}
           </div>
         </div>
       )
